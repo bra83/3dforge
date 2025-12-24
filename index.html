@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planejamento de Negócio: Impressão 3D Decor Nerd</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'lore-paper': '#f5f5f0',
+                        'lore-stone': '#e6e6e0',
+                        'lore-dark': '#2d3748',
+                        'lore-accent': '#d97706',
+                        'tech-blue': '#475569',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f5f5f0; color: #2d3748; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin: auto; height: 300px; }
+        .gemini-gradient { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #d97706 100%); }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .image-aspect-ratio {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            object-fit: cover;
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+    <nav class="bg-white border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-display font-bold text-lore-dark">Forge<span class="text-lore-accent">3D</span> Planner</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="scrollToSection('strategy')" class="text-sm font-medium hover:text-lore-accent transition">Estratégia</button>
+                    <button onclick="scrollToSection('ai-center')" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition">✨ IA Visual</button>
+                    <button onclick="scrollToSection('calculator')" class="bg-lore-accent text-white px-4 py-2 rounded-md text-sm font-bold shadow-sm">Calculadora</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16">
+
+        <!-- Hero -->
+        <section class="text-center py-8">
+            <h1 class="text-4xl md:text-5xl font-display font-bold text-lore-dark mb-4">
+                Negócio de Impressão 3D: <span class="text-lore-accent">Nicho de Lore</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Visualize, planeje e lucre com itens de decoração para o público nerd adulto.</p>
+        </section>
+
+        <!-- ✨ AI CENTER SECTION -->
+        <section id="ai-center" class="scroll-mt-24">
+            <div class="gemini-gradient p-8 md:p-12 rounded-3xl text-white shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-display font-bold mb-2 flex items-center gap-2">✨ Central de Inteligência Lore</h2>
+                        <p class="text-indigo-100 max-w-xl">Crie conceitos visuais e textos de venda em segundos.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left: Inputs and Text Output -->
+                    <div class="space-y-6">
+                        <div class="bg-white/10 p-6 rounded-2xl border border-white/20 backdrop-blur-sm">
+                            <h3 class="text-xl font-bold mb-4">Gerador de Conceitos</h3>
+                            <div class="flex gap-2 mb-4">
+                                <input type="text" id="lore-theme" placeholder="Tema (ex: Dark Souls, Cyberpunk, LOTR...)" class="flex-grow bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                <button onclick="generateLoreIdeas()" id="btn-lore" class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                                    <span>Gerar Ideias</span>
+                                    <div id="loader-lore" class="loading-spinner hidden"></div>
+                                </button>
+                            </div>
+                            <div id="lore-results" class="bg-black/20 rounded-xl p-4 text-sm min-h-[120px] max-h-[250px] overflow-y-auto italic text-indigo-50 border border-white/5">
+                                As ideias de produtos aparecerão aqui...
+                            </div>
+                        </div>
+
+                        <div class="bg-white/10 p-6 rounded-2xl border border-white/20 backdrop-blur-sm">
+                            <h3 class="text-xl font-bold mb-4">Copy de Venda</h3>
+                            <input type="text" id="piece-name" placeholder="Nome da peça para o anúncio" class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white mb-4">
+                            <button onclick="generateSalesCopy()" id="btn-copy" class="w-full bg-indigo-500 hover:bg-indigo-600 py-3 rounded-lg font-bold transition flex justify-center items-center gap-2">
+                                <span>Criar Anúncio</span>
+                                <div id="loader-copy" class="loading-spinner hidden"></div>
+                            </button>
+                            <div id="copy-results" class="mt-4 bg-black/20 rounded-xl p-4 text-sm min-h-[100px] text-indigo-50 border border-white/5 whitespace-pre-line"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Visual Generator -->
+                    <div class="bg-white/10 p-6 rounded-2xl border border-white/20 backdrop-blur-sm flex flex-col h-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">Visualização do Artefato</h3>
+                            <button onclick="generateVisual()" id="btn-visual" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition title='Gerar/Atualizar Imagem'">
+                                <span id="refresh-icon">🔄</span>
+                                <div id="loader-visual" class="loading-spinner hidden"></div>
+                            </button>
+                        </div>
+                        
+                        <div id="image-container" class="relative flex-grow bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden min-h-[300px]">
+                            <div id="image-placeholder" class="text-center p-8">
+                                <span class="text-4xl mb-2 block">🖼️</span>
+                                <p class="text-sm text-indigo-200">Clique no ícone de atualização acima para gerar o conceito visual baseado no tema escolhido.</p>
+                            </div>
+                            <img id="generated-image" class="image-aspect-ratio hidden" alt="Conceito do Artefato">
+                            
+                            <div id="image-status" class="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-sm px-3 py-1 rounded text-xs text-white opacity-0 transition-opacity">
+                                Gerando imagem...
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-indigo-300 mt-2 text-center uppercase tracking-widest">Conceito gerado por Imagen 4.0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Strategy Section -->
+        <section id="strategy" class="scroll-mt-24">
+            <div class="mb-8">
+                <h2 class="text-3xl font-display font-bold text-lore-dark mb-4">1. O Nicho: Decoração Nerd "Grown-Up"</h2>
+                <p class="text-lg text-gray-600 max-w-4xl">
+                    Para atingir sua meta de R$ 6.600, você precisa de margem de lucro, não apenas volume. O nicho "Action Figures" está saturado. O nicho <strong>"Lore & Artifacts"</strong> foca na experiência, na imersão e na decoração funcional para adultos nostálgicos.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-2xl card-shadow">
+                    <h3 class="text-xl font-bold text-lore-dark mb-4 border-b pb-2">Produtos de Alto Valor (Lore)</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-2xl mr-3">🔮</span>
+                            <div>
+                                <strong class="text-lore-accent">Iluminação Temática:</strong>
+                                <p class="text-sm text-gray-600">Luminárias de cristais, tochas de RPG, letreiros neon-style de Cyberpunk. Valor percebido alto (R$ 150 - R$ 400).</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-2xl mr-3">📜</span>
+                            <div>
+                                <strong class="text-lore-accent">Props Funcionais:</strong>
+                                <p class="text-sm text-gray-600">Suportes de fone em formato de caveira, bookends (aparadores de livro) de portais mágicos, caixas de dados.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-lore-stone/50 p-8 rounded-2xl border border-stone-200">
+                    <h3 class="text-xl font-bold text-lore-dark mb-4 border-b border-stone-300 pb-2">O Cliente Ideal</h3>
+                    <div class="space-y-4">
+                        <p class="text-gray-700"><strong>Perfil:</strong> Adulto (25-45 anos), renda estável, trabalha em áreas criativas.</p>
+                        <p class="text-gray-700"><strong>Dores:</strong> Busca exclusividade. Quer decorar o escritório/setup gamer com itens que contam histórias.</p>
+                        <div class="bg-white p-4 rounded-lg mt-4 text-sm text-lore-dark font-medium border-l-4 border-lore-accent">
+                            💡 Dica: A pintura e o acabamento (pós-processamento) agregam 200% ao valor da peça.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hardware Comparison -->
+        <section id="hardware" class="scroll-mt-24">
+            <div class="mb-8">
+                <h2 class="text-3xl font-display font-bold text-lore-dark mb-4">2. Ferramentas para Produção Comercial</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Bambu Lab A1 -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-green-600 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">Ecossistema Fechado</div>
+                    <h3 class="text-2xl font-bold mb-2">Bambu Lab A1 Combo</h3>
+                    <div class="text-3xl font-display font-bold text-gray-800 mb-4">~R$ 4.800</div>
+                    <button onclick="selectPrinter('bambu')" class="w-full py-2 bg-gray-100 hover:bg-green-50 text-green-700 font-bold rounded-lg transition">Selecionar</button>
+                </div>
+
+                <!-- Comparison Chart -->
+                <div class="bg-white p-4 rounded-xl card-shadow flex flex-col items-center justify-center">
+                    <div class="chart-container h-64">
+                        <canvas id="printerRadarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Kobra 3 -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-blue-600 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">Custo Benefício</div>
+                    <h3 class="text-2xl font-bold mb-2">Anycubic Kobra 3 Combo</h3>
+                    <div class="text-3xl font-display font-bold text-gray-800 mb-4">~R$ 3.600</div>
+                    <button onclick="selectPrinter('kobra')" class="w-full py-2 bg-gray-100 hover:bg-blue-50 text-blue-700 font-bold rounded-lg transition">Selecionar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Forge: Calculator -->
+        <section id="calculator" class="scroll-mt-24">
+             <div class="bg-lore-dark text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-lore-accent opacity-10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+                <h2 class="text-3xl font-display font-bold mb-8 relative z-10">🛠️ A Forja: Calculadora de Custos</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
+                    <div class="space-y-6">
+                        <div class="bg-white/10 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+                            <h3 class="text-lg font-bold text-lore-accent mb-4">Configurações da Peça</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Peso (gramas)</label>
+                                    <input type="number" id="partWeight" value="150" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-lore-accent">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Tempo de Impressão (h)</label>
+                                    <input type="number" id="printTime" value="6.5" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-lore-accent">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-xs text-gray-400 mb-1">Preço do Filamento (R$/kg)</label>
+                                    <input type="number" id="filamentCost" value="110" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-lore-accent">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white text-lore-dark rounded-xl p-8 flex flex-col justify-center text-center card-shadow">
+                        <div class="text-xs text-gray-500 uppercase font-bold mb-1">Preço de Venda Sugerido</div>
+                        <div class="text-6xl font-display font-bold text-lore-accent mb-4" id="res-sell-price">R$ 0,00</div>
+                        <div class="text-sm text-green-600 font-bold bg-green-50 py-2 px-4 rounded-full inline-block mx-auto">
+                            Lucro por peça: <span id="res-profit">R$ 0,00</span>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-gray-100 flex justify-around text-sm">
+                            <div class="text-gray-400">Custo Total: <span id="res-cost-display" class="text-lore-dark font-bold">R$ 0,00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white/5 rounded-2xl p-6 border border-white/5">
+                    <h3 class="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Composição Financeira</h3>
+                    <div class="chart-container h-48 w-full">
+                        <canvas id="costBreakdownChart"></canvas>
+                    </div>
+                </div>
+             </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-lore-dark text-white py-8 mt-12 text-center">
+        <p class="text-sm text-gray-400">Forge3D Planner - Inteligência Artificial aplicada ao seu negócio.</p>
+    </footer>
+
+    <script>
+        const apiKey = ""; // Chave fornecida pelo ambiente
+
+        // --- NAVIGATION SAFETY ---
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                console.warn(`Seção com ID '${id}' não encontrada.`);
+            }
+        }
+
+        // --- GEMINI & IMAGEN INTEGRATION ---
+        async function fetchWithRetry(url, payload, retries = 5) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Falha na requisição');
+                    return await response.json();
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                }
+            }
+        }
+
+        async function generateLoreIdeas() {
+            const theme = document.getElementById('lore-theme').value || "Nostalgia Nerd";
+            const btn = document.getElementById('btn-lore');
+            const loader = document.getElementById('loader-lore');
+            const output = document.getElementById('lore-results');
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+            output.innerText = "Consultando arquivos...";
+
+            const systemPrompt = "Você é um especialista em design de produtos 3D nerd adultos. Sugira 3 artefatos decorativos (não bonecos) funcionais ou épicos baseados no tema. Seja criativo.";
+            const userPrompt = `Gere 3 ideias para o tema: ${theme}. Dê nomes impactantes e explique o lore básico.`;
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    contents: [{ parts: [{ text: userPrompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                });
+                output.innerText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar.";
+            } catch (e) {
+                output.innerText = "Erro na conexão com a IA.";
+            } finally {
+                btn.disabled = false;
+                loader.classList.add('hidden');
+            }
+        }
+
+        async function generateVisual() {
+            const theme = document.getElementById('lore-theme').value || "Nerd Artifact";
+            const loader = document.getElementById('loader-visual');
+            const icon = document.getElementById('refresh-icon');
+            const imgElement = document.getElementById('generated-image');
+            const placeholder = document.getElementById('image-placeholder');
+            const status = document.getElementById('image-status');
+
+            loader.classList.remove('hidden');
+            icon.classList.add('hidden');
+            status.style.opacity = "1";
+            status.innerText = "Imaginando artefatos...";
+
+            const promptText = `A highly detailed 3D printed artifact for home decor, theme: ${theme}. It should be a functional or decorative object like a magical lamp, a mechanical bookend, or a gothic wall relief. High-end finish, atmospheric lighting, cinematic composition, photorealistic, 16:9 widescreen format, no people, focus on texture and lore.`;
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    instances: { prompt: promptText },
+                    parameters: { sampleCount: 1 }
+                });
+
+                if (data.predictions && data.predictions[0]) {
+                    const b64 = data.predictions[0].bytesBase64Encoded;
+                    imgElement.src = `data:image/png;base64,${b64}`;
+                    imgElement.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    status.innerText = "Conceito Visual Gerado.";
+                }
+            } catch (e) {
+                status.innerText = "Erro ao gerar imagem.";
+            } finally {
+                loader.classList.add('hidden');
+                icon.classList.remove('hidden');
+                setTimeout(() => status.style.opacity = "0", 3000);
+            }
+        }
+
+        async function generateSalesCopy() {
+            const piece = document.getElementById('piece-name').value || "Artefato";
+            const btn = document.getElementById('btn-copy');
+            const loader = document.getElementById('loader-copy');
+            const output = document.getElementById('copy-results');
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+
+            const prompt = `Crie um anúncio magnético para o Instagram sobre a peça "${piece}". Foque em nostalgia, exclusividade e na história que essa peça conta no setup do cliente.`;
+            
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    contents: [{ parts: [{ text: prompt }] }]
+                });
+                output.innerText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao criar anúncio.";
+            } catch (e) {
+                output.innerText = "Erro de conexão.";
+            } finally {
+                btn.disabled = false;
+                loader.classList.add('hidden');
+            }
+        }
+
+        // --- CALCULATOR LOGIC ---
+        function updateCalcs() {
+            const weight = parseFloat(document.getElementById('partWeight').value) || 0;
+            const time = parseFloat(document.getElementById('printTime').value) || 0;
+            const filCost = parseFloat(document.getElementById('filamentCost').value) || 0;
+            
+            const matCost = (weight / 1000) * filCost;
+            const machineCost = time * 3.5; // Média de energia + depreciação
+            const totalCost = (matCost + machineCost) * 1.1; // +10% de margem de erro
+            
+            const sellPrice = totalCost * 3.5; // Margem de 250%
+            const profit = sellPrice - totalCost;
+
+            document.getElementById('res-sell-price').innerText = sellPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('res-profit').innerText = profit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('res-cost-display').innerText = totalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            updateDonut(matCost, machineCost, profit);
+        }
+
+        // --- CHARTS INITIALIZATION ---
+        let radarChart, costChart;
+
+        window.onload = function() {
+            const ctxRadar = document.getElementById('printerRadarChart').getContext('2d');
+            radarChart = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['Velocidade', 'Confiabilidade', 'Custo-Benefício', 'Facilidade', 'Ecossistema', 'Multicolor'],
+                    datasets: [
+                        { label: 'Bambu A1', data: [9, 10, 7, 9, 10, 9], borderColor: 'rgb(22, 163, 74)', backgroundColor: 'rgba(22, 163, 74, 0.2)' },
+                        { label: 'Kobra 3', data: [8, 7, 10, 7, 6, 8], borderColor: 'rgb(37, 99, 235)', backgroundColor: 'rgba(37, 99, 235, 0.2)' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxDonut = document.getElementById('costBreakdownChart').getContext('2d');
+            costChart = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Material', 'Produção/Energia', 'Lucro Líquido'],
+                    datasets: [{ data: [30, 20, 50], backgroundColor: ['#d97706', '#475569', '#10b981'], borderWidth: 0 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } 
+                    } 
+                }
+            });
+
+            updateCalcs();
+        };
+
+        function updateDonut(mat, mac, pro) {
+            if (costChart) {
+                costChart.data.datasets[0].data = [mat, mac, pro];
+                costChart.update();
+            }
+        }
+
+        function selectPrinter(k) {
+            // Ajustes simulados baseados na máquina
+            const timeInput = document.getElementById('printTime');
+            if(k === 'bambu') { 
+                timeInput.value = (parseFloat(timeInput.value) * 0.9).toFixed(1); // Mais rápida
+            } else { 
+                timeInput.value = (parseFloat(timeInput.value) * 1.1).toFixed(1); 
+            }
+            updateCalcs();
+        }
+
+        document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateCalcs));
+    </script>
+</body>
+</html>
