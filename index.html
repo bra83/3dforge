@@ -5,17 +5,18 @@
 <title>Precificação 3D</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family: Arial; background:#111; color:#fff; padding:15px }
-h1,h2 { margin-top:0 }
-section { display:none }
-section.active { display:block }
-input, select, button {
-  width:100%; padding:10px; margin:6px 0; font-size:16px;
+body{font-family:Arial;background:#111;color:#fff;padding:15px}
+h1,h2{margin-top:0}
+section{display:none}
+section.active{display:block}
+input,select,button{
+  width:100%;padding:10px;margin:6px 0;font-size:16px
 }
-button { background:#00c853; border:none; font-weight:bold }
-.tabs button { width:auto; margin-right:5px }
-.box { background:#1e1e1e; padding:15px; border-radius:10px; margin-bottom:15px }
-ul { padding-left:18px }
+button{background:#00c853;border:none;font-weight:bold}
+.tabs button{width:auto;margin-right:5px}
+.box{background:#1e1e1e;padding:15px;border-radius:10px;margin-bottom:15px}
+ul{padding-left:18px}
+hr{border:0;border-top:1px solid #333;margin:15px 0}
 </style>
 </head>
 
@@ -24,131 +25,166 @@ ul { padding-left:18px }
 <h1>Precificação 3D</h1>
 
 <div class="tabs">
-  <button id="btnEstoque">Estoque</button>
-  <button id="btnProjeto">Projeto</button>
+  <button id="tEstoque">Estoque</button>
+  <button id="tProjeto">Projeto</button>
+  <button id="tConfig">Config</button>
+  <button id="tRelatorio">Relatório</button>
 </div>
 
 <!-- ===== ESTOQUE ===== -->
 <section id="estoque" class="box active">
-  <h2>Filamentos</h2>
+<h2>Filamentos</h2>
 
-  <input id="f_nome" placeholder="Nome do filamento">
-  <input id="f_preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
-  <input id="f_saldo" type="number" placeholder="Saldo (g)">
+<input id="f_nome" placeholder="Nome do filamento">
+<input id="f_preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
+<input id="f_saldo" type="number" placeholder="Saldo (g)">
+<button id="btnAdd">Adicionar Filamento</button>
 
-  <button id="btnAdd">Adicionar Filamento</button>
-
-  <h3>Estoque Atual</h3>
-  <ul id="listaEstoque"></ul>
+<hr>
+<ul id="listaEstoque"></ul>
 </section>
 
 <!-- ===== PROJETO ===== -->
 <section id="projeto" class="box">
-  <h2>Projeto</h2>
+<h2>Projeto</h2>
 
-  <label>Modo</label>
-  <select id="modo">
-    <option value="simular">Simular</option>
-    <option value="real">Executar (baixar estoque)</option>
-  </select>
+<label>Modo</label>
+<select id="modo">
+  <option value="simular">Simular</option>
+  <option value="real">Executar (baixar estoque)</option>
+</select>
 
-  <label>Filamento</label>
-  <select id="filamento"></select>
+<label>Filamento</label>
+<select id="filamento"></select>
 
-  <label>Peso da peça (g)</label>
-  <input id="peso" type="number">
+<label>Peso (g)</label>
+<input id="peso" type="number">
 
-  <label>Tempo de impressão (h)</label>
-  <input id="horas" type="number">
+<label>Horas de impressão</label>
+<input id="horas" type="number">
 
-  <label>Margem de lucro (%)</label>
-  <input id="margem" type="number" value="150">
+<label>Margem (%)</label>
+<input id="margem" type="number" value="150">
 
-  <button id="btnCalcular">Calcular</button>
+<button id="btnCalcular">Calcular</button>
 
-  <h3 id="resultado">Preço final: R$ 0,00</h3>
+<h3 id="resultado">Preço final: R$ 0,00</h3>
+</section>
+
+<!-- ===== CONFIG ===== -->
+<section id="config" class="box">
+<h2>Configurações</h2>
+
+<label>Valor da máquina (R$)</label>
+<input id="cfg_maquina">
+
+<label>Vida útil (horas)</label>
+<input id="cfg_vida">
+
+<label>Custo luz por hora (R$)</label>
+<input id="cfg_luz">
+
+<label>Mão de obra por hora (R$)</label>
+<input id="cfg_mao">
+
+<button id="btnSalvarConfig">Salvar Configurações</button>
+</section>
+
+<!-- ===== RELATÓRIO ===== -->
+<section id="relatorio" class="box">
+<h2>Relatório de Projetos</h2>
+<ul id="listaRelatorio"></ul>
 </section>
 
 <script>
-/* ===== CONFIGURAÇÕES ===== */
-const VALOR_MAQUINA = 4200;
-const VIDA_UTIL = 8000;
-const CUSTO_LUZ_H = 0.85;
-const MAO_OBRA_H = 5;
-
 /* ===== ESTADO ===== */
-let estoque = JSON.parse(localStorage.getItem("estoque_3d")) || [];
+let estoque = JSON.parse(localStorage.getItem("estoque3d")) || [];
+let relatorio = JSON.parse(localStorage.getItem("relatorio3d")) || [];
+let config = JSON.parse(localStorage.getItem("config3d")) || {
+  maquina:4200,
+  vida:8000,
+  luz:0.85,
+  mao:5
+};
 
 /* ===== NAVEGAÇÃO ===== */
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
-btnEstoque.onclick = () => show("estoque");
-btnProjeto.onclick = () => show("projeto");
+tEstoque.onclick=()=>show("estoque");
+tProjeto.onclick=()=>show("projeto");
+tConfig.onclick=()=>show("config");
+tRelatorio.onclick=()=>show("relatorio");
 
 /* ===== ESTOQUE ===== */
-btnAdd.onclick = () => {
-  const nome = f_nome.value.trim();
-  const preco = Number(f_preco.value);
-  const saldo = Number(f_saldo.value);
-
-  if(!nome || preco<=0 || saldo<=0){
-    alert("Preencha todos os campos corretamente");
-    return;
-  }
-
-  estoque.push({ nome, preco, saldo });
+btnAdd.onclick=()=>{
+  const nome=f_nome.value.trim();
+  const preco=Number(f_preco.value);
+  const saldo=Number(f_saldo.value);
+  if(!nome||preco<=0||saldo<=0){alert("Preencha corretamente");return;}
+  estoque.push({nome,preco,saldo});
   salvar();
-  f_nome.value = f_preco.value = f_saldo.value = "";
+  f_nome.value=f_preco.value=f_saldo.value="";
 };
 
 function salvar(){
-  localStorage.setItem("estoque_3d", JSON.stringify(estoque));
+  localStorage.setItem("estoque3d",JSON.stringify(estoque));
+  localStorage.setItem("relatorio3d",JSON.stringify(relatorio));
+  localStorage.setItem("config3d",JSON.stringify(config));
   render();
 }
 
 function render(){
-  listaEstoque.innerHTML = "";
-  filamento.innerHTML = "";
-
+  listaEstoque.innerHTML="";
+  filamento.innerHTML="";
   estoque.forEach((f,i)=>{
-    listaEstoque.innerHTML += `<li>${f.nome} — ${f.saldo.toFixed(1)} g</li>`;
-    filamento.innerHTML += `<option value="${i}">${f.nome}</option>`;
+    listaEstoque.innerHTML+=`<li>${f.nome} — ${f.saldo.toFixed(1)} g</li>`;
+    filamento.innerHTML+=`<option value="${i}">${f.nome}</option>`;
   });
+
+  listaRelatorio.innerHTML="";
+  relatorio.forEach(r=>{
+    listaRelatorio.innerHTML+=`<li>${r}</li>`;
+  });
+
+  cfg_maquina.value=config.maquina;
+  cfg_vida.value=config.vida;
+  cfg_luz.value=config.luz;
+  cfg_mao.value=config.mao;
 }
 
+/* ===== CONFIG ===== */
+btnSalvarConfig.onclick=()=>{
+  config.maquina=Number(cfg_maquina.value);
+  config.vida=Number(cfg_vida.value);
+  config.luz=Number(cfg_luz.value);
+  config.mao=Number(cfg_mao.value);
+  salvar();
+  alert("Configurações salvas");
+};
+
 /* ===== PROJETO ===== */
-btnCalcular.onclick = () => {
-  if(estoque.length === 0){
-    alert("Cadastre um filamento primeiro");
-    return;
-  }
+btnCalcular.onclick=()=>{
+  if(estoque.length===0){alert("Cadastre um filamento");return;}
+  const f=estoque[filamento.value];
+  const p=Number(peso.value);
+  const h=Number(horas.value);
+  const m=Number(margem.value)/100;
+  if(p<=0||h<=0){alert("Valores inválidos");return;}
 
-  const f = estoque[filamento.value];
-  const p = Number(peso.value);
-  const h = Number(horas.value);
-  const m = Number(margem.value) / 100;
+  const custo =
+    (p*f.preco) +
+    (h*(config.maquina/config.vida)) +
+    (h*(config.luz+config.mao));
 
-  if(p<=0 || h<=0){
-    alert("Peso e horas inválidos");
-    return;
-  }
+  const precoFinal=custo*(1+m);
+  resultado.innerText=`Preço final: R$ ${precoFinal.toFixed(2)}`;
 
-  const custoMaterial = p * f.preco;
-  const custoMaquina = h * (VALOR_MAQUINA / VIDA_UTIL);
-  const custoOperacional = h * (CUSTO_LUZ_H + MAO_OBRA_H);
-  const custoTotal = custoMaterial + custoMaquina + custoOperacional;
-  const precoFinal = custoTotal * (1 + m);
-
-  resultado.innerText = `Preço final: R$ ${precoFinal.toFixed(2)}`;
-
-  if(modo.value === "real"){
-    if(p > f.saldo){
-      alert("Estoque insuficiente");
-      return;
-    }
-    f.saldo -= p;
+  if(modo.value==="real"){
+    if(p>f.saldo){alert("Estoque insuficiente");return;}
+    f.saldo-=p;
+    relatorio.push(`${f.nome} | ${p}g | R$ ${precoFinal.toFixed(2)}`);
     salvar();
   }
 };
