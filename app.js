@@ -163,11 +163,7 @@ async function addFilamento() {
     })
   });
 
-  document.getElementById("nomeFil").value = "";
-  document.getElementById("precoFil").value = "";
-  document.getElementById("saldoFil").value = "";
-
-  alert("Filamento cadastrado com sucesso!");
+  alert("Filamento cadastrado!");
   await carregarSistema();
 
 }
