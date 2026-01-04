@@ -16,21 +16,22 @@ button { background:#00c853; border:none; font-weight:bold }
 .tabs button { width:auto; margin-right:5px }
 </style>
 </head>
+
 <body>
 
 <h1>Precificação 3D</h1>
 
 <div class="tabs">
-  <button onclick="show('estoque')">Estoque</button>
-  <button onclick="show('projeto')">Projeto</button>
+  <button id="btnEstoque">Estoque</button>
+  <button id="btnProjeto">Projeto</button>
 </div>
 
-<section id="estoque" class="active box">
+<section id="estoque" class="box active">
   <h2>Filamentos</h2>
   <input id="f_nome" placeholder="Nome do filamento">
   <input id="f_preco" type="number" placeholder="Preço por grama">
   <input id="f_saldo" type="number" placeholder="Saldo (g)">
-  <button onclick="addFilamento()">Adicionar Filamento</button>
+  <button id="btnAdd">Adicionar Filamento</button>
   <ul id="listaEstoque"></ul>
 </section>
 
@@ -49,17 +50,100 @@ button { background:#00c853; border:none; font-weight:bold }
   <label>Peso (g)</label>
   <input id="peso" type="number">
 
-  <label>Horas de impressão</label>
+  <label>Horas</label>
   <input id="horas" type="number">
 
   <label>Margem (%)</label>
   <input id="margem" type="number" value="150">
 
-  <button onclick="calcular()">Calcular</button>
+  <button id="btnCalcular">Calcular</button>
 
   <h3 id="resultado">Preço: R$ 0,00</h3>
 </section>
 
-<script src="app.js"></script>
+<script>
+/* ====== CONFIG ====== */
+const MAQUINA = 4200;
+const VIDA = 8000;
+const LUZ = 0.85;
+const MAO = 5;
+
+/* ====== ESTADO ====== */
+let estoque = JSON.parse(localStorage.getItem("estoque")) || [];
+
+/* ====== UI ====== */
+function show(id){
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+btnEstoque.onclick = () => show("estoque");
+btnProjeto.onclick = () => show("projeto");
+
+/* ====== ESTOQUE ====== */
+btnAdd.onclick = () => {
+  const nome = f_nome.value.trim();
+  const preco = Number(f_preco.value);
+  const saldo = Number(f_saldo.value);
+
+  if(!nome || preco<=0 || saldo<=0){
+    alert("Preencha corretamente");
+    return;
+  }
+
+  estoque.push({ nome, preco, saldo });
+  salvar();
+  f_nome.value = f_preco.value = f_saldo.value = "";
+};
+
+function salvar(){
+  localStorage.setItem("estoque", JSON.stringify(estoque));
+  render();
+}
+
+function render(){
+  listaEstoque.innerHTML = "";
+  filamento.innerHTML = "";
+
+  estoque.forEach((f,i)=>{
+    listaEstoque.innerHTML += `<li>${f.nome} — ${f.saldo} g</li>`;
+    filamento.innerHTML += `<option value="${i}">${f.nome}</option>`;
+  });
+}
+
+/* ====== PROJETO ====== */
+btnCalcular.onclick = () => {
+  if(estoque.length === 0){
+    alert("Cadastre um filamento");
+    return;
+  }
+
+  const f = estoque[filamento.value];
+  const p = Number(peso.value);
+  const h = Number(horas.value);
+  const m = Number(margem.value)/100;
+
+  const custo =
+    (p * f.preco) +
+    (h * (MAQUINA / VIDA)) +
+    (h * (LUZ + MAO));
+
+  const precoFinal = custo * (1 + m);
+  resultado.innerText = `Preço: R$ ${precoFinal.toFixed(2)}`;
+
+  if(modo.value === "real"){
+    if(p > f.saldo){
+      alert("Estoque insuficiente");
+      return;
+    }
+    f.saldo -= p;
+    salvar();
+  }
+};
+
+/* ====== INIT ====== */
+render();
+</script>
+
 </body>
 </html>
