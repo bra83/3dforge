@@ -1,17 +1,16 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxwdOL-HazVHY2S0rDCbNpO6GUn5FnD2ZlV7eXaDFxQla_hrNneQEA54pcabF9qTLAp6g/exec";
 
-// ================== UTIL ==================
-function $(id) {
-  return document.getElementById(id);
-}
+// atalho para pegar elementos
+const $ = id => document.getElementById(id);
 
-// ================== EVENTOS ==================
+// eventos
 document.addEventListener("DOMContentLoaded", () => {
   $("btnAdd").addEventListener("click", adicionarFilamento);
   $("btnLoad").addEventListener("click", carregarEstoque);
+  carregarEstoque();
 });
 
-// ================== AÇÕES ==================
+// adicionar filamento
 async function adicionarFilamento() {
   const nome = $("nomeFil").value.trim();
   const preco = Number($("precoFil").value);
@@ -22,42 +21,39 @@ async function adicionarFilamento() {
     return;
   }
 
-  const res = await fetch(API_URL, {
+  const resposta = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      action: "add_filamento",
       nome,
       preco,
       saldo
     })
   });
 
-  const json = await res.json();
-  console.log("Resposta API:", json);
+  const json = await resposta.json();
+  console.log("API:", json);
 
-  if (json.status === "filamento_salvo") {
-    alert("Filamento salvo com sucesso!");
-    $("nomeFil").value = "";
-    $("precoFil").value = "";
-    $("saldoFil").value = "";
-    carregarEstoque();
-  } else {
-    alert("Erro: " + JSON.stringify(json));
-  }
+  alert("Filamento enviado ao servidor");
+
+  $("nomeFil").value = "";
+  $("precoFil").value = "";
+  $("saldoFil").value = "";
+
+  carregarEstoque();
 }
 
+// carregar estoque
 async function carregarEstoque() {
-  const res = await fetch(API_URL + "?action=estoque");
-  const data = await res.json();
+  const resposta = await fetch(API_URL);
+  const dados = await resposta.json();
 
   const ul = $("listaEstoque");
   ul.innerHTML = "";
 
-  data.forEach(row => {
+  dados.forEach(row => {
     const li = document.createElement("li");
     li.textContent = `${row[1]} — ${row[3]} g`;
     ul.appendChild(li);
   });
 }
-
