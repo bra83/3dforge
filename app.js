@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxKNAKSuyWlzgRwoqJh5VesU-hsRlbH0w5So1q9VPP_rh9JYf0COMK_0PGxua7EOvdLRQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxwdOL-HazVHY2S0rDCbNpO6GUn5FnD2ZlV7eXaDFxQla_hrNneQEA54pcabF9qTLAp6g/exec";
 
 let CONFIG = {};
 let ESTOQUE = [];
