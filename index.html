@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Precificação 3D</title>
-<link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8">
+  <title>Precificação 3D • Full</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>Precificação 3D</h1>
+<h1>Precificação 3D • Full</h1>
 
 <div class="tabs">
-  <button onclick="showTab('calc')">Projeto</button>
-  <button onclick="showTab('estoque')">Estoque</button>
-  <button onclick="showTab('relatorio')">Relatório</button>
+  <button type="button" onclick="show('calc')">Projeto</button>
+  <button type="button" onclick="show('estoque')">Estoque</button>
+  <button type="button" onclick="show('relatorio')">Relatório</button>
 </div>
 
+<!-- ================= PROJETO ================= -->
 <section id="calc" class="card">
   <h2>Projeto</h2>
 
@@ -29,11 +30,11 @@
   <label>Filamento</label>
   <select id="filamento"></select>
 
-  <label>Peso (g)</label>
-  <input type="number" id="peso"/>
+  <label>Peso da peça (g)</label>
+  <input type="number" id="peso">
 
-  <label>Tempo (h)</label>
-  <input type="number" id="tempo"/>
+  <label>Tempo de impressão (h)</label>
+  <input type="number" id="tempo">
 
   <label>Marketplace</label>
   <select id="marketplace">
@@ -41,35 +42,30 @@
     <option>Mercado Livre</option>
   </select>
 
-  <label>Margem (%)</label>
-  <input type="number" id="margem"/>
+  <label>Margem de lucro (%)</label>
+  <input type="number" id="margem" value="150">
 
-  <button onclick="calcularProjeto()">Calcular</button>
-  <button onclick="executarProjeto()">Executar</button>
+  <button type="button" onclick="calcularProjeto()">Calcular</button>
+  <button type="button" onclick="executarProjeto()">Executar Projeto</button>
 
   <h2 id="resultado">Preço Final: R$ 0,00</h2>
 </section>
 
+<!-- ================= ESTOQUE ================= -->
 <section id="estoque" class="card hidden">
-  <h2>Estoque</h2>
+  <h2>Cadastro de Filamento</h2>
 
-  <label>Nome do filamento</label>
-  <input id="novoNome"/>
-
-  <label>Preço por grama (R$)</label>
-  <input id="novoPreco" type="number" step="0.01"/>
-
-  <label>Saldo inicial (g)</label>
-  <input id="novoSaldo" type="number"/>
+  <input id="nomeFil" placeholder="Nome do filamento">
+  <input id="precoFil" type="number" placeholder="Preço por grama (R$)">
+  <input id="saldoFil" type="number" placeholder="Saldo inicial (g)">
 
   <button type="button" onclick="addFilamento()">Adicionar Filamento</button>
 
-  <hr/>
-
+  <h3>Estoque Atual</h3>
   <ul id="listaEstoque"></ul>
 </section>
 
-
+<!-- ================= RELATÓRIO ================= -->
 <section id="relatorio" class="card hidden">
   <h2>Relatório</h2>
   <ul id="listaRelatorio"></ul>
