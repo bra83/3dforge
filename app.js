@@ -11,6 +11,13 @@ async function carregarSistema() {
   renderEstoque();
   renderFilamentos();
 }
+function show(id){
+  document.querySelectorAll("section").forEach(s =>
+    s.classList.add("hidden")
+  );
+  document.getElementById(id).classList.remove("hidden");
+}
+
 
 async function carregarConfig() {
   const res = await fetch(`${API_URL}?action=config`);
