@@ -143,35 +143,33 @@ function showTab(id) {
   });
   document.getElementById(id).classList.remove("hidden");
 }
-async function adicionarFilamento() {
-  const nome = document.getElementById("novoNome").value;
-  const preco = Number(document.getElementById("novoPreco").value);
-  const saldo = Number(document.getElementById("novoSaldo").value);
+async function addFilamento() {
+  const nome = document.getElementById("nomeFil").value;
+  const preco = Number(document.getElementById("precoFil").value);
+  const saldo = Number(document.getElementById("saldoFil").value);
 
   if (!nome || !preco || !saldo) {
     alert("Preencha todos os campos");
     return;
   }
 
-  const novoId = Date.now(); // id simples e único
-
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "add_filamento",
-      id: novoId,
       nome,
       preco,
       saldo
     })
   });
 
-  document.getElementById("novoNome").value = "";
-  document.getElementById("novoPreco").value = "";
-  document.getElementById("novoSaldo").value = "";
+  document.getElementById("nomeFil").value = "";
+  document.getElementById("precoFil").value = "";
+  document.getElementById("saldoFil").value = "";
 
+  alert("Filamento cadastrado com sucesso!");
   await carregarSistema();
-  alert("Filamento adicionado com sucesso!");
+
 }
 
 // ================= INIT =================
