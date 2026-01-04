@@ -1,58 +1,21 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxwdOL-HazVHY2S0rDCbNpO6GUn5FnD2ZlV7eXaDFxQla_hrNneQEA54pcabF9qTLAp6g/exec";
 
-let CONFIG = {};
-let ESTOQUE = [];
-
-// ================= INIT =================
-document.addEventListener("DOMContentLoaded", carregarSistema);
-
-async function carregarSistema() {
-  await carregarConfig();
-  await carregarEstoque();
-  renderFilamentos();
-  renderEstoque();
+// ================== UTIL ==================
+function $(id) {
+  return document.getElementById(id);
 }
 
-// ================= BACKEND =================
-async function carregarConfig() {
-  const res = await fetch(`${API_URL}?action=config`);
-  const data = await res.json();
-  data.forEach(([k, v]) => CONFIG[k] = Number(v));
-}
+// ================== EVENTOS ==================
+document.addEventListener("DOMContentLoaded", () => {
+  $("btnAdd").addEventListener("click", adicionarFilamento);
+  $("btnLoad").addEventListener("click", carregarEstoque);
+});
 
-async function carregarEstoque() {
-  const res = await fetch(`${API_URL}?action=estoque`);
-  const data = await res.json();
-  ESTOQUE = data.map(r => ({
-    id: r[0],
-    nome: r[1],
-    preco: Number(r[2]),
-    saldo: Number(r[3])
-  }));
-}
-
-// ================= UI =================
-function renderFilamentos() {
-  const sel = document.getElementById("filamento");
-  sel.innerHTML = "";
-  ESTOQUE.forEach((f, i) => {
-    sel.innerHTML += `<option value="${i}">${f.nome} (${f.saldo} g)</option>`;
-  });
-}
-
-function renderEstoque() {
-  const ul = document.getElementById("listaEstoque");
-  ul.innerHTML = "";
-  ESTOQUE.forEach(f => {
-    ul.innerHTML += `<li>${f.nome} — ${f.saldo} g</li>`;
-  });
-}
-
-// ================= CADASTRO FILAMENTO =================
-async function addFilamento() {
-  const nome = document.getElementById("nomeFil").value.trim();
-  const preco = Number(document.getElementById("precoFil").value);
-  const saldo = Number(document.getElementById("saldoFil").value);
+// ================== AÇÕES ==================
+async function adicionarFilamento() {
+  const nome = $("nomeFil").value.trim();
+  const preco = Number($("precoFil").value);
+  const saldo = Number($("saldoFil").value);
 
   if (!nome || preco <= 0 || saldo <= 0) {
     alert("Preencha todos os campos corretamente");
@@ -61,9 +24,7 @@ async function addFilamento() {
 
   const res = await fetch(API_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action: "add_filamento",
       nome,
@@ -72,17 +33,31 @@ async function addFilamento() {
     })
   });
 
-  const retorno = await res.json();
+  const json = await res.json();
+  console.log("Resposta API:", json);
 
-  if (retorno.status !== "filamento_adicionado") {
-    alert("Erro ao salvar filamento");
-    return;
+  if (json.status === "filamento_salvo") {
+    alert("Filamento salvo com sucesso!");
+    $("nomeFil").value = "";
+    $("precoFil").value = "";
+    $("saldoFil").value = "";
+    carregarEstoque();
+  } else {
+    alert("Erro: " + JSON.stringify(json));
   }
-
-  document.getElementById("nomeFil").value = "";
-  document.getElementById("precoFil").value = "";
-  document.getElementById("saldoFil").value = "";
-
-  await carregarSistema();
-  alert("Filamento cadastrado com sucesso!");
 }
+
+async function carregarEstoque() {
+  const res = await fetch(API_URL + "?action=estoque");
+  const data = await res.json();
+
+  const ul = $("listaEstoque");
+  ul.innerHTML = "";
+
+  data.forEach(row => {
+    const li = document.createElement("li");
+    li.textContent = `${row[1]} — ${row[3]} g`;
+    ul.appendChild(li);
+  });
+}
+
