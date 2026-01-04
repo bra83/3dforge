@@ -1,73 +1,63 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Precificação 3D • Full</title>
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Precificação 3D</title>
+<link rel="stylesheet" href="style.css"/>
 </head>
+
 <body>
 
-<h1>Precificação 3D • Full</h1>
+<h1>Precificação 3D</h1>
 
 <div class="tabs">
-  <button onclick="show('calc')">Projeto</button>
-  <button onclick="show('estoque')">Estoque</button>
-  <button onclick="show('relatorio')">Relatório</button>
+  <button onclick="showTab('calc')">Projeto</button>
+  <button onclick="showTab('estoque')">Estoque</button>
+  <button onclick="showTab('relatorio')">Relatório</button>
 </div>
 
-<section id="calc" class="card">...</section>
-<section id="estoque" class="card hidden">...</section>
-<section id="relatorio" class="card hidden">...</section>
-
 <section id="calc" class="card">
-<h2>Projeto</h2>
+  <h2>Projeto</h2>
 
-<label>Modo</label>
-<select id="modo">
-<option value="simular">Simular</option>
-<option value="real">Realizar</option>
-</select>
+  <label>Modo</label>
+  <select id="modo">
+    <option value="simular">Simular</option>
+    <option value="real">Realizar</option>
+  </select>
 
-<label>Filamento</label>
-<select id="filamento"></select>
+  <label>Filamento</label>
+  <select id="filamento"></select>
 
-<label>Peso (g)</label>
-<input type="number" id="peso">
+  <label>Peso (g)</label>
+  <input type="number" id="peso"/>
 
-<label>Tempo (h)</label>
-<input type="number" id="tempo">
+  <label>Tempo (h)</label>
+  <input type="number" id="tempo"/>
 
-<label>Marketplace</label>
-<select id="marketplace">
-<option>Shopee</option>
-<option>Mercado Livre</option>
-</select>
+  <label>Marketplace</label>
+  <select id="marketplace">
+    <option>Shopee</option>
+    <option>Mercado Livre</option>
+  </select>
 
-<label>Margem (%)</label>
-<input type="number" id="margem" value="150">
+  <label>Margem (%)</label>
+  <input type="number" id="margem"/>
 
-<button onclick="calcularProjeto()">Calcular</button>
-<button onclick="executarProjeto()">Executar</button>
+  <button onclick="calcularProjeto()">Calcular</button>
+  <button onclick="executarProjeto()">Executar</button>
 
-<h2 id="resultado">Preço Final: R$ 0,00</h2>
+  <h2 id="resultado">Preço Final: R$ 0,00</h2>
 </section>
 
 <section id="estoque" class="card hidden">
-<h2>Estoque</h2>
-
-<input id="nomeFil" placeholder="Nome do filamento">
-<input id="precoFil" placeholder="Preço por g" type="number">
-<input id="saldoFil" placeholder="Saldo g" type="number">
-<button onclick="addFilamento()">Adicionar</button>
-
-<ul id="listaEstoque"></ul>
+  <h2>Estoque</h2>
+  <ul id="listaEstoque"></ul>
 </section>
 
 <section id="relatorio" class="card hidden">
-<h2>Relatório</h2>
-<ul id="listaRelatorio"></ul>
+  <h2>Relatório</h2>
+  <ul id="listaRelatorio"></ul>
 </section>
 
 <script src="app.js"></script>
