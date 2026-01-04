@@ -1,4 +1,4 @@
-const API_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
+const API_URL = "https://script.google.com/macros/s/AKfycbxKNAKSuyWlzgRwoqJh5VesU-hsRlbH0w5So1q9VPP_rh9JYf0COMK_0PGxua7EOvdLRQ/exec";
 
 let CONFIG = {};
 let ESTOQUE = [];
