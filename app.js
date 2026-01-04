@@ -143,6 +143,36 @@ function showTab(id) {
   });
   document.getElementById(id).classList.remove("hidden");
 }
+async function adicionarFilamento() {
+  const nome = document.getElementById("novoNome").value;
+  const preco = Number(document.getElementById("novoPreco").value);
+  const saldo = Number(document.getElementById("novoSaldo").value);
+
+  if (!nome || !preco || !saldo) {
+    alert("Preencha todos os campos");
+    return;
+  }
+
+  const novoId = Date.now(); // id simples e único
+
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "add_filamento",
+      id: novoId,
+      nome,
+      preco,
+      saldo
+    })
+  });
+
+  document.getElementById("novoNome").value = "";
+  document.getElementById("novoPreco").value = "";
+  document.getElementById("novoSaldo").value = "";
+
+  await carregarSistema();
+  alert("Filamento adicionado com sucesso!");
+}
 
 // ================= INIT =================
 document.addEventListener("DOMContentLoaded", carregarSistema);
