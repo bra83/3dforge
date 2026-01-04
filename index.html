@@ -12,10 +12,11 @@
 <h1>Precificação 3D • Full</h1>
 
 <div class="tabs">
-<button onclick="show('calc')">Projeto</button>
-<button onclick="show('estoque')">Estoque</button>
-<button onclick="show('relatorio')">Relatório</button>
+  <button onclick="show('calc')">Projeto</button>
+  <button onclick="show('estoque')">Estoque</button>
+  <button onclick="show('relatorio')">Relatório</button>
 </div>
+
 
 <section id="calc" class="card">
 <h2>Projeto</h2>
@@ -44,8 +45,8 @@
 <label>Margem (%)</label>
 <input type="number" id="margem" value="150">
 
-<button onclick="calcular()">Calcular</button>
-<button onclick="executar()">Executar</button>
+<button onclick="calcularProjeto()">Calcular</button>
+<button onclick="executarProjeto()">Executar</button>
 
 <h2 id="resultado">Preço Final: R$ 0,00</h2>
 </section>
