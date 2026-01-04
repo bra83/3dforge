@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>Precificação 3D</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.json">
+
 <style>
 body{font-family:Arial;background:#111;color:#fff;padding:15px}
 h1,h2{margin-top:0}
@@ -25,10 +29,10 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 <h1>Precificação 3D</h1>
 
 <div class="tabs">
-  <button id="tEstoque">Estoque</button>
-  <button id="tProjeto">Projeto</button>
-  <button id="tConfig">Config</button>
-  <button id="tRelatorio">Relatório</button>
+  <button onclick="show('estoque')">Estoque</button>
+  <button onclick="show('projeto')">Projeto</button>
+  <button onclick="show('config')">Config</button>
+  <button onclick="show('relatorio')">Relatório</button>
 </div>
 
 <!-- ===== ESTOQUE ===== -->
@@ -38,7 +42,7 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 <input id="f_nome" placeholder="Nome do filamento">
 <input id="f_preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
 <input id="f_saldo" type="number" placeholder="Saldo (g)">
-<button id="btnAdd">Adicionar Filamento</button>
+<button onclick="addFilamento()">Adicionar Filamento</button>
 
 <hr>
 <ul id="listaEstoque"></ul>
@@ -66,7 +70,7 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 <label>Margem (%)</label>
 <input id="margem" type="number" value="150">
 
-<button id="btnCalcular">Calcular</button>
+<button onclick="calcular()">Calcular</button>
 
 <h3 id="resultado">Preço final: R$ 0,00</h3>
 </section>
@@ -87,7 +91,7 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 <label>Mão de obra por hora (R$)</label>
 <input id="cfg_mao">
 
-<button id="btnSalvarConfig">Salvar Configurações</button>
+<button onclick="salvarConfig()">Salvar Configurações</button>
 </section>
 
 <!-- ===== RELATÓRIO ===== -->
@@ -97,42 +101,59 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 </section>
 
 <script>
+/* =====================================================
+   🔴 COLE A URL DO APPS SCRIPT AQUI (termina com /exec)
+===================================================== */
+const API_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT_EXEC";
+
 /* ===== ESTADO ===== */
-let estoque = JSON.parse(localStorage.getItem("estoque3d")) || [];
-let relatorio = JSON.parse(localStorage.getItem("relatorio3d")) || [];
-let config = JSON.parse(localStorage.getItem("config3d")) || {
-  maquina:4200,
-  vida:8000,
-  luz:0.85,
-  mao:5
-};
+let estoque = [];
+let relatorio = [];
+let config = { maquina:4200, vida:8000, luz:0.85, mao:5 };
 
 /* ===== NAVEGAÇÃO ===== */
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
-tEstoque.onclick=()=>show("estoque");
-tProjeto.onclick=()=>show("projeto");
-tConfig.onclick=()=>show("config");
-tRelatorio.onclick=()=>show("relatorio");
+
+/* ===== GOOGLE SHEETS ===== */
+async function carregarSheets(){
+  const r = await fetch(API_URL + "?action=load");
+  const data = await r.json();
+
+  estoque = data.estoque.map(l=>({ nome:l[0], preco:Number(l[1]), saldo:Number(l[2]) }));
+  config = Object.fromEntries(data.config.map(l=>[l[0],Number(l[1])]));
+  relatorio = data.relatorio.map(l=>`${l[1]} | ${l[2]}g | R$ ${Number(l[3]).toFixed(2)}`);
+
+  render();
+}
+
+async function salvarSheets(){
+  await fetch(API_URL,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      action:"save",
+      estoque: estoque.map(f=>[f.nome,f.preco,f.saldo]),
+      config: Object.entries(config),
+      relatorio: relatorio.map(r=>{
+        const p=r.split(" | ");
+        return ["",p[0],Number(p[1].replace("g","")),Number(p[2].replace("R$",""))];
+      })
+    })
+  });
+}
 
 /* ===== ESTOQUE ===== */
-btnAdd.onclick=()=>{
+function addFilamento(){
   const nome=f_nome.value.trim();
   const preco=Number(f_preco.value);
   const saldo=Number(f_saldo.value);
   if(!nome||preco<=0||saldo<=0){alert("Preencha corretamente");return;}
   estoque.push({nome,preco,saldo});
-  salvar();
+  salvarSheets();
   f_nome.value=f_preco.value=f_saldo.value="";
-};
-
-function salvar(){
-  localStorage.setItem("estoque3d",JSON.stringify(estoque));
-  localStorage.setItem("relatorio3d",JSON.stringify(relatorio));
-  localStorage.setItem("config3d",JSON.stringify(config));
-  render();
 }
 
 function render(){
@@ -144,9 +165,7 @@ function render(){
   });
 
   listaRelatorio.innerHTML="";
-  relatorio.forEach(r=>{
-    listaRelatorio.innerHTML+=`<li>${r}</li>`;
-  });
+  relatorio.forEach(r=>listaRelatorio.innerHTML+=`<li>${r}</li>`);
 
   cfg_maquina.value=config.maquina;
   cfg_vida.value=config.vida;
@@ -155,18 +174,18 @@ function render(){
 }
 
 /* ===== CONFIG ===== */
-btnSalvarConfig.onclick=()=>{
+function salvarConfig(){
   config.maquina=Number(cfg_maquina.value);
   config.vida=Number(cfg_vida.value);
   config.luz=Number(cfg_luz.value);
   config.mao=Number(cfg_mao.value);
-  salvar();
+  salvarSheets();
   alert("Configurações salvas");
-};
+}
 
 /* ===== PROJETO ===== */
-btnCalcular.onclick=()=>{
-  if(estoque.length===0){alert("Cadastre um filamento");return;}
+function calcular(){
+  if(estoque.length===0){alert("Cadastre filamento");return;}
   const f=estoque[filamento.value];
   const p=Number(peso.value);
   const h=Number(horas.value);
@@ -185,12 +204,17 @@ btnCalcular.onclick=()=>{
     if(p>f.saldo){alert("Estoque insuficiente");return;}
     f.saldo-=p;
     relatorio.push(`${f.nome} | ${p}g | R$ ${precoFinal.toFixed(2)}`);
-    salvar();
+    salvarSheets();
   }
-};
+}
 
 /* ===== INIT ===== */
-render();
+carregarSheets();
+
+/* ===== PWA ===== */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
