@@ -137,6 +137,12 @@ async function executarProjeto() {
   alert("Projeto registrado e estoque atualizado!");
   await carregarSistema();
 }
+function showTab(id) {
+  document.querySelectorAll("section").forEach(sec => {
+    sec.classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+}
 
 // ================= INIT =================
 document.addEventListener("DOMContentLoaded", carregarSistema);
