@@ -4,218 +4,91 @@
 <meta charset="UTF-8">
 <title>Precificação 3D</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- ===== PWA ===== -->
-<link rel="manifest" href="manifest.json">
-
 <style>
 body{font-family:Arial;background:#111;color:#fff;padding:15px}
-h1,h2{margin-top:0}
 section{display:none}
 section.active{display:block}
-input,select,button{
-  width:100%;padding:10px;margin:6px 0;font-size:16px
-}
+input,select,button{width:100%;padding:10px;margin:6px 0}
 button{background:#00c853;border:none;font-weight:bold}
-.tabs button{width:auto;margin-right:5px}
 .box{background:#1e1e1e;padding:15px;border-radius:10px;margin-bottom:15px}
-ul{padding-left:18px}
-hr{border:0;border-top:1px solid #333;margin:15px 0}
 </style>
 </head>
-
 <body>
 
 <h1>Precificação 3D</h1>
 
-<div class="tabs">
-  <button onclick="show('estoque')">Estoque</button>
-  <button onclick="show('projeto')">Projeto</button>
-  <button onclick="show('config')">Config</button>
-  <button onclick="show('relatorio')">Relatório</button>
-</div>
+<button onclick="show('estoque')">Estoque</button>
+<button onclick="show('projeto')">Projeto</button>
 
-<!-- ===== ESTOQUE ===== -->
 <section id="estoque" class="box active">
-<h2>Filamentos</h2>
-
-<input id="f_nome" placeholder="Nome do filamento">
-<input id="f_preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
-<input id="f_saldo" type="number" placeholder="Saldo (g)">
-<button onclick="addFilamento()">Adicionar Filamento</button>
-
-<hr>
-<ul id="listaEstoque"></ul>
+  <input id="nome" placeholder="Filamento">
+  <input id="preco" type="number" placeholder="Preço/g">
+  <input id="saldo" type="number" placeholder="Saldo g">
+  <button onclick="add()">Adicionar</button>
+  <ul id="lista"></ul>
 </section>
 
-<!-- ===== PROJETO ===== -->
 <section id="projeto" class="box">
-<h2>Projeto</h2>
-
-<label>Modo</label>
-<select id="modo">
-  <option value="simular">Simular</option>
-  <option value="real">Executar (baixar estoque)</option>
-</select>
-
-<label>Filamento</label>
-<select id="filamento"></select>
-
-<label>Peso (g)</label>
-<input id="peso" type="number">
-
-<label>Horas de impressão</label>
-<input id="horas" type="number">
-
-<label>Margem (%)</label>
-<input id="margem" type="number" value="150">
-
-<button onclick="calcular()">Calcular</button>
-
-<h3 id="resultado">Preço final: R$ 0,00</h3>
-</section>
-
-<!-- ===== CONFIG ===== -->
-<section id="config" class="box">
-<h2>Configurações</h2>
-
-<label>Valor da máquina (R$)</label>
-<input id="cfg_maquina">
-
-<label>Vida útil (horas)</label>
-<input id="cfg_vida">
-
-<label>Custo luz por hora (R$)</label>
-<input id="cfg_luz">
-
-<label>Mão de obra por hora (R$)</label>
-<input id="cfg_mao">
-
-<button onclick="salvarConfig()">Salvar Configurações</button>
-</section>
-
-<!-- ===== RELATÓRIO ===== -->
-<section id="relatorio" class="box">
-<h2>Relatório de Projetos</h2>
-<ul id="listaRelatorio"></ul>
+  <select id="fil"></select>
+  <input id="peso" type="number" placeholder="Peso g">
+  <input id="horas" type="number" placeholder="Horas">
+  <button onclick="calc()">Calcular</button>
+  <h3 id="res">R$ 0,00</h3>
 </section>
 
 <script>
-/* =====================================================
-   🔴 COLE A URL DO APPS SCRIPT AQUI (termina com /exec)
-===================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbyGY5m5HSSudgE1zDP45kbZZhM73o5UNmuPiiV7jaSTy6DKN1b_W1C9LoOFnFaZF0okVA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzBCIoPCZTwi4QwIfnwcej4yymhU2uwtUolwVeEhI_sxA3L3iIEo-tJzRsIJwjMloXkZQ/exec";
 
-/* ===== ESTADO ===== */
-let estoque = [];
-let relatorio = [];
-let config = { maquina:4200, vida:8000, luz:0.85, mao:5 };
+let estoque=[], config={}, rel=[];
 
-/* ===== NAVEGAÇÃO ===== */
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-/* ===== GOOGLE SHEETS ===== */
-async function carregarSheets(){
-  const r = await fetch(API_URL + "?action=load");
-  const data = await r.json();
-
-  estoque = data.estoque.map(l=>({ nome:l[0], preco:Number(l[1]), saldo:Number(l[2]) }));
-  config = Object.fromEntries(data.config.map(l=>[l[0],Number(l[1])]));
-  relatorio = data.relatorio.map(l=>`${l[1]} | ${l[2]}g | R$ ${Number(l[3]).toFixed(2)}`);
-
+async function load(){
+  const r = await fetch(API_URL+"?action=load");
+  const d = await r.json();
+  estoque = d.estoque.map(x=>({nome:x[0],preco:x[1],saldo:x[2]}));
+  config = Object.fromEntries(d.config);
+  rel = d.relatorio;
   render();
 }
 
-async function salvarSheets(){
+async function save(){
   await fetch(API_URL,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
+    body:JSON.stringify({
       action:"save",
-      estoque: estoque.map(f=>[f.nome,f.preco,f.saldo]),
-      config: Object.entries(config),
-      relatorio: relatorio.map(r=>{
-        const p=r.split(" | ");
-        return ["",p[0],Number(p[1].replace("g","")),Number(p[2].replace("R$",""))];
-      })
+      estoque:estoque.map(f=>[f.nome,f.preco,f.saldo]),
+      config:Object.entries(config),
+      relatorio:rel
     })
   });
 }
 
-/* ===== ESTOQUE ===== */
-function addFilamento(){
-  const nome=f_nome.value.trim();
-  const preco=Number(f_preco.value);
-  const saldo=Number(f_saldo.value);
-  if(!nome||preco<=0||saldo<=0){alert("Preencha corretamente");return;}
-  estoque.push({nome,preco,saldo});
-  salvarSheets();
-  f_nome.value=f_preco.value=f_saldo.value="";
+function add(){
+  estoque.push({nome:nome.value,preco:+preco.value,saldo:+saldo.value});
+  save(); load();
 }
 
 function render(){
-  listaEstoque.innerHTML="";
-  filamento.innerHTML="";
+  lista.innerHTML="";
+  fil.innerHTML="";
   estoque.forEach((f,i)=>{
-    listaEstoque.innerHTML+=`<li>${f.nome} — ${f.saldo.toFixed(1)} g</li>`;
-    filamento.innerHTML+=`<option value="${i}">${f.nome}</option>`;
+    lista.innerHTML+=`<li>${f.nome} - ${f.saldo}g</li>`;
+    fil.innerHTML+=`<option value="${i}">${f.nome}</option>`;
   });
-
-  listaRelatorio.innerHTML="";
-  relatorio.forEach(r=>listaRelatorio.innerHTML+=`<li>${r}</li>`);
-
-  cfg_maquina.value=config.maquina;
-  cfg_vida.value=config.vida;
-  cfg_luz.value=config.luz;
-  cfg_mao.value=config.mao;
 }
 
-/* ===== CONFIG ===== */
-function salvarConfig(){
-  config.maquina=Number(cfg_maquina.value);
-  config.vida=Number(cfg_vida.value);
-  config.luz=Number(cfg_luz.value);
-  config.mao=Number(cfg_mao.value);
-  salvarSheets();
-  alert("Configurações salvas");
+function calc(){
+  const f=estoque[fil.value];
+  const v=(peso.value*f.preco)+(horas.value*1);
+  res.innerText="R$ "+v.toFixed(2);
 }
 
-/* ===== PROJETO ===== */
-function calcular(){
-  if(estoque.length===0){alert("Cadastre filamento");return;}
-  const f=estoque[filamento.value];
-  const p=Number(peso.value);
-  const h=Number(horas.value);
-  const m=Number(margem.value)/100;
-  if(p<=0||h<=0){alert("Valores inválidos");return;}
-
-  const custo =
-    (p*f.preco) +
-    (h*(config.maquina/config.vida)) +
-    (h*(config.luz+config.mao));
-
-  const precoFinal=custo*(1+m);
-  resultado.innerText=`Preço final: R$ ${precoFinal.toFixed(2)}`;
-
-  if(modo.value==="real"){
-    if(p>f.saldo){alert("Estoque insuficiente");return;}
-    f.saldo-=p;
-    relatorio.push(`${f.nome} | ${p}g | R$ ${precoFinal.toFixed(2)}`);
-    salvarSheets();
-  }
-}
-
-/* ===== INIT ===== */
-carregarSheets();
-
-/* ===== PWA ===== */
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js");
-}
+load();
 </script>
-
 </body>
 </html>
