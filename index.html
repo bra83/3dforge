@@ -16,6 +16,24 @@
   <button onclick="showTab('estoque')">Estoque</button>
   <button onclick="showTab('relatorio')">Relatório</button>
 </div>
+<section id="estoque" class="card hidden">
+  <h2>Estoque</h2>
+
+  <label>Nome do filamento</label>
+  <input id="novoNome"/>
+
+  <label>Preço por grama (R$)</label>
+  <input id="novoPreco" type="number" step="0.01"/>
+
+  <label>Saldo inicial (g)</label>
+  <input id="novoSaldo" type="number"/>
+
+  <button onclick="adicionarFilamento()">Adicionar filamento</button>
+
+  <hr/>
+
+  <ul id="listaEstoque"></ul>
+</section>
 
 <section id="calc" class="card">
   <h2>Projeto</h2>
