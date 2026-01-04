@@ -1,23 +1,24 @@
 // ================= CONFIGURAÇÃO =================
-const API_URL = "https://script.google.com/macros/s/AKfycbxKNAKSuyWlzgRwoqJh5VesU-hsRlbH0w5So1q9VPP_rh9JYf0COMK_0PGxua7EOvdLRQ/exec"; // 👈 substitua
+const API_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
 
+// ================= ESTADO =================
 let CONFIG = {};
 let ESTOQUE = [];
+let RELATORIO = [];
 
-// ================= CARREGAMENTO INICIAL =================
-async function carregarSistema() {
-  await carregarConfig();
-  await carregarEstoque();
-  renderEstoque();
-  renderFilamentos();
-}
-function show(id){
-  document.querySelectorAll("section").forEach(s =>
-    s.classList.add("hidden")
-  );
+// ================= NAVEGAÇÃO =================
+function show(id) {
+  document.querySelectorAll("section").forEach(s => s.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
 
+// ================= CARREGAMENTO =================
+async function carregarSistema() {
+  await carregarConfig();
+  await carregarEstoque();
+  renderFilamentos();
+  renderEstoque();
+}
 
 async function carregarConfig() {
   const res = await fetch(`${API_URL}?action=config`);
@@ -36,7 +37,7 @@ async function carregarEstoque() {
   }));
 }
 
-// ================= UI =================
+// ================= RENDER =================
 function renderFilamentos() {
   const sel = document.getElementById("filamento");
   sel.innerHTML = "";
@@ -47,11 +48,39 @@ function renderFilamentos() {
 
 function renderEstoque() {
   const ul = document.getElementById("listaEstoque");
-  if (!ul) return;
   ul.innerHTML = "";
   ESTOQUE.forEach(f => {
     ul.innerHTML += `<li>${f.nome} — ${f.saldo.toFixed(1)} g</li>`;
   });
+}
+
+// ================= CADASTRO DE FILAMENTO =================
+async function addFilamento() {
+  const nome = document.getElementById("nomeFil").value.trim();
+  const preco = Number(document.getElementById("precoFil").value);
+  const saldo = Number(document.getElementById("saldoFil").value);
+
+  if (!nome || preco <= 0 || saldo <= 0) {
+    alert("Preencha corretamente todos os campos.");
+    return;
+  }
+
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "add_filamento",
+      nome,
+      preco,
+      saldo
+    })
+  });
+
+  document.getElementById("nomeFil").value = "";
+  document.getElementById("precoFil").value = "";
+  document.getElementById("saldoFil").value = "";
+
+  alert("Filamento cadastrado com sucesso!");
+  await carregarSistema();
 }
 
 // ================= CÁLCULO =================
@@ -78,94 +107,58 @@ function calcularProjeto() {
   }
 
   const precoBase = custoTotal * (1 + margem);
-  const precoFinal = precoBase + (precoBase * taxaPct) + taxaFixa + CONFIG.embalagem;
+  const precoFinal =
+    precoBase +
+    precoBase * taxaPct +
+    taxaFixa +
+    CONFIG.embalagem;
 
   document.getElementById("resultado").innerText =
     `Preço Final: R$ ${precoFinal.toFixed(2)}`;
 
-  return {
-    filamento: fil,
-    peso,
-    horas,
-    custo: custoTotal,
-    preco: precoFinal,
-    marketplace
-  };
+  return { fil, peso, horas, custoTotal, precoFinal, marketplace };
 }
 
 // ================= EXECUÇÃO REAL =================
 async function executarProjeto() {
   const modo = document.getElementById("modo").value;
+  const r = calcularProjeto();
+
   if (modo !== "real") {
-    alert("Modo simulação ativo. Estoque não será alterado.");
-    calcularProjeto();
+    alert("Simulação realizada. Estoque não alterado.");
     return;
   }
 
-  const r = calcularProjeto();
-
-  if (r.peso > r.filamento.saldo) {
+  if (r.peso > r.fil.saldo) {
     alert("Estoque insuficiente!");
     return;
   }
 
-  // baixa estoque
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "baixar",
-      id: r.filamento.id,
+      id: r.fil.id,
       peso: r.peso
     })
   });
 
-  // registra projeto
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "projeto",
       produto: "Projeto Manual",
-      filamento: r.filamento.nome,
+      filamento: r.fil.nome,
       peso: r.peso,
       horas: r.horas,
-      custo: r.custo,
-      preco: r.preco,
+      custo: r.custoTotal,
+      preco: r.precoFinal,
       marketplace: r.marketplace
     })
   });
 
-  alert("Projeto registrado e estoque atualizado!");
+  alert("Projeto executado e estoque atualizado!");
   await carregarSistema();
-}
-function showTab(id) {
-  document.querySelectorAll("section").forEach(sec => {
-    sec.classList.add("hidden");
-  });
-  document.getElementById(id).classList.remove("hidden");
-}
-async function addFilamento() {
-  const nome = document.getElementById("nomeFil").value;
-  const preco = Number(document.getElementById("precoFil").value);
-  const saldo = Number(document.getElementById("saldoFil").value);
-
-  if (!nome || !preco || !saldo) {
-    alert("Preencha todos os campos");
-    return;
-  }
-
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "add_filamento",
-      nome,
-      preco,
-      saldo
-    })
-  });
-
-  alert("Filamento cadastrado!");
-  await carregarSistema();
-
 }
 
 // ================= INIT =================
