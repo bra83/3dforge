@@ -1,59 +1,79 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxwdOL-HazVHY2S0rDCbNpO6GUn5FnD2ZlV7eXaDFxQla_hrNneQEA54pcabF9qTLAp6g/exec";
+// CONFIG FIXA (depois vira configurável)
+const MAQUINA_VALOR = 4200;
+const VIDA_UTIL = 8000;
+const LUZ_POR_HORA = 0.85;
+const MAO_OBRA_HORA = 5;
 
-// atalho para pegar elementos
-const $ = id => document.getElementById(id);
+// ESTADO
+let estoque = JSON.parse(localStorage.getItem("estoque")) || [];
 
-// eventos
-document.addEventListener("DOMContentLoaded", () => {
-  $("btnAdd").addEventListener("click", adicionarFilamento);
-  $("btnLoad").addEventListener("click", carregarEstoque);
-  carregarEstoque();
-});
+// UI
+function show(id){
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-// adicionar filamento
-async function adicionarFilamento() {
-  const nome = $("nomeFil").value.trim();
-  const preco = Number($("precoFil").value);
-  const saldo = Number($("saldoFil").value);
+// ESTOQUE
+function addFilamento(){
+  const nome = f_nome.value.trim();
+  const preco = Number(f_preco.value);
+  const saldo = Number(f_saldo.value);
 
-  if (!nome || preco <= 0 || saldo <= 0) {
-    alert("Preencha todos os campos corretamente");
+  if(!nome || preco<=0 || saldo<=0){
+    alert("Preencha corretamente");
     return;
   }
 
-  const resposta = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      nome,
-      preco,
-      saldo
-    })
-  });
-
-  const json = await resposta.json();
-  console.log("API:", json);
-
-  alert("Filamento enviado ao servidor");
-
-  $("nomeFil").value = "";
-  $("precoFil").value = "";
-  $("saldoFil").value = "";
-
-  carregarEstoque();
+  estoque.push({ nome, preco, saldo });
+  salvar();
+  f_nome.value = f_preco.value = f_saldo.value = "";
 }
 
-// carregar estoque
-async function carregarEstoque() {
-  const resposta = await fetch(API_URL);
-  const dados = await resposta.json();
+function salvar(){
+  localStorage.setItem("estoque", JSON.stringify(estoque));
+  render();
+}
 
-  const ul = $("listaEstoque");
-  ul.innerHTML = "";
+function render(){
+  listaEstoque.innerHTML = "";
+  filamento.innerHTML = "";
 
-  dados.forEach(row => {
-    const li = document.createElement("li");
-    li.textContent = `${row[1]} — ${row[3]} g`;
-    ul.appendChild(li);
+  estoque.forEach((f,i)=>{
+    listaEstoque.innerHTML += `<li>${f.nome} — ${f.saldo} g</li>`;
+    filamento.innerHTML += `<option value="${i}">${f.nome}</option>`;
   });
 }
+
+// PROJETO
+function calcular(){
+  if(estoque.length === 0){
+    alert("Cadastre um filamento");
+    return;
+  }
+
+  const f = estoque[filamento.value];
+  const peso = Number(peso.value);
+  const horas = Number(horas.value);
+  const margem = Number(margem.value)/100;
+
+  const custoMaterial = peso * f.preco;
+  const custoMaquina = horas * (MAQUINA_VALOR / VIDA_UTIL);
+  const custoOperacional = horas * (LUZ_POR_HORA + MAO_OBRA_HORA);
+
+  const custoTotal = custoMaterial + custoMaquina + custoOperacional;
+  const precoFinal = custoTotal * (1 + margem);
+
+  resultado.innerText = `Preço: R$ ${precoFinal.toFixed(2)}`;
+
+  if(modo.value === "real"){
+    if(peso > f.saldo){
+      alert("Estoque insuficiente");
+      return;
+    }
+    f.saldo -= peso;
+    salvar();
+  }
+}
+
+// INIT
+render();
