@@ -6,14 +6,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: Arial; background:#111; color:#fff; padding:15px }
+h1,h2 { margin-top:0 }
 section { display:none }
 section.active { display:block }
 input, select, button {
-  width:100%; padding:10px; margin:6px 0;
+  width:100%; padding:10px; margin:6px 0; font-size:16px;
 }
 button { background:#00c853; border:none; font-weight:bold }
-.box { background:#1e1e1e; padding:15px; border-radius:10px; margin-bottom:15px }
 .tabs button { width:auto; margin-right:5px }
+.box { background:#1e1e1e; padding:15px; border-radius:10px; margin-bottom:15px }
+ul { padding-left:18px }
 </style>
 </head>
 
@@ -26,68 +28,73 @@ button { background:#00c853; border:none; font-weight:bold }
   <button id="btnProjeto">Projeto</button>
 </div>
 
+<!-- ===== ESTOQUE ===== -->
 <section id="estoque" class="box active">
   <h2>Filamentos</h2>
+
   <input id="f_nome" placeholder="Nome do filamento">
-  <input id="f_preco" type="number" placeholder="Preço por grama">
+  <input id="f_preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
   <input id="f_saldo" type="number" placeholder="Saldo (g)">
+
   <button id="btnAdd">Adicionar Filamento</button>
+
+  <h3>Estoque Atual</h3>
   <ul id="listaEstoque"></ul>
 </section>
 
+<!-- ===== PROJETO ===== -->
 <section id="projeto" class="box">
   <h2>Projeto</h2>
 
   <label>Modo</label>
   <select id="modo">
     <option value="simular">Simular</option>
-    <option value="real">Executar</option>
+    <option value="real">Executar (baixar estoque)</option>
   </select>
 
   <label>Filamento</label>
   <select id="filamento"></select>
 
-  <label>Peso (g)</label>
+  <label>Peso da peça (g)</label>
   <input id="peso" type="number">
 
-  <label>Horas</label>
+  <label>Tempo de impressão (h)</label>
   <input id="horas" type="number">
 
-  <label>Margem (%)</label>
+  <label>Margem de lucro (%)</label>
   <input id="margem" type="number" value="150">
 
   <button id="btnCalcular">Calcular</button>
 
-  <h3 id="resultado">Preço: R$ 0,00</h3>
+  <h3 id="resultado">Preço final: R$ 0,00</h3>
 </section>
 
 <script>
-/* ====== CONFIG ====== */
-const MAQUINA = 4200;
-const VIDA = 8000;
-const LUZ = 0.85;
-const MAO = 5;
+/* ===== CONFIGURAÇÕES ===== */
+const VALOR_MAQUINA = 4200;
+const VIDA_UTIL = 8000;
+const CUSTO_LUZ_H = 0.85;
+const MAO_OBRA_H = 5;
 
-/* ====== ESTADO ====== */
-let estoque = JSON.parse(localStorage.getItem("estoque")) || [];
+/* ===== ESTADO ===== */
+let estoque = JSON.parse(localStorage.getItem("estoque_3d")) || [];
 
-/* ====== UI ====== */
+/* ===== NAVEGAÇÃO ===== */
 function show(id){
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
-
 btnEstoque.onclick = () => show("estoque");
 btnProjeto.onclick = () => show("projeto");
 
-/* ====== ESTOQUE ====== */
+/* ===== ESTOQUE ===== */
 btnAdd.onclick = () => {
   const nome = f_nome.value.trim();
   const preco = Number(f_preco.value);
   const saldo = Number(f_saldo.value);
 
   if(!nome || preco<=0 || saldo<=0){
-    alert("Preencha corretamente");
+    alert("Preencha todos os campos corretamente");
     return;
   }
 
@@ -97,7 +104,7 @@ btnAdd.onclick = () => {
 };
 
 function salvar(){
-  localStorage.setItem("estoque", JSON.stringify(estoque));
+  localStorage.setItem("estoque_3d", JSON.stringify(estoque));
   render();
 }
 
@@ -106,30 +113,35 @@ function render(){
   filamento.innerHTML = "";
 
   estoque.forEach((f,i)=>{
-    listaEstoque.innerHTML += `<li>${f.nome} — ${f.saldo} g</li>`;
+    listaEstoque.innerHTML += `<li>${f.nome} — ${f.saldo.toFixed(1)} g</li>`;
     filamento.innerHTML += `<option value="${i}">${f.nome}</option>`;
   });
 }
 
-/* ====== PROJETO ====== */
+/* ===== PROJETO ===== */
 btnCalcular.onclick = () => {
   if(estoque.length === 0){
-    alert("Cadastre um filamento");
+    alert("Cadastre um filamento primeiro");
     return;
   }
 
   const f = estoque[filamento.value];
   const p = Number(peso.value);
   const h = Number(horas.value);
-  const m = Number(margem.value)/100;
+  const m = Number(margem.value) / 100;
 
-  const custo =
-    (p * f.preco) +
-    (h * (MAQUINA / VIDA)) +
-    (h * (LUZ + MAO));
+  if(p<=0 || h<=0){
+    alert("Peso e horas inválidos");
+    return;
+  }
 
-  const precoFinal = custo * (1 + m);
-  resultado.innerText = `Preço: R$ ${precoFinal.toFixed(2)}`;
+  const custoMaterial = p * f.preco;
+  const custoMaquina = h * (VALOR_MAQUINA / VIDA_UTIL);
+  const custoOperacional = h * (CUSTO_LUZ_H + MAO_OBRA_H);
+  const custoTotal = custoMaterial + custoMaquina + custoOperacional;
+  const precoFinal = custoTotal * (1 + m);
+
+  resultado.innerText = `Preço final: R$ ${precoFinal.toFixed(2)}`;
 
   if(modo.value === "real"){
     if(p > f.saldo){
@@ -141,7 +153,7 @@ btnCalcular.onclick = () => {
   }
 };
 
-/* ====== INIT ====== */
+/* ===== INIT ===== */
 render();
 </script>
 
