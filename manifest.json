@@ -1,9 +1,8 @@
 {
-"name": "Precificação 3D",
-"short_name": "3D Calc",
-"start_url": "index.html",
-"display": "standalone",
-"background_color": "#111111",
-"theme_color": "#00c853",
-"icons": []
+"name":"Precificação 3D Full",
+"short_name":"3D Full",
+"display":"standalone",
+"start_url":"index.html",
+"background_color":"#0f0f0f",
+"theme_color":"#00c853"
 }
