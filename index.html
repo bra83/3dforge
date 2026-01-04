@@ -37,9 +37,10 @@ button{background:#00c853;border:none;font-weight:bold}
 </section>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzBCIoPCZTwi4QwIfnwcej4yymhU2uwtUolwVeEhI_sxA3L3iIEo-tJzRsIJwjMloXkZQ/exec";
+/* 🔴 COLE SUA URL /exec AQUI */
+const API_URL = "COLE_AQUI_SUA_URL_EXEC";
 
-let estoque=[], config={}, rel=[];
+let estoque=[];
 
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -49,9 +50,8 @@ function show(id){
 async function load(){
   const r = await fetch(API_URL+"?action=load");
   const d = await r.json();
-  estoque = d.estoque.map(x=>({nome:x[0],preco:x[1],saldo:x[2]}));
-  config = Object.fromEntries(d.config);
-  rel = d.relatorio;
+
+  estoque = d.estoque.map(x=>({nome:x[0],preco:+x[1],saldo:+x[2]}));
   render();
 }
 
@@ -62,15 +62,15 @@ async function save(){
     body:JSON.stringify({
       action:"save",
       estoque:estoque.map(f=>[f.nome,f.preco,f.saldo]),
-      config:Object.entries(config),
-      relatorio:rel
+      config:[],
+      relatorio:[]
     })
   });
 }
 
 function add(){
   estoque.push({nome:nome.value,preco:+preco.value,saldo:+saldo.value});
-  save(); load();
+  save().then(load);
 }
 
 function render(){
@@ -84,8 +84,7 @@ function render(){
 
 function calc(){
   const f=estoque[fil.value];
-  const v=(peso.value*f.preco)+(horas.value*1);
-  res.innerText="R$ "+v.toFixed(2);
+  res.innerText="R$ "+((peso.value*f.preco)+(horas.value*1)).toFixed(2);
 }
 
 load();
