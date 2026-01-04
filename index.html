@@ -1,36 +1,64 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Precificação 3D</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial; background:#111; color:#fff; padding:20px }
-    button { padding:10px; margin:5px 0; width:100% }
-    input { padding:10px; margin:5px 0; width:100% }
-    .box { background:#1e1e1e; padding:15px; border-radius:10px; max-width:400px }
-    ul { padding-left:20px }
-  </style>
+<meta charset="UTF-8">
+<title>Precificação 3D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: Arial; background:#111; color:#fff; padding:15px }
+section { display:none }
+section.active { display:block }
+input, select, button {
+  width:100%; padding:10px; margin:6px 0;
+}
+button { background:#00c853; border:none; font-weight:bold }
+.box { background:#1e1e1e; padding:15px; border-radius:10px; margin-bottom:15px }
+.tabs button { width:auto; margin-right:5px }
+</style>
 </head>
 <body>
 
-<h1>Estoque de Filamentos</h1>
+<h1>Precificação 3D</h1>
 
-<div class="box">
-  <h2>Cadastrar Filamento</h2>
-
-  <input id="nomeFil" placeholder="Nome do filamento">
-  <input id="precoFil" type="number" placeholder="Preço por grama">
-  <input id="saldoFil" type="number" placeholder="Saldo (g)">
-
-  <button id="btnAdd">Adicionar Filamento</button>
+<div class="tabs">
+  <button onclick="show('estoque')">Estoque</button>
+  <button onclick="show('projeto')">Projeto</button>
 </div>
 
-<div class="box" style="margin-top:20px">
-  <h2>Estoque Atual</h2>
-  <button id="btnLoad">Atualizar Lista</button>
+<section id="estoque" class="active box">
+  <h2>Filamentos</h2>
+  <input id="f_nome" placeholder="Nome do filamento">
+  <input id="f_preco" type="number" placeholder="Preço por grama">
+  <input id="f_saldo" type="number" placeholder="Saldo (g)">
+  <button onclick="addFilamento()">Adicionar Filamento</button>
   <ul id="listaEstoque"></ul>
-</div>
+</section>
+
+<section id="projeto" class="box">
+  <h2>Projeto</h2>
+
+  <label>Modo</label>
+  <select id="modo">
+    <option value="simular">Simular</option>
+    <option value="real">Executar</option>
+  </select>
+
+  <label>Filamento</label>
+  <select id="filamento"></select>
+
+  <label>Peso (g)</label>
+  <input id="peso" type="number">
+
+  <label>Horas de impressão</label>
+  <input id="horas" type="number">
+
+  <label>Margem (%)</label>
+  <input id="margem" type="number" value="150">
+
+  <button onclick="calcular()">Calcular</button>
+
+  <h3 id="resultado">Preço: R$ 0,00</h3>
+</section>
 
 <script src="app.js"></script>
 </body>
