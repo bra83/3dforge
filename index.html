@@ -5,14 +5,19 @@
 <title>Precificação 3D</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial;background:#111;color:#fff;padding:15px}
-section{display:none}
-section.active{display:block}
-input,select,button{width:100%;padding:10px;margin:6px 0}
-button{background:#00c853;border:none;font-weight:bold}
-.box{background:#1e1e1e;padding:15px;border-radius:10px;margin-bottom:15px}
+body { font-family: Arial; background:#111; color:#fff; padding:15px }
+h1 { margin-top:0 }
+section { display:none }
+section.active { display:block }
+input, select, button {
+  width:100%; padding:10px; margin:6px 0; font-size:16px;
+}
+button { background:#00c853; border:none; font-weight:bold }
+.box { background:#1e1e1e; padding:15px; border-radius:10px; margin-bottom:15px }
+ul { padding-left:18px }
 </style>
 </head>
+
 <body>
 
 <h1>Precificação 3D</h1>
@@ -20,74 +25,152 @@ button{background:#00c853;border:none;font-weight:bold}
 <button onclick="show('estoque')">Estoque</button>
 <button onclick="show('projeto')">Projeto</button>
 
+<!-- ===== ESTOQUE ===== -->
 <section id="estoque" class="box active">
-  <input id="nome" placeholder="Filamento">
-  <input id="preco" type="number" placeholder="Preço/g">
-  <input id="saldo" type="number" placeholder="Saldo g">
-  <button onclick="add()">Adicionar</button>
+  <h2>Filamentos</h2>
+
+  <input id="nome" placeholder="Nome do filamento">
+  <input id="preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
+  <input id="saldo" type="number" placeholder="Saldo (g)">
+
+  <button onclick="addFilamento()">Adicionar Filamento</button>
+
+  <h3>Estoque Atual</h3>
   <ul id="lista"></ul>
 </section>
 
+<!-- ===== PROJETO ===== -->
 <section id="projeto" class="box">
+  <h2>Projeto</h2>
+
+  <label>Filamento</label>
   <select id="fil"></select>
-  <input id="peso" type="number" placeholder="Peso g">
-  <input id="horas" type="number" placeholder="Horas">
-  <button onclick="calc()">Calcular</button>
-  <h3 id="res">R$ 0,00</h3>
+
+  <label>Peso (g)</label>
+  <input id="peso" type="number">
+
+  <label>Horas de impressão</label>
+  <input id="horas" type="number">
+
+  <button onclick="calcular()">Calcular</button>
+
+  <h3 id="res">Preço: R$ 0,00</h3>
 </section>
 
 <script>
-/* 🔴 COLE SUA URL /exec AQUI */
-const API_URL = "https://script.google.com/macros/s/AKfycbzFlm0ljdlhxoNvpLs_rN-P6oeDygE2d7BRtjIPFj9ospCbM9nmrh8LnZiVUn-2Aw02dQ/exec";
+/* ======================================================
+   🔴 CONFIGURAÇÃO FIXA (JÁ AJUSTADA PRA VOCÊ)
+====================================================== */
 
-let estoque=[];
+// URL do Google Form (formResponse)
+const FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
 
+// IDs dos campos do Form
+const ENTRY_ACTION  = "entry.1318253980";
+const ENTRY_PAYLOAD = "entry.1973534829";
+
+// URL do Apps Script (leitura)
+const API_URL = "COLE_AQUI_A_URL_EXEC_DO_APPS_SCRIPT";
+
+/* ======================================================
+   ESTADO DO APP
+====================================================== */
+let estado = {
+  estoque: []
+};
+
+/* ======================================================
+   NAVEGAÇÃO
+====================================================== */
 function show(id){
-  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-async function load(){
-  const r = await fetch(API_URL+"?action=load");
-  const d = await r.json();
+/* ======================================================
+   BACKEND (FORMS + SHEETS)
+====================================================== */
+async function salvarEstado(){
+  const form = new FormData();
+  form.append(ENTRY_ACTION, "save");
+  form.append(ENTRY_PAYLOAD, JSON.stringify(estado));
 
-  estoque = d.estoque.map(x=>({nome:x[0],preco:+x[1],saldo:+x[2]}));
+  await fetch(FORM_URL, {
+    method: "POST",
+    body: form,
+    mode: "no-cors"
+  });
+}
+
+async function carregarEstado(){
+  const r = await fetch(API_URL);
+  estado = await r.json();
   render();
 }
 
-async function save(){
-  await fetch(API_URL,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      action:"save",
-      estoque:estoque.map(f=>[f.nome,f.preco,f.saldo]),
-      config:[],
-      relatorio:[]
-    })
-  });
-}
+/* ======================================================
+   ESTOQUE
+====================================================== */
+function addFilamento(){
+  const n = nome.value.trim();
+  const p = Number(preco.value);
+  const s = Number(saldo.value);
 
-function add(){
-  estoque.push({nome:nome.value,preco:+preco.value,saldo:+saldo.value});
-  save().then(load);
+  if(!n || p <= 0 || s <= 0){
+    alert("Preencha todos os campos corretamente");
+    return;
+  }
+
+  estado.estoque.push({ nome:n, preco:p, saldo:s });
+
+  salvarEstado().then(carregarEstado);
+
+  nome.value = "";
+  preco.value = "";
+  saldo.value = "";
 }
 
 function render(){
-  lista.innerHTML="";
-  fil.innerHTML="";
-  estoque.forEach((f,i)=>{
-    lista.innerHTML+=`<li>${f.nome} - ${f.saldo}g</li>`;
-    fil.innerHTML+=`<option value="${i}">${f.nome}</option>`;
+  lista.innerHTML = "";
+  fil.innerHTML = "";
+
+  estado.estoque.forEach((f,i)=>{
+    lista.innerHTML += `<li>${f.nome} — ${f.saldo} g</li>`;
+    fil.innerHTML += `<option value="${i}">${f.nome}</option>`;
   });
 }
 
-function calc(){
-  const f=estoque[fil.value];
-  res.innerText="R$ "+((peso.value*f.preco)+(horas.value*1)).toFixed(2);
+/* ======================================================
+   PROJETO (SIMPLIFICADO)
+====================================================== */
+function calcular(){
+  if(estado.estoque.length === 0){
+    alert("Cadastre um filamento");
+    return;
+  }
+
+  const f = estado.estoque[fil.value];
+  const p = Number(peso.value);
+  const h = Number(horas.value);
+
+  if(p <= 0 || h <= 0){
+    alert("Valores inválidos");
+    return;
+  }
+
+  const custo =
+    (p * f.preco) +
+    (h * 1.0); // custo fixo simples por hora
+
+  res.innerText = "Preço: R$ " + custo.toFixed(2);
 }
 
-load();
+/* ======================================================
+   INIT
+====================================================== */
+carregarEstado();
 </script>
+
 </body>
 </html>
