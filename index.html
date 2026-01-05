@@ -13,7 +13,6 @@
 
 <h1>Precificação 3D</h1>
 
-<!-- ================= NAVEGAÇÃO ================= -->
 <div class="tabs">
   <button onclick="showTab('projeto')">Projeto</button>
   <button onclick="showTab('estoque')">Estoque</button>
@@ -53,45 +52,41 @@
   <button onclick="executarProjeto()">Executar Projeto</button>
 
   <h2 id="resultado">Preço Final: R$ 0,00</h2>
-
 </section>
 
 <!-- ================= ESTOQUE ================= -->
 <section id="estoque" class="card hidden">
 
-  <h2>Estoque de Filamentos</h2>
+  <h2>Estoque</h2>
 
   <label>Nome do filamento</label>
-  <input type="text" id="nomeFil">
+  <input id="nomeFil">
 
   <label>Preço por grama (R$)</label>
-  <input type="number" step="0.01" id="precoFil">
+  <input id="precoFil" type="number" step="0.01">
 
-  <label>Saldo inicial (g)</label>
-  <input type="number" id="saldoFil">
+  <label>Saldo (g)</label>
+  <input id="saldoFil" type="number">
 
   <button onclick="addFilamento()">Cadastrar Filamento</button>
 
   <hr>
 
   <ul id="listaEstoque"></ul>
-
 </section>
 
 <!-- ================= RELATÓRIO ================= -->
 <section id="relatorio" class="card hidden">
-
-  <h2>Relatório de Projetos</h2>
-
-  <p>Projetos realizados (dados vêm da planilha):</p>
-
-  <ul id="listaRelatorio">
-    <!-- (vamos preencher pelo app.js no próximo passo) -->
-  </ul>
-
+  <h2>Relatório</h2>
+  <ul id="listaRelatorio"></ul>
 </section>
 
-<!-- ================= SCRIPT ================= -->
+<!-- ================= CONFIG GLOBAL ================= -->
+<script>
+  // ⚠️ COLE A URL DO APPS SCRIPT AQUI
+  window.API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
+</script>
+
 <script>
   function showTab(id) {
     document.getElementById("projeto").classList.add("hidden");
