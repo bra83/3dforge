@@ -1,57 +1,106 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Precificação 3D</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Manager PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
+        .card { background-color: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
+        input, select { background-color: #334155; border: 1px solid #475569; color: white; padding: 8px; border-radius: 6px; width: 100%; }
+        label { font-size: 0.875rem; color: #94a3b8; display: block; margin-bottom: 4px; }
+        .btn-primary { background-color: #3b82f6; color: white; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn-primary:hover { background-color: #2563eb; }
+    </style>
 </head>
-<body>
+<body class="p-4 pb-20">
 
-<h2>Precificação 3D</h2>
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold text-blue-400">3D Manager PRO</h1>
+        <p class="text-slate-400 text-sm">Controle de Produção e Custos</p>
+    </header>
 
-<label>Filamento</label>
-<select id="filamento"></select>
+    <div class="card">
+        <h2 class="text-lg font-semibold mb-4 text-white">Simular Impressão</h2>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label>Peso da Peça (g)</label>
+                <input type="number" id="pesoPeca" placeholder="Ex: 50" oninput="calcular()">
+            </div>
+            <div>
+                <label>Tempo (horas)</label>
+                <input type="number" id="tempoHoras" placeholder="Ex: 5" oninput="calcular()">
+            </div>
+        </div>
 
-<label>Peso (g)</label>
-<input type="number" id="peso">
+        <div class="mt-4">
+            <label>Marketplace</label>
+            <select id="marketplace" onchange="calcular()">
+                <option value="direta">Venda Direta (0%)</option>
+                <option value="ml">Mercado Livre (17% + R$ 6,00)</option>
+                <option value="shopee">Shopee (20%)</option>
+            </select>
+        </div>
 
-<label>Tempo (h)</label>
-<input type="number" id="tempo">
+        <div class="mt-6 p-4 bg-slate-800 rounded-lg">
+            <p class="text-sm text-slate-400">Custo de Produção: <span id="custoProducao" class="text-white font-mono">R$ 0,00</span></p>
+            <p class="text-sm text-slate-400">Preço Sugerido (Lucro 100%): <span id="precoSugerido" class="text-green-400 font-bold text-lg">R$ 0,00</span></p>
+        </div>
 
-<button onclick="calcular()">Calcular</button>
+        <button class="btn-primary mt-4" onclick="registrarPedido()">Registrar e Baixar Estoque</button>
+    </div>
 
-<h3 id="resultado"></h3>
+    <div class="card">
+        <h2 class="text-lg font-semibold mb-2">Estoque de Filamento</h2>
+        <div id="listaEstoque" class="text-sm space-y-2 text-slate-300">
+            Carregando estoque...
+        </div>
+    </div>
 
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
+    <script>
+        // CONFIGURAÇÕES GERAIS (Mude aqui seus valores)
+        const CONFIG = {
+            precoKwh: 0.85,
+            consumoW: 150, // Watts da impressora
+            valorMaquina: 1800,
+            vidaUtilHoras: 5000,
+            precoFilamentoKg: 120,
+            margemLucro: 2.0 // 100% de lucro
+        };
 
-  async function carregarFilamentos() {
-    const r = await fetch(API_URL + "?action=estoque");
-    const data = await r.json();
+        function calcular() {
+            const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
+            const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
+            const mkt = document.getElementById('marketplace').value;
 
-    const sel = document.getElementById("filamento");
-    sel.innerHTML = "";
+            // Fórmulas
+            const custoFilamento = (peso / 1000) * CONFIG.precoFilamentoKg;
+            const custoEnergia = (CONFIG.consumoW / 1000) * horas * CONFIG.precoKwh;
+            const custoDepreciacao = (CONFIG.valorMaquina / CONFIG.vidaUtilHoras) * horas;
+            
+            const custoTotal = custoFilamento + custoEnergia + custoDepreciacao;
+            let precoFinal = custoTotal * CONFIG.margemLucro;
 
-    data.forEach(f => {
-      sel.innerHTML += `<option value="${f[2]}">${f[1]} (${f[3]} g)</option>`;
-    });
-  }
+            // Aplicar Taxas de Marketplace
+            if (mkt === 'ml') {
+                precoFinal = (precoFinal + 6) / 0.83;
+            } else if (mkt === 'shopee') {
+                precoFinal = precoFinal / 0.80;
+            }
 
-  function calcular() {
-    const precoG = Number(filamento.value);
-    const peso = Number(document.getElementById("peso").value);
-    const tempo = Number(document.getElementById("tempo").value);
+            document.getElementById('custoProducao').innerText = `R$ ${custoTotal.toFixed(2)}`;
+            document.getElementById('precoSugerido').innerText = `R$ ${precoFinal.toFixed(2)}`;
+        }
 
-    const custoMaterial = precoG * peso;
-    const custoMaquina = tempo * 0.73;
-    const custoTotal = custoMaterial + custoMaquina;
-
-    document.getElementById("resultado").innerText =
-      "Custo estimado: R$ " + custoTotal.toFixed(2);
-  }
-
-  carregarFilamentos();
-</script>
+       async function registrarPedido() {
+    // COLE O SEU URL ENTRE AS ASPAS ABAIXO
+    const urlScript = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+    
+    // O resto do código continua igual...
+}
+    </script>
 
 </body>
 </html>
