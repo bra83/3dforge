@@ -3,38 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Forja 3D</title>
+    <title>3D TERMINAL v2.0 - LOGISTICS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: #f1f5f9; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 16px; margin-bottom: 20px; }
-        input, select { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; border-radius: 8px; width: 100%; }
-        .btn { padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; transition: 0.2s; }
-        .btn-blue { background: #3b82f6; }
-        .btn-red { background: #ef4444; margin-top: 10px; }
-        .tab-btn { padding: 10px; width: 50%; border-bottom: 2px solid transparent; }
-        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+        :root {
+            --neon-green: #00ff41;
+            --dark-bg: #0d0208;
+            --panel-bg: #161b22;
+        }
+        body { 
+            background-color: var(--dark-bg); 
+            color: var(--neon-green); 
+            font-family: 'Fira Code', monospace; 
+        }
+        .card { 
+            background-color: var(--panel-bg); 
+            border: 1px solid var(--neon-green); 
+            border-radius: 4px; 
+            padding: 20px; 
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+        }
+        input, select { 
+            background-color: #000; 
+            border: 1px solid var(--neon-green); 
+            color: var(--neon-green); 
+            padding: 10px; 
+            width: 100%; 
+            margin-bottom: 10px;
+            outline: none;
+        }
+        input:focus { box-shadow: 0 0 5px var(--neon-green); }
+        .btn { 
+            padding: 12px; 
+            font-weight: bold; 
+            width: 100%; 
+            cursor: pointer; 
+            text-transform: uppercase;
+            border: 1px solid var(--neon-green);
+            transition: 0.3s;
+        }
+        .btn-main { background-color: var(--neon-green); color: #000; }
+        .btn-main:hover { background-color: #000; color: var(--neon-green); }
+        
+        .progress-bg { background-color: #333; height: 8px; border-radius: 4px; width: 100%; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s ease-in-out; }
+        
+        .tab-btn { padding: 10px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; }
+        .active-tab { opacity: 1; border-bottom: 2px solid var(--neon-green); font-weight: bold; }
+        
+        .alert-box { border: 1px dashed #ffb100; color: #ffb100; padding: 10px; margin-top: 10px; font-size: 0.8rem; }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto pb-24">
+<body class="p-4 max-w-xl mx-auto">
 
-    <nav class="flex mb-6 border-b border-slate-700">
-        <button id="btnTab1" onclick="switchTab(1)" class="tab-btn tab-active">Calculadora</button>
-        <button id="btnTab2" onclick="switchTab(2)" class="tab-btn">Almoxarifado</button>
+    <header class="mb-6 text-center border-b border-green-900 pb-4">
+        <h1 class="text-xl font-bold uppercase tracking-widest">3D_LOGISTICS_SYSTEM_v2</h1>
+        <div id="maintenanceAlert" class="hidden alert-box">AVISO: MANUTENÇÃO DE EIXOS RECOMENDADA!</div>
+    </header>
+
+    <nav class="flex justify-around mb-6">
+        <div id="tab1" class="tab-btn active-tab" onclick="switchTab(1)">[CALCULAR]</div>
+        <div id="tab2" class="tab-btn" onclick="switchTab(2)">[ESTOQUE]</div>
+        <div id="tab3" class="tab-btn" onclick="switchTab(3)">[CONFIG]</div>
     </nav>
 
-    <div id="tab1">
-        <div class="glass-card p-4">
-            <h2 class="text-blue-300 font-semibold mb-3">📦 Estoque Atual</h2>
-            <div id="tabelaEstoque" class="text-xs space-y-2">Carregando...</div>
+    <div id="content1">
+        <div class="card">
+            <label>> SELECIONAR_MATERIAL</label>
+            <select id="selectMaterial" onchange="calcular()"></select>
+            
+            <div class="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                    <label>> PESO_G</label>
+                    <input type="number" id="pesoPeca" oninput="calcular()">
+                </div>
+                <div>
+                    <label>> TEMPO_H</label>
+                    <input type="number" id="tempoHoras" oninput="calcular()">
+                </div>
+            </div>
+
+            <label>> CANAL_VENDA</label>
+            <select id="mkt" onchange="calcular()">
+                <option value="direta">VENDA DIRETA</option>
+                <option value="ml">MERCADO LIVRE</option>
+                <option value="shopee">SHOPEE</option>
+            </select>
+
+            <div class="p-4 bg-black border border-green-900 rounded mt-4">
+                <p class="text-xs opacity-70">CUSTO_REAL (C/ FALHA): <span id="resCusto">R$ 0,00</span></p>
+                <p class="text-lg font-bold">VENDA_SUGERIDA: <span id="resVenda">R$ 0,00</span></p>
+            </div>
+            <button class="btn btn-main mt-4" onclick="registrarPedido()">EXECUTAR_PEDIDO</button>
         </div>
-        <div class="glass-card p-6">
-            <h2 class="text-green-300 font-semibold mb-4">🔮 Nova Encomenda</h2>
-            <div class="space-y-4">
-                <select id="selMaterial" onchange="calcularTudo()"></select>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="pesoPeca" placeholder="Peso (g)" oninput="calcularTudo()">
-                    <input type="number" id="tempoHoras" placeholder="Tempo (h)" oninput="calcularTudo()">
+    </div>
+
+    <div id="content2" class="hidden">
+        <div class="card">
+            <h2 class="mb-4">NOVO_INPUT_MATERIAL</h2>
+            <input type="text" id="novoNome" placeholder="NOME/COR">
+            <input type="number" id="novoPreco" placeholder="PREÇO_ROLO">
+            <input type="number" id="novoPeso" placeholder="PESO_TOTAL_G">
+            <button class="btn btn-main" onclick="adicionarFilamento()">SALVAR_DATA</button>
+        </div>
+        
+        <div class="card" id="listaEstoque">
+            </div>
+    </div>
+
+    <div id="content3" class="hidden">
+        <div class="card">
+            <h2 class="mb-4">PARAMETROS_SISTEMA</h2>
+            <label>MARGEM_FALHA_SEGURANÇA (%)</label>
+            <input type="number" id="cfgFalha" value="10" oninput="calcular()">
+            
+            <label>LUCRO_DESEJADO (x VEZES)</label>
+            <input type="number" id="cfgLucro" value="2" step="0.1" oninput="calcular()">
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label>TAXA_ML (%)</label>
+                    <input type="number" id="cfgTaxaML" value="17">
+                </div>
+                <div>
+                    <label>FIXO_ML (R$)</label>
+                    <input type="number" id="cfgFixoML" value="6">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+        let dadosEstoque = [];
+        let horasAcumuladas = parseFloat(localStorage.getItem('horas3D')) || 0;
+
+        async function carregarDados() {
+            try {
+                const resp = await fetch(URL_SCRIPT);
+                dadosEstoque = await resp.json();
+                atualizarUI();
+                verificarManutencao();
+            } catch (e) { console.log("Erro ao carregar"); }
+        }
+
+        function atualizarUI() {
+            const select = document.getElementById('selectMaterial');
+            const lista = document.getElementById('listaEstoque');
+            select.innerHTML = "";
+            lista.innerHTML = "<h3 class='mb-2 opacity-50'>STATUS_ESTOQUE</h3>";
+
+            dadosEstoque.slice(1).forEach(item => {
+                const perc = (item[3] / item[2]) * 100;
+                const corBarra = perc < 20 ? '#ff4141' : (perc < 50 ? '#ffb100' : '#00ff41');
+                
+                select.innerHTML += `<option value="${item[0]}">${item[0]}</option>`;
+                lista.innerHTML += `
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>${item[0]}</span>
+                            <span>${item[3]}g / ${item[2]}g</span>
+                        </div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: ${perc}%; background-color: ${corBarra}"></div></div>
+                    </div>`;
+            });
+        }
+
+        function calcular() {
+            const materialNome = document.getElementById('selectMaterial').value;
+            const mat = dadosEstoque.find(i => i[0] === materialNome);
+            if(!mat) return;
+
+            const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
+            const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
+            const falha = (parseFloat(document.getElementById('cfgFalha').value) / 100) + 1;
+            const multiplicadorLucro = parseFloat(document.getElementById('cfgLucro').value);
+
+            const custoMaterial = ((peso * falha) / mat[2]) * mat[1];
+            const custoLuz = (150 / 1000) * horas * 0.85; 
+            const custoMaq = (1800 / 5000) * horas; 
+            
+            const custoTotal = custoMaterial + custoLuz + custoMaq;
+            let venda = custoTotal * multiplicadorLucro;
+
+            const canal = document.getElementById('mkt').value;
+            if(canal === 'ml') {
+                const t = parseFloat(document.getElementById('cfgTaxaML').value) / 100;
+                const f = parseFloat(document.getElementById('cfgFixoML').value);
+                venda = (venda + f) / (1 - t);
+            }
+            if(canal === 'shopee') venda = venda / 0.80;
+
+            document.getElementById('resCusto').innerText = `R$ ${custoTotal.toFixed(2)}`;
+            document.getElementById('resVenda').innerText = `R$ ${venda.toFixed(2)}`;
+        }
+
+        function verificarManutencao() {
+            if(horasAcumuladas >= 200) {
+                document.getElementById('maintenanceAlert').classList.remove('hidden');
+            }
+        }
+
+        async function registrarPedido() {
+            const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
+            const data = {
+                acao: "REGISTRAR_PEDIDO",
+                material: document.getElementById('selectMaterial').value,
+                peca: "Job_" + Math.floor(Math.random()*1000),
+                pesoGasto: parseFloat(document.getElementById('pesoPeca').value),
+                custo: document.getElementById('resCusto').innerText,
+                precoVenda: document.getElementById('resVenda').innerText,
+                mkt: document.getElementById('mkt').value
+            };
+            
+            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
+            
+            // Lógica de manutenção local
+            horasAcumuladas += horas;
+            localStorage.setItem('horas3D', horasAcumuladas);
+            
+            alert("SISTEMA: PEDIDO COMPUTADO COM SUCESSO.");
+            carregarDados();
+        }
+
+        async function adicionarFilamento() {
+            const data = {
+                acao: "ADICIONAR_FILAMENTO",
+                material: document.getElementById('novoNome').value,
+                preco: parseFloat(document.getElementById('novoPreco').value),
+                peso: parseFloat(document.getElementById('novoPeso').value)
+            };
+            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
+            alert("SISTEMA: NOVO MATERIAL CATALOGADO.");
+            carregarDados();
+        }
+
+        function switchTab(n) {
+            [1,2,3].forEach(i => {
+                document.getElementById('content'+i).classList.toggle('hidden', i !== n);
+                document.getElementById('tab'+i).classList.toggle('active-tab', i === n);
+            });
+        }
+
+        carregarDados();
+    </script>
+</body>
+</html>                    <input type="number" id="tempoHoras" placeholder="Tempo (h)" oninput="calcularTudo()">
                 </div>
                 <select id="selMkt" onchange="calcularTudo()">
                     <option value="direta">Venda Direta</option>
