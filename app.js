@@ -1,5 +1,9 @@
 // ================= CONFIG =================
-const API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
+const API_URL = window.API_URL;
+
+if (!API_URL) {
+  alert("API_URL não definida no index.html");
+}
 
 let CONFIG = {};
 let ESTOQUE = [];
@@ -12,18 +16,19 @@ async function iniciar() {
   await carregarEstoque();
   renderFilamentos();
   renderEstoque();
+  renderRelatorio();
 }
 
 // ================= LOADERS =================
 async function carregarConfig() {
-  const res = await fetch(`${API_URL}?action=config`);
-  const data = await res.json();
+  const r = await fetch(`${API_URL}?action=config`);
+  const data = await r.json();
   data.forEach(([k, v]) => CONFIG[k] = Number(v));
 }
 
 async function carregarEstoque() {
-  const res = await fetch(`${API_URL}?action=estoque`);
-  const data = await res.json();
+  const r = await fetch(`${API_URL}?action=estoque`);
+  const data = await r.json();
   ESTOQUE = data.map(r => ({
     id: r[0],
     nome: r[1],
@@ -43,16 +48,14 @@ function renderFilamentos() {
 
 function renderEstoque() {
   const ul = document.getElementById("listaEstoque");
-  if (!ul) return;
   ul.innerHTML = "";
-
   ESTOQUE.forEach((f, i) => {
     ul.innerHTML += `
       <li>
-        <strong>${f.nome}</strong> — ${f.saldo.toFixed(1)} g<br>
-        R$ ${f.preco.toFixed(2)} / g<br>
-        <button onclick="editarFilamento(${i})">✏️ Editar</button>
-        <button onclick="removerFilamento(${i})">🗑️ Remover</button>
+        <strong>${f.nome}</strong> — ${f.saldo} g<br>
+        R$ ${f.preco}/g<br>
+        <button onclick="editarFilamento(${i})">✏️</button>
+        <button onclick="removerFilamento(${i})">🗑️</button>
       </li>
     `;
   });
@@ -60,39 +63,24 @@ function renderEstoque() {
 
 // ================= FILAMENTO =================
 async function addFilamento() {
-  const nome = nomeFil.value;
-  const preco = Number(precoFil.value);
-  const saldo = Number(saldoFil.value);
-
-  if (!nome || !preco || !saldo) {
-    alert("Preencha todos os campos");
-    return;
-  }
-
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "add_filamento",
-      nome,
-      preco,
-      saldo
+      nome: nomeFil.value,
+      preco: Number(precoFil.value),
+      saldo: Number(saldoFil.value)
     })
   });
-
   nomeFil.value = precoFil.value = saldoFil.value = "";
-  await carregarEstoque();
-  renderFilamentos();
-  renderEstoque();
+  await iniciar();
 }
 
-async function editarFilamento(index) {
-  const f = ESTOQUE[index];
-
-  const nome = prompt("Nome:", f.nome);
-  if (!nome) return;
-
-  const preco = Number(prompt("Preço por g:", f.preco));
-  const saldo = Number(prompt("Saldo (g):", f.saldo));
+async function editarFilamento(i) {
+  const f = ESTOQUE[i];
+  const nome = prompt("Nome", f.nome);
+  const preco = Number(prompt("Preço/g", f.preco));
+  const saldo = Number(prompt("Saldo g", f.saldo));
 
   await fetch(API_URL, {
     method: "POST",
@@ -104,78 +92,65 @@ async function editarFilamento(index) {
       saldo
     })
   });
-
-  await carregarEstoque();
-  renderFilamentos();
-  renderEstoque();
+  await iniciar();
 }
 
-async function removerFilamento(index) {
-  const f = ESTOQUE[index];
-  if (!confirm(`Remover ${f.nome}?`)) return;
-
+async function removerFilamento(i) {
+  if (!confirm("Remover filamento?")) return;
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "remover_filamento",
-      id: f.id
+      id: ESTOQUE[i].id
     })
   });
-
-  await carregarEstoque();
-  renderFilamentos();
-  renderEstoque();
+  await iniciar();
 }
 
 // ================= CÁLCULO =================
 function calcularProjeto() {
+  const f = ESTOQUE[filamento.value];
   const peso = Number(peso.value);
   const horas = Number(tempo.value);
   const margem = Number(margem.value) / 100;
-  const marketplace = market.value;
-  const fil = ESTOQUE[filamento.value];
+  const mk = market.value;
 
-  const custoMaterial = peso * fil.preco;
-  const custoMaquina = horas * (CONFIG.valor_maquina / CONFIG.vida_util_horas);
-  const custoOperacional = horas * (CONFIG.custo_luz_hora + CONFIG.mao_obra_hora);
-  const custoTotal = custoMaterial + custoMaquina + custoOperacional;
+  const custo =
+    peso * f.preco +
+    horas * (CONFIG.valor_maquina / CONFIG.vida_util_horas) +
+    horas * (CONFIG.custo_luz_hora + CONFIG.mao_obra_hora);
 
-  let taxaPct = 0, taxaFixa = 0;
-  if (marketplace === "Shopee") {
+  let taxaPct = 0, taxaFix = 0;
+  if (mk === "Shopee") {
     taxaPct = CONFIG.taxa_shopee_pct / 100;
-    taxaFixa = CONFIG.taxa_shopee_fixa;
+    taxaFix = CONFIG.taxa_shopee_fixa;
   } else {
     taxaPct = CONFIG.taxa_ml_classico_pct / 100;
-    taxaFixa = CONFIG.taxa_ml_classico_fixa;
+    taxaFix = CONFIG.taxa_ml_classico_fixa;
   }
 
-  const precoBase = custoTotal * (1 + margem);
-  const precoFinal = precoBase + (precoBase * taxaPct) + taxaFixa + CONFIG.embalagem;
+  const preco = custo * (1 + margem) + (custo * taxaPct) + taxaFix + CONFIG.embalagem;
 
-  resultado.innerText = `Preço Final: R$ ${precoFinal.toFixed(2)}`;
+  resultado.innerText = `Preço Final: R$ ${preco.toFixed(2)}`;
 
-  return { fil, peso, horas, custoTotal, precoFinal, marketplace };
+  return { f, peso, horas, custo, preco, mk };
 }
 
 // ================= EXECUÇÃO =================
 async function executarProjeto() {
   if (modo.value !== "real") {
     calcularProjeto();
-    alert("Simulação realizada (estoque não alterado)");
-    return;
+    return alert("Simulação realizada");
   }
 
   const r = calcularProjeto();
-  if (r.peso > r.fil.saldo) {
-    alert("Estoque insuficiente");
-    return;
-  }
+  if (r.peso > r.f.saldo) return alert("Estoque insuficiente");
 
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "baixar",
-      id: r.fil.id,
+      id: r.f.id,
       peso: r.peso
     })
   });
@@ -184,16 +159,23 @@ async function executarProjeto() {
     method: "POST",
     body: JSON.stringify({
       action: "projeto",
-      produto: "Projeto Manual",
-      filamento: r.fil.nome,
+      produto: "Projeto",
+      filamento: r.f.nome,
       peso: r.peso,
       horas: r.horas,
-      custo: r.custoTotal,
-      preco: r.precoFinal,
-      marketplace: r.marketplace
+      custo: r.custo,
+      preco: r.preco,
+      marketplace: r.mk
     })
   });
 
-  alert("Projeto registrado com sucesso");
+  alert("Projeto registrado");
   await iniciar();
+}
+
+// ================= RELATÓRIO (BÁSICO) =================
+function renderRelatorio() {
+  const ul = document.getElementById("listaRelatorio");
+  if (!ul) return;
+  ul.innerHTML = "Os projetos estão registrados na planilha (aba Projetos).";
 }
