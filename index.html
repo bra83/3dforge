@@ -3,104 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_LOGISTICS_v5.0</title>
+    <title>Magistrum_3D_v6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
     <style>
-        :root { --neon: #00ff41; --bg: #0d0208; }
-        body { background-color: var(--bg); color: var(--neon); font-family: monospace; padding: 15px; }
-        .card { background-color: #161b22; border: 1px solid var(--neon); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        input, select { background-color: #000; border: 1px solid var(--neon); color: var(--neon); padding: 10px; width: 100%; margin-bottom: 10px; outline: none; }
-        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border: 1px solid var(--neon); text-transform: uppercase; transition: 0.3s; }
-        .btn-active { background-color: var(--neon); color: #000; }
-        .tab-btn { padding: 10px; cursor: pointer; border: 1px solid #333; flex: 1; text-align: center; font-size: 0.7rem; }
-        .active { background-color: var(--neon); color: #000; font-weight: bold; }
+        :root { 
+            --gold: #c5a059; 
+            --lich-green: #a8f0a8; 
+            --dark-bg: #0a0a0b; 
+            --panel-bg: #1a1a1c;
+            --border: #3a3a3c;
+        }
+        body { 
+            background-color: var(--dark-bg); 
+            color: #e0e0e0; 
+            font-family: 'Lora', serif; 
+            padding: 20px;
+            background-image: radial-gradient(circle at top, #1a1a2e 0%, #0a0a0b 100%);
+        }
+        h1, h2, .tab-btn, .btn { font-family: 'Cinzel', serif; letter-spacing: 1px; }
+        
+        .card { 
+            background-color: var(--panel-bg); 
+            border: 1px solid var(--border); 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 2px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .card::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        input, select { 
+            background-color: #000; border: 1px solid var(--border); 
+            color: var(--lich-green); padding: 12px; width: 100%; 
+            margin-bottom: 12px; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(197, 160, 89, 0.2); }
+
+        .btn { 
+            padding: 15px; font-weight: bold; width: 100%; cursor: pointer; 
+            border: 1px solid var(--gold); background: transparent; color: var(--gold);
+            text-transform: uppercase; transition: 0.4s; position: relative; overflow: hidden;
+        }
+        .btn:hover { background: var(--gold); color: #000; box-shadow: 0 0 20px rgba(197, 160, 89, 0.4); }
+
+        .tab-btn { padding: 12px; cursor: pointer; border-bottom: 2px solid transparent; flex: 1; text-align: center; color: #666; font-size: 0.8rem; }
+        .active-tab { color: var(--gold); border-bottom: 2px solid var(--gold); text-shadow: 0 0 10px rgba(197, 160, 89, 0.5); }
+        
+        .result-box {
+            background: rgba(0,0,0,0.4); border-left: 3px solid var(--lich-green); padding: 15px; margin: 15px 0;
+        }
         .hidden { display: none; }
-        label { font-size: 0.7rem; opacity: 0.8; }
+        label { font-size: 0.75rem; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        
+        .progress-bar { background: #111; height: 4px; width: 100%; margin-top: 5px; }
+        .progress-fill { height: 100%; background: var(--lich-green); box-shadow: 0 0 10px var(--lich-green); }
     </style>
 </head>
 <body class="max-w-lg mx-auto">
 
-    <nav class="flex gap-1 mb-4">
-        <div id="t1" class="tab-btn active" onclick="switchTab(1)">CALC</div>
-        <div id="t2" class="tab-btn" onclick="switchTab(2)">ESTOQUE</div>
-        <div id="t3" class="tab-btn" onclick="switchTab(3)">CONFIG</div>
+    <header class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-white uppercase tracking-[4px]">Magistrum 3D</h1>
+        <p class="text-[0.6rem] italic text-gray-500 uppercase tracking-widest mt-1">Gestão de Artefatos & Alquimia de Custos</p>
+    </header>
+
+    <nav class="flex gap-4 mb-8">
+        <div id="t1" class="tab-btn active-tab" onclick="tab(1)">Cálculo</div>
+        <div id="t2" class="tab-btn" onclick="tab(2)">Depósito</div>
+        <div id="t3" class="tab-btn" onclick="tab(3)">Decretos</div>
     </nav>
 
     <div id="c1" class="tab-content">
         <div class="card">
-            <label>MATERIAL</label><select id="selMat" onchange="calcular()"></select>
-            <div class="grid grid-cols-2 gap-2">
-                <div><label>PESO (G)</label><input type="number" id="p" oninput="calcular()" value="0"></div>
-                <div><label>TEMPO (H)</label><input type="number" id="t" oninput="calcular()" value="0"></div>
+            <label>Essência do Material</label>
+            <select id="selMat" onchange="calc()"></select>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label>Massa (G)</label><input type="number" id="p" oninput="calc()" value="0"></div>
+                <div><label>Tempo (H)</label><input type="number" id="t" oninput="calc()" value="0"></div>
             </div>
-            <label>MARKETPLACE</label>
-            <select id="m" onchange="calcular()">
-                <option value="direta">VENDA DIRETA</option>
-                <option value="ml">MERCADO LIVRE</option>
-                <option value="shopee">SHOPEE</option>
+            <label>Mercado de Destino</label>
+            <select id="m" onchange="calc()">
+                <option value="direta">Venda Direta</option>
+                <option value="ml">Mercado Livre</option>
+                <option value="shopee">Shopee</option>
             </select>
-            <div class="p-3 bg-black border border-green-900 mb-4 text-xs">
-                <p>CUSTO PROD: <span id="resC">R$ 0,00</span></p>
-                <p class="text-xl font-bold">VENDA: <span id="resV">R$ 0,00</span></p>
+            <div class="result-box">
+                <p class="text-[0.65rem] opacity-60 uppercase">Custo de Forja</p>
+                <p id="resC" class="text-lg text-white">R$ 0,00</p>
+                <p class="text-[0.65rem] opacity-60 uppercase mt-2">Valor de Oferta</p>
+                <p id="resV" class="text-2xl font-bold text-[#a8f0a8] shadow-green-900">R$ 0,00</p>
             </div>
-            <button class="btn btn-active" onclick="registrarPedido()">REGISTRAR VENDA</button>
+            <button class="btn" onclick="sendV()">Registrar Venda</button>
         </div>
     </div>
 
     <div id="c2" class="tab-content hidden">
         <div class="card">
-            <h2 class="mb-2 text-xs font-bold">> NOVO FILAMENTO</h2>
-            <input type="text" id="nN" placeholder="NOME/COR">
-            <input type="number" id="nP" placeholder="PREÇO ROLO">
-            <input type="number" id="nW" placeholder="PESO TOTAL G">
-            <button class="btn btn-active" onclick="adicionarFilamento()">GRAVAR NA PLANILHA</button>
+            <h2 class="mb-4 text-sm text-gold">Adicionar Suprimento</h2>
+            <input type="text" id="nN" placeholder="Nome do Material">
+            <input type="number" id="nP" placeholder="Preço do Rolo">
+            <input type="number" id="nW" placeholder="Peso Total (G)">
+            <button class="btn" onclick="sendA()">Sincronizar com Planilha</button>
         </div>
-        <div class="card" id="list">CARREGANDO...</div>
+        <div id="list" class="space-y-4"></div>
     </div>
 
     <div id="c3" class="tab-content hidden">
         <div class="card">
-            <label>LUCRO (%)</label><input type="number" id="cL" value="100">
-            <label>MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
-            <label>MAQUINA (R$)</label><input type="number" id="cVM" value="2000">
-            <label>VIDA ÚTIL (H)</label><input type="number" id="cVU" value="5000">
-            <label>ENERGIA (KWH)</label><input type="number" id="cEK" value="0.85">
-            <button class="btn btn-active" onclick="save()">SALVAR CONFIGS</button>
+            <label>Margem de Lucro (%)</label><input type="number" id="cL" value="100">
+            <label>Valor da Hora (R$)</label><input type="number" id="cMO" value="15">
+            <label>Valor da Máquina (R$)</label><input type="number" id="cVM" value="2000">
+            <label>Vida Útil (H)</label><input type="number" id="cVU" value="5000">
+            <label>Energia (KWH)</label><input type="number" id="cEK" value="0.85">
+            <button class="btn" onclick="save()">Salvar Decretos</button>
         </div>
     </div>
 
     <script>
-        const URL_API = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+        const API = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
         let db = [];
 
-        function switchTab(n){
+        function tab(n){
             [1,2,3].forEach(i=>{
                 document.getElementById('c'+i).classList.toggle('hidden', i!==n);
-                document.getElementById('t'+i).classList.toggle('active', i===n);
+                document.getElementById('t'+i).classList.toggle('active-tab', i===n);
             });
         }
 
-        function save(){
-            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
-            alert("SISTEMA: CONFIGURAÇÕES LOCAIS ATUALIZADAS.");
-            calcular();
-        }
-
-        async function carregarDados(){
+        async function load(){
             ['cL','cMO','cVM','cVU','cEK'].forEach(k=>{if(localStorage.getItem(k)) document.getElementById(k).value=localStorage.getItem(k)});
-            const r = await fetch(URL_API);
+            const r = await fetch(API);
             db = await r.json();
             const s = document.getElementById('selMat');
             const l = document.getElementById('list');
-            s.innerHTML = ""; l.innerHTML = "ESTOQUE:<br><br>";
+            s.innerHTML = ""; l.innerHTML = "";
             db.slice(1).forEach(i=>{
                 s.innerHTML+=`<option value="${i[0]}">${i[0]}</option>`;
-                l.innerHTML+=`<div class="text-[10px] mb-2 border-b border-green-900 pb-1">${i[0]}: ${i[3]}g</div>`;
+                const perc = (i[3]/i[2])*100;
+                l.innerHTML+=`<div class="card"><div class="flex justify-between text-xs mb-1"><span>${i[0]}</span><span>${i[3]}g</span></div><div class="progress-bar"><div class="progress-fill" style="width:${perc}%"></div></div></div>`;
             });
-            calcular();
+            calc();
         }
 
-        function calcular(){
+        function calc(){
             const mat = db.find(i=>i[0]===document.getElementById('selMat').value) || ["-",120,1000,1000];
             const p = parseFloat(document.getElementById('p').value)||0;
             const t = parseFloat(document.getElementById('t').value)||0;
@@ -116,29 +165,33 @@
             document.getElementById('resV').innerText="R$ "+v.toFixed(2);
         }
 
-        async function adicionarFilamento(){
-            const mat = document.getElementById('nN').value;
-            const pre = document.getElementById('nP').value;
-            const pes = document.getElementById('nW').value;
-            const link = `${URL_API}?acao=ADICIONAR_FILAMENTO&material=${encodeURIComponent(mat)}&preco=${pre}&peso=${pes}`;
-            await fetch(link, {mode: 'no-cors'});
-            alert("COMANDO ENVIADO!");
-            setTimeout(carregarDados, 3000);
+        async function sendA(){
+            const n = document.getElementById('nN').value;
+            const p = document.getElementById('nP').value;
+            const w = document.getElementById('nW').value;
+            await fetch(`${API}?acao=ADICIONAR_FILAMENTO&material=${encodeURIComponent(n)}&preco=${p}&peso=${w}`, {mode: 'no-cors'});
+            alert("Suprimento registrado no Grande Livro.");
+            setTimeout(load, 3000);
         }
 
-        async function registrarPedido(){
+        async function sendV(){
             const mat = document.getElementById('selMat').value;
             const psg = document.getElementById('p').value;
             const cus = document.getElementById('resC').innerText;
             const ven = document.getElementById('resV').innerText;
             const mkt = document.getElementById('m').value;
-            const link = `${URL_API}?acao=REGISTRAR_PEDIDO&material=${encodeURIComponent(mat)}&pesoGasto=${psg}&custo=${cus}&precoVenda=${ven}&mkt=${mkt}`;
-            await fetch(link, {mode: 'no-cors'});
-            alert("PEDIDO REGISTRADO!");
-            setTimeout(carregarDados, 3000);
+            await fetch(`${API}?acao=REGISTRAR_PEDIDO&material=${encodeURIComponent(mat)}&pesoGasto=${psg}&custo=${cus}&precoVenda=${ven}&mkt=${mkt}`, {mode: 'no-cors'});
+            alert("Venda selada com sucesso.");
+            setTimeout(load, 3000);
         }
 
-        carregarDados();
+        function save(){
+            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
+            alert("Decretos salvos na memória da oficina.");
+            calc();
+        }
+
+        load();
     </script>
 </body>
 </html>
