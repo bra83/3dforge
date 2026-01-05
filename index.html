@@ -15,6 +15,7 @@ input, select, button {
 button { background:#00c853; border:none; font-weight:bold }
 .box { background:#1e1e1e; padding:15px; border-radius:10px; margin-bottom:15px }
 ul { padding-left:18px }
+.result { background:#000; padding:10px; border-radius:6px; margin-top:10px }
 </style>
 </head>
 
@@ -25,7 +26,7 @@ ul { padding-left:18px }
 <button onclick="show('estoque')">Estoque</button>
 <button onclick="show('projeto')">Projeto</button>
 
-<!-- ===== ESTOQUE ===== -->
+<!-- ================= ESTOQUE ================= -->
 <section id="estoque" class="box active">
   <h2>Filamentos</h2>
 
@@ -39,58 +40,60 @@ ul { padding-left:18px }
   <ul id="lista"></ul>
 </section>
 
-<!-- ===== PROJETO ===== -->
+<!-- ================= PROJETO ================= -->
 <section id="projeto" class="box">
   <h2>Projeto</h2>
+
+  <label>Modo do projeto</label>
+  <select id="modo">
+    <option value="simular">Simular (não baixa estoque)</option>
+    <option value="realizar">Realizar (baixa estoque)</option>
+  </select>
 
   <label>Filamento</label>
   <select id="fil"></select>
 
-  <label>Peso (g)</label>
+  <label>Peso do projeto (g)</label>
   <input id="peso" type="number">
 
   <label>Horas de impressão</label>
   <input id="horas" type="number">
 
-  <button onclick="calcular()">Calcular</button>
+  <button onclick="calcularProjeto()">Calcular</button>
 
-  <h3 id="res">Preço: R$ 0,00</h3>
+  <div class="result">
+    <div id="res">Preço: R$ 0,00</div>
+    <div id="info"></div>
+  </div>
 </section>
 
 <script>
-/* ======================================================
-   🔴 CONFIGURAÇÃO FIXA (JÁ AJUSTADA PRA VOCÊ)
-====================================================== */
+/* ================= CONFIG FIXA ================= */
 
-// URL do Google Form (formResponse)
 const FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
 
-// IDs dos campos do Form
 const ENTRY_ACTION  = "entry.1318253980";
 const ENTRY_PAYLOAD = "entry.1973534829";
 
-// URL do Apps Script (leitura)
-const API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
+/* URL do Apps Script (LEITURA) */
+const API_URL = "COLE_AQUI_SUA_URL_EXEC";
 
-/* ======================================================
-   ESTADO DO APP
-====================================================== */
+/* ================= ESTADO ================= */
+
 let estado = {
   estoque: []
 };
 
-/* ======================================================
-   NAVEGAÇÃO
-====================================================== */
+/* ================= NAVEGAÇÃO ================= */
+
 function show(id){
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-/* ======================================================
-   BACKEND (FORMS + SHEETS)
-====================================================== */
+/* ================= BACKEND ================= */
+
 async function salvarEstado(){
   const form = new FormData();
   form.append(ENTRY_ACTION, "save");
@@ -109,16 +112,15 @@ async function carregarEstado(){
   render();
 }
 
-/* ======================================================
-   ESTOQUE
-====================================================== */
+/* ================= ESTOQUE ================= */
+
 function addFilamento(){
   const n = nome.value.trim();
   const p = Number(preco.value);
   const s = Number(saldo.value);
 
   if(!n || p <= 0 || s <= 0){
-    alert("Preencha todos os campos corretamente");
+    alert("Preencha corretamente");
     return;
   }
 
@@ -141,34 +143,48 @@ function render(){
   });
 }
 
-/* ======================================================
-   PROJETO (SIMPLIFICADO)
-====================================================== */
-function calcular(){
+/* ================= PROJETO ================= */
+
+function calcularProjeto(){
   if(estado.estoque.length === 0){
-    alert("Cadastre um filamento");
+    alert("Cadastre um filamento primeiro");
     return;
   }
 
-  const f = estado.estoque[fil.value];
+  const idx = fil.value;
+  const f = estado.estoque[idx];
   const p = Number(peso.value);
   const h = Number(horas.value);
+  const modoProjeto = modo.value;
 
   if(p <= 0 || h <= 0){
     alert("Valores inválidos");
     return;
   }
 
-  const custo =
-    (p * f.preco) +
-    (h * 1.0); // custo fixo simples por hora
+  if(modoProjeto === "realizar" && p > f.saldo){
+    alert("Estoque insuficiente");
+    return;
+  }
 
-  res.innerText = "Preço: R$ " + custo.toFixed(2);
+  /* Cálculo simples (pode evoluir depois) */
+  const custoFilamento = p * f.preco;
+  const custoHora = h * 1.0;
+  const total = custoFilamento + custoHora;
+
+  res.innerText = "Preço: R$ " + total.toFixed(2);
+
+  if(modoProjeto === "simular"){
+    info.innerText = "Simulação: estoque NÃO alterado.";
+  } else {
+    f.saldo -= p;
+    info.innerText = `Projeto realizado. ${p} g removidos do estoque.`;
+    salvarEstado().then(carregarEstado);
+  }
 }
 
-/* ======================================================
-   INIT
-====================================================== */
+/* ================= INIT ================= */
+
 carregarEstado();
 </script>
 
