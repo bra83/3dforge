@@ -1,11 +1,176 @@
-body{font-family:Arial;background:#0f0f0f;color:#fff;padding:14px}
-h1{text-align:center}
-.card{background:#1e1e1e;padding:14px;border-radius:14px;max-width:420px;margin:14px auto}
-label{margin-top:8px;display:block}
-input,select,button{width:100%;padding:10px;margin-top:5px;border-radius:10px;border:none}
-button{background:#00c853;color:#000;font-weight:bold;margin-top:10px}
-ul{list-style:none;padding:0}
-li{border-bottom:1px solid #333;padding:6px 0}
-.tabs{display:flex;justify-content:center;gap:6px}
-.tabs button{width:auto;padding:8px 12px}
-.hidden{display:none}
+/* ================= RESET BÁSICO ================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ================= VARIÁVEIS ================= */
+:root {
+  --bg: #0f0f0f;
+  --card: #1e1e1e;
+  --text: #ffffff;
+  --muted: #b0b0b0;
+  --accent: #00c853;
+  --danger: #ff5252;
+  --border: #333;
+}
+
+/* ================= BODY ================= */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 16px;
+}
+
+/* ================= TÍTULO ================= */
+h1 {
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+/* ================= TABS ================= */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  background: #2a2a2a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tabs button:hover {
+  background: #333;
+}
+
+/* ================= CARDS ================= */
+.card {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 14px;
+  max-width: 480px;
+  margin: 0 auto 16px auto;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* ================= TÍTULOS INTERNOS ================= */
+.card h2 {
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+/* ================= LABELS ================= */
+label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ================= INPUTS / SELECT ================= */
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ================= BOTÕES ================= */
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Botão padrão (ações principais) */
+button {
+  background: var(--accent);
+  color: #000;
+}
+
+/* Botões pequenos (editar / remover) */
+li button {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+/* Botão remover */
+li button:last-child {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ================= RESULTADO ================= */
+#resultado {
+  margin-top: 14px;
+  font-size: 18px;
+  text-align: center;
+  color: var(--accent);
+}
+
+/* ================= LISTAS ================= */
+ul {
+  list-style: none;
+  margin-top: 12px;
+}
+
+li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+/* ================= HR ================= */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+/* ================= HIDDEN ================= */
+.hidden {
+  display: none;
+}
+
+/* ================= RESPONSIVO ================= */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 20px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+}
