@@ -3,176 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Forja 3D</title>
+    <title>Sistema de Forja 3D</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: #f1f5f9; font-family: sans-serif; }
+        body { background-color: #0f172a; color: #f1f5f9; }
         .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 16px; margin-bottom: 20px; }
         input, select { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; border-radius: 8px; width: 100%; }
-        .btn-action { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; }
-        .status-low { color: #ef4444; font-weight: bold; }
-        .status-ok { color: #22c55e; }
+        .btn { padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; transition: 0.2s; }
+        .btn-blue { background: #3b82f6; }
+        .btn-red { background: #ef4444; margin-top: 10px; }
+        .tab-btn { padding: 10px; width: 50%; border-bottom: 2px solid transparent; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: bold; }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto pb-24">
 
-    <header class="text-center my-6">
-        <h1 class="text-2xl font-bold text-blue-400">Mestre da Forja 3D</h1>
-        <p class="text-slate-400 text-sm">Sincronizado com Google Sheets</p>
-    </header>
+    <nav class="flex mb-6 border-b border-slate-700">
+        <button id="btnTab1" onclick="switchTab(1)" class="tab-btn tab-active">Calculadora</button>
+        <button id="btnTab2" onclick="switchTab(2)" class="tab-btn">Almoxarifado</button>
+    </nav>
 
-    <div class="glass-card p-4">
-        <h2 class="text-blue-300 font-semibold mb-3 flex justify-between">
-            📦 Estoque em Tempo Real
-            <button onclick="carregarDados()" class="text-xs bg-slate-700 px-2 py-1 rounded">🔄 Atualizar</button>
-        </h2>
-        <div id="tabelaEstoque" class="text-xs space-y-2">
-            <p>Carregando estoque da planilha...</p>
+    <div id="tab1">
+        <div class="glass-card p-4">
+            <h2 class="text-blue-300 font-semibold mb-3">📦 Estoque Atual</h2>
+            <div id="tabelaEstoque" class="text-xs space-y-2">Carregando...</div>
+        </div>
+        <div class="glass-card p-6">
+            <h2 class="text-green-300 font-semibold mb-4">🔮 Nova Encomenda</h2>
+            <div class="space-y-4">
+                <select id="selMaterial" onchange="calcularTudo()"></select>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="pesoPeca" placeholder="Peso (g)" oninput="calcularTudo()">
+                    <input type="number" id="tempoHoras" placeholder="Tempo (h)" oninput="calcularTudo()">
+                </div>
+                <select id="selMkt" onchange="calcularTudo()">
+                    <option value="direta">Venda Direta</option>
+                    <option value="ml">Mercado Livre</option>
+                    <option value="shopee">Shopee</option>
+                </select>
+            </div>
+            <div class="mt-6 p-4 bg-slate-900/50 rounded-xl border border-blue-500/30 text-center">
+                <span class="text-blue-400 block text-sm">Preço Sugerido:</span>
+                <span id="resVenda" class="text-green-400 text-2xl font-bold">R$ 0,00</span>
+            </div>
+            <button onclick="enviarPedido()" class="btn btn-blue mt-6">REGISTRAR PEDIDO</button>
         </div>
     </div>
 
-    <div class="glass-card p-6">
-        <h2 class="text-green-300 font-semibold mb-4">🔮 Nova Encomenda</h2>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="text-xs text-slate-400">Material</label>
-                <select id="selMaterial" onchange="calcularTudo()">
-                    <option value="">Carregando materiais...</option>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-xs text-slate-400">Peso (g)</label>
-                    <input type="number" id="pesoPeca" placeholder="0" oninput="calcularTudo()">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-400">Tempo (h)</label>
-                    <input type="number" id="tempoHoras" placeholder="0" oninput="calcularTudo()">
+    <div id="tab2" class="hidden">
+        <div class="glass-card p-6">
+            <h2 class="text-yellow-300 font-semibold mb-4">🛠️ Gerenciar Filamento</h2>
+            <div class="space-y-4">
+                <input type="text" id="mNome" placeholder="Nome do Material (Ex: PLA Azul)">
+                <input type="number" id="mPreco" placeholder="Preço do Rolo (R$)">
+                <input type="number" id="mPeso" placeholder="Peso Total do Rolo (g)">
+                <div id="areaEditar" class="hidden">
+                    <input type="number" id="mPesoAtual" placeholder="Peso Atual em Estoque (g)">
                 </div>
             </div>
-            <div>
-                <label class="text-xs text-slate-400">Canal de Venda</label>
-                <select id="selMkt" onchange="calcularTudo()">
-                    <option value="direta">Venda Direta (0%)</option>
-                    <option value="ml">Mercado Livre (17% + R$ 6,00)</option>
-                    <option value="shopee">Shopee (20%)</option>
-                </select>
+            <button id="btnMAdd" onclick="gerenciarMaterial('ADICIONAR')" class="btn btn-blue mt-6">ADICIONAR NOVO</button>
+            <div id="botoesEdicao" class="hidden">
+                <button onclick="gerenciarMaterial('EDITAR')" class="btn btn-blue mt-4">SALVAR ALTERAÇÕES</button>
+                <button onclick="gerenciarMaterial('DELETAR')" class="btn btn-red">EXCLUIR FILAMENTO</button>
             </div>
+            <p class="text-[10px] text-slate-500 mt-4 italic text-center">Para editar, clique em um material na lista da aba Calculadora.</p>
         </div>
-
-        <div class="mt-6 p-4 bg-slate-900/50 rounded-xl border border-blue-500/30">
-            <div class="flex justify-between text-sm">
-                <span>Custo de Produção:</span>
-                <span id="resCusto" class="font-mono">R$ 0,00</span>
-            </div>
-            <div class="flex justify-between text-lg font-bold mt-2 pt-2 border-t border-slate-700">
-                <span class="text-blue-400">Preço Sugerido:</span>
-                <span id="resVenda" class="text-green-400">R$ 0,00</span>
-            </div>
-        </div>
-
-        <button onclick="enviarPedido()" id="btnEnviar" class="btn-action mt-6 shadow-lg">
-            CONFIRMAR E BAIXAR ESTOQUE
-        </button>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
-        let dadosEstoqueGlobal = [];
+        const SCRIPT_URL = "SUA_URL_DO_SCRIPT_AQUI"; // COLOQUE SUA URL AQUI
+        let estoqueLocal = [];
+        let materialEmEdicao = null;
 
-        // Configurações fixas para custo de luz e máquina
-        const CONFIG = { kwh: 0.85, watts: 150, vMaq: 2000, vidaH: 5000 };
+        function switchTab(tab) {
+            document.getElementById('tab1').classList.toggle('hidden', tab !== 1);
+            document.getElementById('tab2').classList.toggle('hidden', tab !== 2);
+            document.getElementById('btnTab1').classList.toggle('tab-active', tab === 1);
+            document.getElementById('btnTab2').classList.toggle('tab-active', tab === 2);
+        }
 
-        async function carregarDados() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
-                dadosEstoqueGlobal = data; // Salva para uso na calculadora
-                
-                // 1. Preencher a Tabela de Estoque Visual
-                let htmlEstoque = "";
-                let htmlSelect = "";
-                
-                // Começa do 1 para pular o cabeçalho da planilha
-                for(let i = 1; i < data.length; i++) {
-                    const [nome, preco, pesoTotal, pesoAtual] = data[i];
-                    const statusClass = pesoAtual < 200 ? 'status-low' : 'status-ok';
-                    
-                    htmlEstoque += `
-                        <div class="flex justify-between border-b border-slate-700 pb-1">
-                            <span>${nome}</span>
-                            <span class="${statusClass}">${pesoAtual}g restantes</span>
-                        </div>`;
-                    
-                    htmlSelect += `<option value="${preco}" data-nome="${nome}">${nome} (R$ ${preco}/kg)</option>`;
-                }
-                
-                document.getElementById('tabelaEstoque').innerHTML = htmlEstoque;
-                document.getElementById('selMaterial').innerHTML = htmlSelect;
-                calcularTudo();
-            } catch (e) {
-                document.getElementById('tabelaEstoque').innerHTML = "Erro ao carregar dados. Verifique a planilha.";
+        async function carregar() {
+            const res = await fetch(SCRIPT_URL);
+            estoqueLocal = await res.json();
+            let htmlE = "", htmlS = "";
+            for(let i=1; i<estoqueLocal.length; i++) {
+                const [n, p, pt, pa] = estoqueLocal[i];
+                htmlE += `<div onclick="prepararEdicao(${i})" class="flex justify-between border-b border-slate-700 py-1 cursor-pointer"><span>${n}</span><span>${pa}g</span></div>`;
+                htmlS += `<option value="${p}">${n}</option>`;
             }
+            document.getElementById('tabelaEstoque').innerHTML = htmlE;
+            document.getElementById('selMaterial').innerHTML = htmlS;
+        }
+
+        function prepararEdicao(index) {
+            const [n, p, pt, pa] = estoqueLocal[index];
+            materialEmEdicao = n;
+            document.getElementById('mNome').value = n;
+            document.getElementById('mPreco').value = p;
+            document.getElementById('mPeso').value = pt;
+            document.getElementById('mPesoAtual').value = pa;
+            
+            document.getElementById('areaEditar').classList.remove('hidden');
+            document.getElementById('botoesEdicao').classList.remove('hidden');
+            document.getElementById('btnMAdd').classList.add('hidden');
+            switchTab(2);
+        }
+
+        async function gerenciarMaterial(acao) {
+            const payload = {
+                acao: acao,
+                nome: document.getElementById('mNome').value,
+                nomeAntigo: materialEmEdicao,
+                preco: document.getElementById('mPreco').value,
+                pesoTotal: document.getElementById('mPeso').value,
+                pesoAtual: document.getElementById('mPesoAtual').value
+            };
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            alert("Operação realizada!");
+            location.reload();
         }
 
         function calcularTudo() {
-            const precoKg = parseFloat(document.getElementById('selMaterial').value) || 0;
-            const pesoG = parseFloat(document.getElementById('pesoPeca').value) || 0;
-            const tempoH = parseFloat(document.getElementById('tempoHoras').value) || 0;
+            const pKg = parseFloat(document.getElementById('selMaterial').value) || 0;
+            const pG = parseFloat(document.getElementById('pesoPeca').value) || 0;
+            const tH = parseFloat(document.getElementById('tempoHoras').value) || 0;
             const mkt = document.getElementById('selMkt').value;
-
-            const custoFilamento = (pesoG / 1000) * precoKg;
-            const custoLuz = (CONFIG.watts / 1000) * tempoH * CONFIG.kwh;
-            const custoVida = (CONFIG.vMaq / CONFIG.vidaH) * tempoH;
-            
-            const custoTotal = custoFilamento + custoLuz + custoVida;
-            let precoBase = custoTotal * 2; // Lucro 100%
-
-            if (mkt === 'ml') precoBase = (precoBase + 6) / 0.83;
-            if (mkt === 'shopee') precoBase = precoBase / 0.80;
-
-            document.getElementById('resCusto').innerText = "R$ " + custoTotal.toFixed(2);
-            document.getElementById('resVenda').innerText = "R$ " + precoBase.toFixed(2);
+            const custo = (pG/1000 * pKg) + (150/1000 * tH * 0.85) + (2000/5000 * tH);
+            let preco = custo * 2;
+            if(mkt==='ml') preco = (preco+6)/0.83;
+            if(mkt==='shopee') preco = preco/0.80;
+            document.getElementById('resVenda').innerText = "R$ " + preco.toFixed(2);
         }
 
         async function enviarPedido() {
-            const btn = document.getElementById('btnEnviar');
-            const pesoG = document.getElementById('pesoPeca').value;
-            const select = document.getElementById('selMaterial');
-            const nomeMat = select.options[select.selectedIndex].getAttribute('data-nome');
-
-            if(!pesoG || !nomeMat) return alert("Preencha os dados!");
-
-            btn.innerText = "PROCESSANDO...";
-            btn.disabled = true;
-
+            const sel = document.getElementById('selMaterial');
             const payload = {
-                peca: "Pedido via Dashboard",
-                material: nomeMat,
-                pesoGasto: parseFloat(pesoG),
-                custo: document.getElementById('resCusto').innerText,
+                acao: "PEDIDO",
+                material: sel.options[sel.selectedIndex].text,
+                pesoGasto: parseFloat(document.getElementById('pesoPeca').value),
+                custo: "R$ " + (parseFloat(document.getElementById('resVenda').innerText.replace('R$ ',''))/2).toFixed(2),
                 precoVenda: document.getElementById('resVenda').innerText,
                 mkt: document.getElementById('selMkt').value
             };
-
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    body: JSON.stringify(payload)
-                });
-                alert("Sucesso! Estoque atualizado.");
-                location.reload(); // Recarrega para mostrar o novo estoque
-            } catch (e) {
-                alert("Erro ao salvar. Verifique o Apps Script.");
-                btn.innerText = "CONFIRMAR E BAIXAR ESTOQUE";
-                btn.disabled = false;
-            }
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            alert("Pedido e estoque atualizados!");
+            location.reload();
         }
 
-        // Iniciar carregamento
-        window.onload = carregarDados;
+        window.onload = carregar;
     </script>
 </body>
 </html>
