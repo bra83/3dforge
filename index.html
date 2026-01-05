@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>Precificação 3D</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="manifest.json">
+
 <style>
 body{font-family:Arial;background:#111;color:#fff;padding:15px}
 h1{margin-top:0}
@@ -13,8 +16,8 @@ input,select,button{width:100%;padding:10px;margin:6px 0;font-size:16px}
 button{background:#00c853;border:none;font-weight:bold}
 .box{background:#1e1e1e;padding:15px;border-radius:10px;margin-bottom:15px}
 ul{padding-left:18px}
-hr{border:0;border-top:1px solid #333;margin:15px 0}
-.small{font-size:14px;color:#ccc}
+.card{background:#000;padding:10px;border-radius:8px;margin-bottom:10px}
+.small{font-size:13px;color:#bbb}
 </style>
 </head>
 
@@ -22,235 +25,170 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 
 <h1>Precificação 3D</h1>
 
-<button onclick="show('estoque')">Estoque</button>
 <button onclick="show('projeto')">Projeto</button>
-<button onclick="show('config')">Custos</button>
-<button onclick="show('relatorio')">Relatório</button>
-
-<!-- ================= ESTOQUE ================= -->
-<section id="estoque" class="box active">
-<h2>Filamentos</h2>
-
-<input id="f_nome" placeholder="Nome do filamento">
-<input id="f_preco" type="number" step="0.01" placeholder="Preço por grama (R$)">
-<input id="f_saldo" type="number" placeholder="Saldo (g)">
-<button onclick="addFilamento()">Adicionar</button>
-
-<ul id="listaEstoque"></ul>
-</section>
+<button onclick="show('custos')">Custos</button>
+<button onclick="show('painel')">Painel</button>
+<button onclick="show('estoque')">Estoque</button>
 
 <!-- ================= PROJETO ================= -->
-<section id="projeto" class="box">
+<section id="projeto" class="box active">
 <h2>Projeto</h2>
 
-<label>Modo</label>
 <select id="modo">
   <option value="simular">Simular</option>
-  <option value="realizar">Realizar (baixa estoque)</option>
+  <option value="realizar">Realizar</option>
 </select>
 
-<label>Filamento</label>
+<select id="canal">
+  <option value="direto">Venda Direta</option>
+  <option value="shopee">Shopee</option>
+  <option value="ml">Mercado Livre</option>
+</select>
+
 <select id="fil"></select>
-
-<label>Peso (g)</label>
-<input id="peso" type="number">
-
-<label>Horas de impressão</label>
-<input id="horas" type="number">
-
+<input id="peso" type="number" placeholder="Peso (g)">
+<input id="horas" type="number" placeholder="Horas">
 <button onclick="calcular()">Calcular</button>
 
-<hr>
 <div id="resultado"></div>
 </section>
 
-<!-- ================= CONFIG ================= -->
-<section id="config" class="box">
-<h2>Custos e Margem</h2>
+<!-- ================= CUSTOS ================= -->
+<section id="custos" class="box">
+<h2>Custos</h2>
 
-<input id="c_maquina" type="number" placeholder="Valor da máquina (R$)">
-<input id="c_vida" type="number" placeholder="Vida útil (horas)">
-<input id="c_luz" type="number" step="0.01" placeholder="Energia R$/hora">
-<input id="c_mao" type="number" step="0.01" placeholder="Mão de obra R$/hora">
-<input id="c_emb" type="number" step="0.01" placeholder="Embalagem (R$)">
-<input id="c_margem" type="number" placeholder="Margem de lucro (%)">
+<input id="c_maquina" placeholder="Máquina (R$)">
+<input id="c_vida" placeholder="Vida útil (h)">
+<input id="c_luz" placeholder="Energia R$/h">
+<input id="c_mao" placeholder="Mão de obra R$/h">
+<input id="c_emb" placeholder="Embalagem (R$)">
+<input id="c_margem" placeholder="Margem (%)">
+
+<h3>Shopee</h3>
+<input id="s_pct" placeholder="% Shopee">
+<input id="s_fix" placeholder="Taxa fixa Shopee">
+
+<h3>Mercado Livre</h3>
+<input id="m_pct" placeholder="% ML">
+<input id="m_fix" placeholder="Taxa fixa ML">
 
 <button onclick="salvarConfig()">Salvar custos</button>
 </section>
 
-<!-- ================= RELATÓRIO ================= -->
-<section id="relatorio" class="box">
-<h2>Relatório de Projetos</h2>
-<ul id="listaRelatorio"></ul>
+<!-- ================= PAINEL ================= -->
+<section id="painel" class="box">
+<h2>Painel Financeiro</h2>
+
+<div class="card">Faturamento: R$ <span id="fat">0</span></div>
+<div class="card">Custos: R$ <span id="cust">0</span></div>
+<div class="card">Lucro: R$ <span id="luc">0</span></div>
+<div class="card">Projetos: <span id="qtd">0</span></div>
+</section>
+
+<!-- ================= ESTOQUE ================= -->
+<section id="estoque" class="box">
+<h2>Estoque</h2>
+<ul id="listaEstoque"></ul>
 </section>
 
 <script>
-/* ================= BACKEND ================= */
-const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
+/* ===== BACKEND ===== */
+const FORM_URL="https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
 const ENTRY_ACTION="entry.1318253980";
 const ENTRY_PAYLOAD="entry.1973534829";
 const API_URL="https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
 
-/* ================= ESTADO PADRÃO ================= */
-const ESTADO_PADRAO = {
-  estoque: [],
-  config: {
-    maquina:4200,
-    vida:8000,
-    luz:0.85,
-    mao:5,
-    embalagem:5,
-    margem:150
-  },
-  relatorio: []
+/* ===== ESTADO ===== */
+let estado={
+  estoque:[],
+  relatorio:[],
+  config:{
+    maquina:4200,vida:8000,luz:0.85,mao:5,emb:5,margem:150,
+    shopee:{pct:12,fix:4},
+    ml:{pct:16,fix:6}
+  }
 };
 
-let estado = JSON.parse(JSON.stringify(ESTADO_PADRAO));
-
-/* ================= NAVEGAÇÃO ================= */
+/* ===== UI ===== */
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-/* ================= BACKEND ================= */
-async function salvarEstado(){
+/* ===== BACKEND ===== */
+async function salvar(){
   const f=new FormData();
   f.append(ENTRY_ACTION,"save");
   f.append(ENTRY_PAYLOAD,JSON.stringify(estado));
   await fetch(FORM_URL,{method:"POST",body:f,mode:"no-cors"});
 }
-
-async function carregarEstado(){
-  const r = await fetch(API_URL);
-  const recebido = await r.json();
-
-  // 🔥 MERGE SEGURO (CORREÇÃO DO BUG)
-  estado = {
-    estoque: recebido.estoque || [],
-    config: {
-      ...ESTADO_PADRAO.config,
-      ...(recebido.config || {})
-    },
-    relatorio: recebido.relatorio || []
-  };
-
+async function carregar(){
+  const r=await fetch(API_URL);
+  const d=await r.json();
+  estado={...estado,...d};
   render();
 }
 
-/* ================= ESTOQUE ================= */
-function addFilamento(){
-  if(!f_nome.value || f_preco.value<=0 || f_saldo.value<=0){
-    alert("Preencha corretamente");
-    return;
-  }
-
-  estado.estoque.push({
-    nome:f_nome.value,
-    preco:+f_preco.value,
-    saldo:+f_saldo.value
-  });
-
-  salvarEstado().then(carregarEstado);
-
-  f_nome.value="";
-  f_preco.value="";
-  f_saldo.value="";
-}
-
-/* ================= CONFIG ================= */
-function salvarConfig(){
-  estado.config={
-    maquina:+c_maquina.value,
-    vida:+c_vida.value,
-    luz:+c_luz.value,
-    mao:+c_mao.value,
-    embalagem:+c_emb.value,
-    margem:+c_margem.value
-  };
-  salvarEstado();
-  alert("Custos salvos");
-}
-
-/* ================= PROJETO ================= */
+/* ===== PROJETO ===== */
 function calcular(){
-  if(estado.estoque.length===0){
-    alert("Cadastre um filamento");
-    return;
-  }
-
   const f=estado.estoque[fil.value];
-  const p=+peso.value;
-  const h=+horas.value;
+  const p=+peso.value,h=+horas.value;
+  const c=estado.config;
 
-  if(p<=0||h<=0){
-    alert("Valores inválidos");
-    return;
+  let custo =
+    (p*f.preco) +
+    (h*(c.luz+c.mao)) +
+    (h*(c.maquina/c.vida)) +
+    c.emb;
+
+  let preco=custo*(1+c.margem/100);
+
+  if(canal.value==="shopee"){
+    preco+=preco*(c.shopee.pct/100)+c.shopee.fix;
+  }
+  if(canal.value==="ml"){
+    preco+=preco*(c.ml.pct/100)+c.ml.fix;
   }
 
-  if(modo.value==="realizar" && p>f.saldo){
-    alert("Estoque insuficiente");
-    return;
-  }
-
-  const dep=(estado.config.maquina/estado.config.vida)*h;
-  const energia=estado.config.luz*h;
-  const mao=estado.config.mao*h;
-  const filamento=f.preco*p;
-  const embalagem=estado.config.embalagem;
-
-  const custo=dep+energia+mao+filamento+embalagem;
-  const preco=custo*(1+estado.config.margem/100);
-
-  resultado.innerHTML=`
-    <div class="small">
-      Filamento: R$ ${filamento.toFixed(2)}<br>
-      Energia: R$ ${energia.toFixed(2)}<br>
-      Mão de obra: R$ ${mao.toFixed(2)}<br>
-      Depreciação: R$ ${dep.toFixed(2)}<br>
-      Embalagem: R$ ${embalagem.toFixed(2)}
-    </div>
-    <hr>
-    <strong>Preço final: R$ ${preco.toFixed(2)}</strong>
-  `;
+  resultado.innerHTML=`Preço final: <strong>R$ ${preco.toFixed(2)}</strong>`;
 
   if(modo.value==="realizar"){
     f.saldo-=p;
-    estado.relatorio.push({
-      data:new Date().toLocaleString(),
-      filamento:f.nome,
-      peso:p,
-      preco:preco.toFixed(2)
-    });
-    salvarEstado().then(carregarEstado);
+    estado.relatorio.push({preco,custo,canal:canal.value});
+    salvar().then(carregar);
   }
 }
 
-/* ================= RENDER ================= */
-function render(){
-  listaEstoque.innerHTML="";
-  fil.innerHTML="";
-  estado.estoque.forEach((f,i)=>{
-    listaEstoque.innerHTML+=`<li>${f.nome} — ${f.saldo} g</li>`;
-    fil.innerHTML+=`<option value="${i}">${f.nome}</option>`;
-  });
-
-  listaRelatorio.innerHTML="";
+/* ===== PAINEL ===== */
+function atualizarPainel(){
+  let fat=0,cust=0;
   estado.relatorio.forEach(r=>{
-    listaRelatorio.innerHTML+=`<li>${r.data} | ${r.filamento} | ${r.peso}g | R$ ${r.preco}</li>`;
+    fat+=r.preco;
+    cust+=r.custo;
   });
-
-  c_maquina.value=estado.config.maquina;
-  c_vida.value=estado.config.vida;
-  c_luz.value=estado.config.luz;
-  c_mao.value=estado.config.mao;
-  c_emb.value=estado.config.embalagem;
-  c_margem.value=estado.config.margem;
+  fat.textContent=fat.toFixed(2);
+  cust.textContent=cust.toFixed(2);
+  luc.textContent=(fat-cust).toFixed(2);
+  qtd.textContent=estado.relatorio.length;
 }
 
-/* ================= INIT ================= */
-carregarEstado();
+/* ===== RENDER ===== */
+function render(){
+  fil.innerHTML="";
+  estado.estoque.forEach((f,i)=>{
+    fil.innerHTML+=`<option value="${i}">${f.nome}</option>`;
+  });
+  listaEstoque.innerHTML=estado.estoque.map(f=>`<li>${f.nome} — ${f.saldo}g</li>`).join("");
+  atualizarPainel();
+}
+
+/* ===== INIT ===== */
+carregar();
+
+/* ===== PWA ===== */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
