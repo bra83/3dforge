@@ -3,195 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_LOGISTICS_v3.9</title>
+    <title>3D_TERMINAL_PRO_v4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --neon-green: #00ff41; --dark-bg: #0d0208; --panel-bg: #161b22; }
-        body { background-color: var(--dark-bg); color: var(--neon-green); font-family: monospace; padding: 10px; }
-        .card { background-color: var(--panel-bg); border: 1px solid var(--neon-green); border-radius: 4px; padding: 15px; margin-bottom: 15px; }
-        input, select { background-color: #000; border: 1px solid var(--neon-green); color: var(--neon-green); padding: 8px; width: 100%; margin-bottom: 8px; outline: none; }
-        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; border: 1px solid var(--neon-green); transition: 0.2s; }
-        .btn-main { background-color: var(--neon-green); color: #000; }
-        .tab-btn { padding: 8px; cursor: pointer; border: 1px solid #333; flex-grow: 1; text-align: center; font-size: 0.7rem; opacity: 0.6; }
-        .active-tab { background-color: var(--neon-green); color: #000; font-weight: bold; opacity: 1; }
-        .content-section { display: none; }
-        .content-section.active { display: block; }
-        .progress-bg { background-color: #333; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; background-color: var(--neon-green); transition: width 0.5s; }
-        label { font-size: 0.65rem; opacity: 0.8; }
+        :root { --neon: #00ff41; --bg: #0d0208; --card: #161b22; }
+        body { background-color: var(--bg); color: var(--neon); font-family: monospace; padding: 10px; }
+        .card { background-color: var(--card); border: 1px solid var(--neon); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        input, select { background-color: #000; border: 1px solid var(--neon); color: var(--neon); padding: 8px; width: 100%; margin-bottom: 10px; outline: none; }
+        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border: 1px solid var(--neon); text-transform: uppercase; }
+        .btn-main { background-color: var(--neon); color: #000; }
+        .tab-btn { padding: 8px; cursor: pointer; border: 1px solid #333; flex: 1; text-align: center; font-size: 0.7rem; }
+        .active { background-color: var(--neon); color: #000; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="max-w-lg mx-auto">
 
-    <header class="mb-4 text-center border-b border-green-900 pb-2">
-        <h1 class="text-base font-bold tracking-widest text-white">3D_LOGISTICS_v3.9</h1>
-    </header>
+    <header class="text-center mb-4 border-b border-green-900 pb-2 font-bold">CORE_SYSTEM_v4.0</header>
 
     <nav class="flex gap-1 mb-4">
-        <div id="btn-1" class="tab-btn active-tab" onclick="switchTab(1)">CALC</div>
-        <div id="btn-2" class="tab-btn" onclick="switchTab(2)">ESTOQUE</div>
-        <div id="btn-3" class="tab-btn" onclick="switchTab(3)">CONFIG</div>
+        <div id="t1" class="tab-btn active" onclick="tab(1)">CALC</div>
+        <div id="t2" class="tab-btn" onclick="tab(2)">ESTOQUE</div>
+        <div id="t3" class="tab-btn" onclick="tab(3)">CONFIG</div>
     </nav>
 
-    <div id="content-1" class="content-section active">
+    <div id="c1" class="tab-content">
         <div class="card">
-            <label>> MATERIAL</label>
-            <select id="selectMaterial" onchange="calcular()"></select>
+            <label>MATERIAL</label>
+            <select id="selMat" onchange="calc()"></select>
             <div class="grid grid-cols-2 gap-2">
-                <div><label>> PESO(G)</label><input type="number" id="pesoPeca" oninput="calcular()" value="0"></div>
-                <div><label>> TEMPO(H)</label><input type="number" id="tempoHoras" oninput="calcular()" value="0"></div>
+                <input type="number" id="p" placeholder="PESO(G)" oninput="calc()">
+                <input type="number" id="t" placeholder="HORAS" oninput="calc()">
             </div>
-            <label>> CANAL_VENDA</label>
-            <select id="mkt" onchange="calcular()">
-                <option value="direta">VENDA DIRETA</option>
+            <select id="m" onchange="calc()">
+                <option value="direta">DIRETA</option>
                 <option value="ml">MERCADO LIVRE</option>
                 <option value="shopee">SHOPEE</option>
             </select>
-            <div class="p-3 bg-black border border-green-900 rounded mb-4 text-[0.7rem] space-y-1">
-                <p>CUSTO_PROD (C/ DEPREC): <span id="resCusto">R$ 0,00</span></p>
-                <p class="text-lg font-bold text-white">VENDA: <span id="resVenda" class="text-green-400">R$ 0,00</span></p>
+            <div class="p-3 bg-black border border-green-900 mb-4 text-xs">
+                <p>CUSTO: <span id="resC">R$ 0,00</span></p>
+                <p class="text-lg font-bold">VENDA: <span id="resV">R$ 0,00</span></p>
             </div>
-            <button class="btn btn-main" onclick="registrarPedido()">REGISTRAR_VENDA</button>
+            <button class="btn btn-main" onclick="sendP()">REGISTRAR VENDA</button>
         </div>
     </div>
 
-    <div id="content-2" class="content-section">
+    <div id="c2" class="tab-content hidden">
         <div class="card">
-            <h2 class="mb-2 text-xs font-bold">> ENTRADA_FILAMENTO</h2>
-            <input type="text" id="novoNome" placeholder="NOME/COR">
-            <input type="number" id="novoPreco" placeholder="PREÇO_ROLO">
-            <input type="number" id="novoPeso" placeholder="PESO_TOTAL_G">
-            <button class="btn btn-main" onclick="adicionarFilamento()">GRAVAR_PLANILHA</button>
+            <h2 class="mb-2 text-xs font-bold">> NOVO_FILAMENTO</h2>
+            <input type="text" id="nN" placeholder="NOME/COR">
+            <input type="number" id="nP" placeholder="PREÇO ROLO">
+            <input type="number" id="nW" placeholder="PESO TOTAL G">
+            <button class="btn btn-main" onclick="sendF()">GRAVAR NA PLANILHA</button>
         </div>
-        <div class="card" id="listaEstoque"></div>
+        <div class="card" id="list"></div>
     </div>
 
-    <div id="content-3" class="content-section">
+    <div id="c3" class="tab-content hidden">
         <div class="card">
-            <h2 class="mb-4 text-xs font-bold">> PARAMETROS_DE_CUSTO</h2>
-            
-            <label>VALOR_DA_MAQUINA (R$)</label>
-            <input type="number" id="cfgMaqVal" value="2000">
-
-            <label>VIDA_UTIL_ESTIMADA (HORAS)</label>
-            <input type="number" id="cfgVidaH" value="5000">
-
-            <label>MÃO_DE_OBRA (R$/H)</label>
-            <input type="number" id="cfgMaoObra" value="15">
-
-            <label>LUCRO (%)</label>
-            <input type="number" id="cfgLucroPerc" value="100">
-
-            <div class="grid grid-cols-2 gap-2 mt-2">
-                <div><label>LUZ(KWH)</label><input type="number" id="cfgKwh" value="0.85"></div>
-                <div><label>CONSUMO(W)</label><input type="number" id="cfgConsumo" value="150"></div>
-            </div>
-
-            <button class="btn btn-main mt-4" onclick="salvarConfigLocal()">SALVAR_CONFIGURAÇÕES</button>
+            <label>MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
+            <label>MAQUINA(R$)</label><input type="number" id="cMV" value="2000">
+            <label>VIDA UTIL(H)</label><input type="number" id="cVU" value="5000">
+            <label>ENERGIA(KWH)</label><input type="number" id="cKW" value="0.85">
+            <label>LUCRO(%)</label><input type="number" id="cL" value="100">
+            <button class="btn btn-main" onclick="saveL()">SALVAR CONFIGS</button>
         </div>
     </div>
 
     <script>
-        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
-        let dadosEstoque = [];
+        const URL = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+        let db = [];
 
-        function switchTab(n) {
-            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
-            document.getElementById('content-' + n).classList.add('active');
-            document.getElementById('btn-' + n).classList.add('active-tab');
+        function tab(n){
+            document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('hidden', i+1!==n));
+            document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', i+1!==n));
         }
 
-        function carregarConfigLocal() {
-            const keys = ['cfgMaoObra', 'cfgLucroPerc', 'cfgKwh', 'cfgConsumo', 'cfgMaqVal', 'cfgVidaH'];
-            keys.forEach(key => {
-                const saved = localStorage.getItem(key);
-                if (saved) document.getElementById(key).value = saved;
+        function saveL(){
+            ['cMO','cMV','cVU','cKW','cL'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
+            alert("CONFIGS SALVAS LOCALMENTE");
+            calc();
+        }
+
+        async function load(){
+            ['cMO','cMV','cVU','cKW','cL'].forEach(k=>{if(localStorage.getItem(k)) document.getElementById(k).value=localStorage.getItem(k)});
+            const r = await fetch(URL);
+            db = await r.json();
+            const s = document.getElementById('selMat');
+            const l = document.getElementById('list');
+            s.innerHTML = ""; l.innerHTML = "ESTOQUE:<br>";
+            db.slice(1).forEach(i=>{
+                s.innerHTML+=`<option value="${i[0]}">${i[0]}</option>`;
+                l.innerHTML+=`<div class="text-[10px] mb-1">${i[0]}: ${i[3]}g</div>`;
             });
+            calc();
         }
 
-        function salvarConfigLocal() {
-            const keys = ['cfgMaoObra', 'cfgLucroPerc', 'cfgKwh', 'cfgConsumo', 'cfgMaqVal', 'cfgVidaH'];
-            keys.forEach(key => localStorage.setItem(key, document.getElementById(key).value));
-            alert("SISTEMA: PARAMETROS ATUALIZADOS.");
-            calcular();
+        function calc(){
+            const mat = db.find(i=>i[0]===document.getElementById('selMat').value) || ["-",120,1000,1000];
+            const peso = parseFloat(document.getElementById('p').value)||0;
+            const horas = parseFloat(document.getElementById('t').value)||0;
+            const cM = (peso/mat[2])*mat[1];
+            const cL = (150/1000)*horas*parseFloat(document.getElementById('cKW').value);
+            const cD = (parseFloat(document.getElementById('cMV').value)/parseFloat(document.getElementById('cVU').value))*horas;
+            const cT = cM + cL + cD + (parseFloat(document.getElementById('cMO').value)*horas);
+            let v = cT * (1+(parseFloat(document.getElementById('cL').value)/100));
+            if(document.getElementById('m').value==='ml') v=(v+6)/0.83;
+            if(document.getElementById('m').value==='shopee') v=v/0.80;
+            document.getElementById('resC').innerText="R$ "+cT.toFixed(2);
+            document.getElementById('resV').innerText="R$ "+v.toFixed(2);
         }
 
-        async function carregarDados() {
-            try {
-                const resp = await fetch(URL_SCRIPT);
-                dadosEstoque = await resp.json();
-                atualizarUI();
-                calcular();
-            } catch (e) { console.error("Erro na leitura."); }
+        async function sendF(){
+            const d = {acao:"ADICIONAR_FILAMENTO", material:document.getElementById('nN').value, preco:document.getElementById('nP').value, peso:document.getElementById('nW').value};
+            await fetch(URL,{method:'POST', mode:'no-cors', body:JSON.stringify(d)});
+            alert("SOLICITAÇÃO ENVIADA! AGUARDE 5s E RECARREGUE.");
+            setTimeout(load, 5000);
         }
 
-        function atualizarUI() {
-            const select = document.getElementById('selectMaterial');
-            const lista = document.getElementById('listaEstoque');
-            select.innerHTML = "";
-            lista.innerHTML = "";
-            dadosEstoque.slice(1).forEach(item => {
-                const perc = (item[3] / item[2]) * 100;
-                select.innerHTML += `<option value="${item[0]}">${item[0]}</option>`;
-                lista.innerHTML += `<div class="mb-2 text-[0.7rem]">${item[0]}<div class="progress-bg"><div class="progress-fill" style="width: ${perc}%"></div></div></div>`;
-            });
-        }
-
-        function calcular() {
-            const matNome = document.getElementById('selectMaterial').value;
-            const mat = dadosEstoque.find(i => i[0] === matNome) || ["-", 120, 1000, 1000];
-            
-            const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
-            const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
-            
-            // Lógica de Depreciação
-            const maqVal = parseFloat(document.getElementById('cfgMaqVal').value) || 0;
-            const vidaH = parseFloat(document.getElementById('cfgVidaH').value) || 1;
-            const custoDeprec = (maqVal / vidaH) * horas;
-
-            const cMat = (peso / mat[2]) * mat[1];
-            const cLuz = (parseFloat(document.getElementById('cfgConsumo').value) / 1000) * horas * parseFloat(document.getElementById('cfgKwh').value);
-            const cTrabalho = parseFloat(document.getElementById('cfgMaoObra').value) * horas;
-            
-            const totalCusto = cMat + cLuz + cTrabalho + custoDeprec;
-            let venda = totalCusto * ((parseFloat(document.getElementById('cfgLucroPerc').value) / 100) + 1);
-
-            if(document.getElementById('mkt').value === 'ml') venda = (venda + 6) / 0.83;
-            if(document.getElementById('mkt').value === 'shopee') venda = venda / 0.80;
-
-            document.getElementById('resCusto').innerText = `R$ ${totalCusto.toFixed(2)}`;
-            document.getElementById('resVenda').innerText = `R$ ${venda.toFixed(2)}`;
-        }
-
-        async function adicionarFilamento() {
-            const payload = {
-                acao: "ADICIONAR_FILAMENTO",
-                material: document.getElementById('novoNome').value,
-                preco: document.getElementById('novoPreco').value,
-                peso: document.getElementById('novoPeso').value
-            };
-            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            alert("COMANDO ENVIADO! Verifique a planilha.");
-            setTimeout(carregarDados, 2000);
-        }
-
-        async function registrarPedido() {
-            const payload = {
-                acao: "REGISTRAR_PEDIDO",
-                material: document.getElementById('selectMaterial').value,
-                pesoGasto: document.getElementById('pesoPeca').value,
-                custo: document.getElementById('resCusto').innerText,
-                precoVenda: document.getElementById('resVenda').innerText,
-                mkt: document.getElementById('mkt').value
-            };
-            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        async function sendP(){
+            const d = {acao:"REGISTRAR_PEDIDO", material:document.getElementById('selMat').value, pesoGasto:document.getElementById('p').value, custo:document.getElementById('resC').innerText, precoVenda:document.getElementById('resV').innerText, mkt:document.getElementById('m').innerText};
+            await fetch(URL,{method:'POST', mode:'no-cors', body:JSON.stringify(d)});
             alert("PEDIDO ENVIADO!");
-            setTimeout(carregarDados, 2000);
+            setTimeout(load, 5000);
         }
 
-        carregarConfigLocal();
-        carregarDados();
+        load();
     </script>
 </body>
 </html>
