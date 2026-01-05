@@ -3,56 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_LOGISTICS_TERMINAL</title>
+    <title>3D_LOGISTICS_v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --neon: #00ff41; --bg: #0d0208; }
         body { background-color: var(--bg); color: var(--neon); font-family: monospace; padding: 15px; }
         .card { background-color: #161b22; border: 1px solid var(--neon); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
         input, select { background-color: #000; border: 1px solid var(--neon); color: var(--neon); padding: 10px; width: 100%; margin-bottom: 10px; outline: none; }
-        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border: 1px solid var(--neon); text-transform: uppercase; }
-        .active { background-color: var(--neon); color: #000; }
+        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border: 1px solid var(--neon); text-transform: uppercase; transition: 0.3s; }
+        .btn-active { background-color: var(--neon); color: #000; }
+        .tab-btn { padding: 10px; cursor: pointer; border: 1px solid #333; flex: 1; text-align: center; font-size: 0.7rem; }
+        .active { background-color: var(--neon); color: #000; font-weight: bold; }
         .hidden { display: none; }
-        label { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; }
+        label { font-size: 0.7rem; opacity: 0.8; }
     </style>
 </head>
 <body class="max-w-lg mx-auto">
 
     <nav class="flex gap-1 mb-4">
-        <div id="t1" class="flex-1 text-center p-2 border border-green-900 active" onclick="tab(1)">CALC</div>
-        <div id="t2" class="flex-1 text-center p-2 border border-green-900" onclick="tab(2)">ESTOQUE</div>
-        <div id="t3" class="flex-1 text-center p-2 border border-green-900" onclick="tab(3)">CONFIG</div>
+        <div id="t1" class="tab-btn active" onclick="switchTab(1)">CALC</div>
+        <div id="t2" class="tab-btn" onclick="switchTab(2)">ESTOQUE</div>
+        <div id="t3" class="tab-btn" onclick="switchTab(3)">CONFIG</div>
     </nav>
 
     <div id="c1" class="tab-content">
         <div class="card">
-            <label>FILAMENTO</label>
-            <select id="selMat" onchange="calc()"></select>
+            <label>MATERIAL</label><select id="selMat" onchange="calcular()"></select>
             <div class="grid grid-cols-2 gap-2">
-                <div><label>PESO (G)</label><input type="number" id="p" oninput="calc()"></div>
-                <div><label>TEMPO (H)</label><input type="number" id="t" oninput="calc()"></div>
+                <div><label>PESO (G)</label><input type="number" id="p" oninput="calcular()" value="0"></div>
+                <div><label>TEMPO (H)</label><input type="number" id="t" oninput="calcular()" value="0"></div>
             </div>
             <label>MARKETPLACE</label>
-            <select id="m" onchange="calc()">
+            <select id="m" onchange="calcular()">
                 <option value="direta">VENDA DIRETA</option>
-                <option value="ml">MERCADO LIVRE (17% + R$6)</option>
-                <option value="shopee">SHOPEE (20%)</option>
+                <option value="ml">MERCADO LIVRE</option>
+                <option value="shopee">SHOPEE</option>
             </select>
-            <div class="p-3 bg-black border border-green-900 mb-4 text-xs space-y-1">
-                <p>CUSTO TOTAL: <span id="resC">R$ 0,00</span></p>
-                <p class="text-lg font-bold">VENDA SUGERIDA: <span id="resV">R$ 0,00</span></p>
+            <div class="p-3 bg-black border border-green-900 mb-4 text-xs">
+                <p>CUSTO PROD: <span id="resC">R$ 0,00</span></p>
+                <p class="text-xl font-bold">VENDA: <span id="resV">R$ 0,00</span></p>
             </div>
-            <button class="btn active" onclick="sendV()">REGISTRAR VENDA</button>
+            <button class="btn btn-active" onclick="registrarPedido()">REGISTRAR VENDA</button>
         </div>
     </div>
 
     <div id="c2" class="tab-content hidden">
         <div class="card">
-            <h2 class="mb-2 font-bold text-xs">> NOVO MATERIAL</h2>
+            <h2 class="mb-2 text-xs font-bold">> NOVO FILAMENTO</h2>
             <input type="text" id="nN" placeholder="NOME/COR">
             <input type="number" id="nP" placeholder="PREÇO ROLO">
             <input type="number" id="nW" placeholder="PESO TOTAL G">
-            <button class="btn active" onclick="sendA()">SALVAR NA PLANILHA</button>
+            <button class="btn btn-active" onclick="adicionarFilamento()">GRAVAR NA PLANILHA</button>
         </div>
         <div class="card" id="list">CARREGANDO...</div>
     </div>
@@ -61,10 +62,10 @@
         <div class="card">
             <label>LUCRO (%)</label><input type="number" id="cL" value="100">
             <label>MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
-            <label>VALOR MÁQUINA</label><input type="number" id="cVM" value="2000">
+            <label>MAQUINA (R$)</label><input type="number" id="cVM" value="2000">
             <label>VIDA ÚTIL (H)</label><input type="number" id="cVU" value="5000">
             <label>ENERGIA (KWH)</label><input type="number" id="cEK" value="0.85">
-            <button class="btn active" onclick="save()">SALVAR CONFIGS</button>
+            <button class="btn btn-active" onclick="save()">SALVAR CONFIGS</button>
         </div>
     </div>
 
@@ -72,72 +73,72 @@
         const URL_API = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
         let db = [];
 
-        function tab(n){
+        function switchTab(n){
             [1,2,3].forEach(i=>{
                 document.getElementById('c'+i).classList.toggle('hidden', i!==n);
                 document.getElementById('t'+i).classList.toggle('active', i===n);
             });
         }
 
-        async function load(){
+        function save(){
+            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
+            alert("SISTEMA: CONFIGURAÇÕES LOCAIS ATUALIZADAS.");
+            calcular();
+        }
+
+        async function carregarDados(){
             ['cL','cMO','cVM','cVU','cEK'].forEach(k=>{if(localStorage.getItem(k)) document.getElementById(k).value=localStorage.getItem(k)});
             const r = await fetch(URL_API);
             db = await r.json();
             const s = document.getElementById('selMat');
             const l = document.getElementById('list');
-            s.innerHTML = ""; l.innerHTML = "ESTOQUE ATUAL:<br><br>";
+            s.innerHTML = ""; l.innerHTML = "ESTOQUE:<br><br>";
             db.slice(1).forEach(i=>{
                 s.innerHTML+=`<option value="${i[0]}">${i[0]}</option>`;
                 l.innerHTML+=`<div class="text-[10px] mb-2 border-b border-green-900 pb-1">${i[0]}: ${i[3]}g</div>`;
             });
-            calc();
+            calcular();
         }
 
-        function calc(){
+        function calcular(){
             const mat = db.find(i=>i[0]===document.getElementById('selMat').value) || ["-",120,1000,1000];
-            const peso = parseFloat(document.getElementById('p').value)||0;
-            const horas = parseFloat(document.getElementById('t').value)||0;
-            const cM = (peso/mat[2])*mat[1];
-            const cL = (150/1000)*horas*parseFloat(document.getElementById('cEK').value);
-            const cD = (parseFloat(document.getElementById('cVM').value)/parseFloat(document.getElementById('cVU').value))*horas;
-            const cO = parseFloat(document.getElementById('cMO').value)*horas;
-            const cT = cM + cL + cD + cO;
-            let v = cT * (1+(parseFloat(document.getElementById('cL').value)/100));
+            const p = parseFloat(document.getElementById('p').value)||0;
+            const t = parseFloat(document.getElementById('t').value)||0;
+            const cM = (p/mat[2])*mat[1];
+            const cL = (150/1000)*t*parseFloat(document.getElementById('cEK').value);
+            const cD = (parseFloat(document.getElementById('cVM').value)/parseFloat(document.getElementById('cVU').value))*t;
+            const cO = parseFloat(document.getElementById('cMO').value)*t;
+            const total = cM + cL + cD + cO;
+            let v = total * (1+(parseFloat(document.getElementById('cL').value)/100));
             if(document.getElementById('m').value==='ml') v=(v+6)/0.83;
             if(document.getElementById('m').value==='shopee') v=v/0.80;
-            document.getElementById('resC').innerText="R$ "+cT.toFixed(2);
+            document.getElementById('resC').innerText="R$ "+total.toFixed(2);
             document.getElementById('resV').innerText="R$ "+v.toFixed(2);
         }
 
-        async function sendA(){
-            const n = document.getElementById('nN').value;
-            const p = document.getElementById('nP').value;
-            const w = document.getElementById('nW').value;
-            const link = `${URL_API}?acao=ADD&mat=${n}&pre=${p}&pes=${w}`;
+        async function adicionarFilamento(){
+            const mat = document.getElementById('nN').value;
+            const pre = document.getElementById('nP').value;
+            const pes = document.getElementById('nW').value;
+            const link = `${URL_API}?acao=ADICIONAR_FILAMENTO&material=${encodeURIComponent(mat)}&preco=${pre}&peso=${pes}`;
             await fetch(link, {mode: 'no-cors'});
-            alert("Sincronizando...");
-            setTimeout(load, 3000);
+            alert("COMANDO ENVIADO!");
+            setTimeout(carregarDados, 3000);
         }
 
-        async function sendV(){
+        async function registrarPedido(){
             const mat = document.getElementById('selMat').value;
             const psg = document.getElementById('p').value;
             const cus = document.getElementById('resC').innerText;
             const ven = document.getElementById('resV').innerText;
             const mkt = document.getElementById('m').value;
-            const link = `${URL_API}?acao=VENDA&mat=${mat}&psg=${psg}&cus=${cus}&ven=${ven}&mkt=${mkt}&pec=Impressao`;
+            const link = `${URL_API}?acao=REGISTRAR_PEDIDO&material=${encodeURIComponent(mat)}&pesoGasto=${psg}&custo=${cus}&precoVenda=${ven}&mkt=${mkt}`;
             await fetch(link, {mode: 'no-cors'});
-            alert("Venda registrada!");
-            setTimeout(load, 3000);
+            alert("PEDIDO REGISTRADO!");
+            setTimeout(carregarDados, 3000);
         }
 
-        function save(){
-            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
-            alert("Configurações locais salvas!");
-            calc();
-        }
-
-        load();
+        carregarDados();
     </script>
 </body>
 </html>
