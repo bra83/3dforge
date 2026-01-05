@@ -1,101 +1,57 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precificação 3D</title>
-
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>Precificação 3D</h1>
+<h2>Precificação 3D</h2>
 
-<div class="tabs">
-  <button onclick="showTab('projeto')">Projeto</button>
-  <button onclick="showTab('estoque')">Estoque</button>
-  <button onclick="showTab('relatorio')">Relatório</button>
-</div>
+<label>Filamento</label>
+<select id="filamento"></select>
 
-<!-- ================= PROJETO ================= -->
-<section id="projeto" class="card">
+<label>Peso (g)</label>
+<input type="number" id="peso">
 
-  <h2>Projeto</h2>
+<label>Tempo (h)</label>
+<input type="number" id="tempo">
 
-  <label>Modo</label>
-  <select id="modo">
-    <option value="simular">Simular</option>
-    <option value="real">Realizar</option>
-  </select>
+<button onclick="calcular()">Calcular</button>
 
-  <label>Filamento</label>
-  <select id="filamento"></select>
-
-  <label>Peso da peça (g)</label>
-  <input type="number" id="peso">
-
-  <label>Tempo de impressão (h)</label>
-  <input type="number" id="tempo">
-
-  <label>Marketplace</label>
-  <select id="market">
-    <option value="Shopee">Shopee</option>
-    <option value="Mercado Livre">Mercado Livre</option>
-  </select>
-
-  <label>Margem de lucro (%)</label>
-  <input type="number" id="margem" value="150">
-
-  <button onclick="calcularProjeto()">Calcular</button>
-  <button onclick="executarProjeto()">Executar Projeto</button>
-
-  <h2 id="resultado">Preço Final: R$ 0,00</h2>
-</section>
-
-<!-- ================= ESTOQUE ================= -->
-<section id="estoque" class="card hidden">
-
-  <h2>Estoque</h2>
-
-  <label>Nome do filamento</label>
-  <input id="nomeFil">
-
-  <label>Preço por grama (R$)</label>
-  <input id="precoFil" type="number" step="0.01">
-
-  <label>Saldo (g)</label>
-  <input id="saldoFil" type="number">
-
-  <button onclick="addFilamento()">Cadastrar Filamento</button>
-
-  <hr>
-
-  <ul id="listaEstoque"></ul>
-</section>
-
-<!-- ================= RELATÓRIO ================= -->
-<section id="relatorio" class="card hidden">
-  <h2>Relatório</h2>
-  <ul id="listaRelatorio"></ul>
-</section>
-
-<!-- ================= CONFIG GLOBAL ================= -->
-<script>
-  // ⚠️ COLE A URL DO APPS SCRIPT AQUI
-  window.API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
-</script>
+<h3 id="resultado"></h3>
 
 <script>
-  function showTab(id) {
-    document.getElementById("projeto").classList.add("hidden");
-    document.getElementById("estoque").classList.add("hidden");
-    document.getElementById("relatorio").classList.add("hidden");
-    document.getElementById(id).classList.remove("hidden");
+  const API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
+
+  async function carregarFilamentos() {
+    const r = await fetch(API_URL + "?action=estoque");
+    const data = await r.json();
+
+    const sel = document.getElementById("filamento");
+    sel.innerHTML = "";
+
+    data.forEach(f => {
+      sel.innerHTML += `<option value="${f[2]}">${f[1]} (${f[3]} g)</option>`;
+    });
   }
+
+  function calcular() {
+    const precoG = Number(filamento.value);
+    const peso = Number(document.getElementById("peso").value);
+    const tempo = Number(document.getElementById("tempo").value);
+
+    const custoMaterial = precoG * peso;
+    const custoMaquina = tempo * 0.73;
+    const custoTotal = custoMaterial + custoMaquina;
+
+    document.getElementById("resultado").innerText =
+      "Custo estimado: R$ " + custoTotal.toFixed(2);
+  }
+
+  carregarFilamentos();
 </script>
 
-<script src="app.js"></script>
 </body>
 </html>
