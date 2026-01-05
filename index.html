@@ -3,104 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Print Manager PRO</title>
+    <title>Grimório Industrial 3D</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
-        .card { background-color: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
-        input, select { background-color: #334155; border: 1px solid #475569; color: white; padding: 8px; border-radius: 6px; width: 100%; }
-        label { font-size: 0.875rem; color: #94a3b8; display: block; margin-bottom: 4px; }
-        .btn-primary { background-color: #3b82f6; color: white; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn-primary:hover { background-color: #2563eb; }
+        body { background-color: #0f172a; color: #f1f5f9; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 16px; }
+        input, select { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; border-radius: 8px; width: 100%; transition: 0.3s; }
+        input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        .btn-action { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: transform 0.2s; }
+        .btn-action:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-4 max-w-md mx-auto pb-24">
 
-    <header class="mb-6">
-        <h1 class="text-2xl font-bold text-blue-400">3D Manager PRO</h1>
-        <p class="text-slate-400 text-sm">Controle de Produção e Custos</p>
+    <header class="text-center my-6">
+        <h1 class="text-3xl font-bold text-blue-400">Arquiteto 3D</h1>
+        <p class="text-slate-400 text-sm italic">Gestão de Forja e Mercadorias</p>
     </header>
 
-    <div class="card">
-        <h2 class="text-lg font-semibold mb-4 text-white">Simular Impressão</h2>
-        
-        <div class="grid grid-cols-2 gap-4">
+    <div class="glass-card p-6 mb-6">
+        <h2 class="text-blue-300 font-semibold mb-4 flex items-center">⚙️ Configurações Base</h2>
+        <div class="grid grid-cols-2 gap-3">
             <div>
-                <label>Peso da Peça (g)</label>
-                <input type="number" id="pesoPeca" placeholder="Ex: 50" oninput="calcular()">
+                <label class="text-xs text-slate-400">Preço kWh (R$)</label>
+                <input type="number" id="cfgKwh" value="0.85" step="0.01" oninput="calcularTudo()">
             </div>
             <div>
-                <label>Tempo (horas)</label>
-                <input type="number" id="tempoHoras" placeholder="Ex: 5" oninput="calcular()">
+                <label class="text-xs text-slate-400">Consumo (Watts)</label>
+                <input type="number" id="cfgWatts" value="150" oninput="calcularTudo()">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Valor Máquina (R$)</label>
+                <input type="number" id="cfgMaq" value="2000" oninput="calcularTudo()">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Vida Útil (Horas)</label>
+                <input type="number" id="cfgVida" value="5000" oninput="calcularTudo()">
             </div>
         </div>
-
-        <div class="mt-4">
-            <label>Marketplace</label>
-            <select id="marketplace" onchange="calcular()">
-                <option value="direta">Venda Direta (0%)</option>
-                <option value="ml">Mercado Livre (17% + R$ 6,00)</option>
-                <option value="shopee">Shopee (20%)</option>
-            </select>
-        </div>
-
-        <div class="mt-6 p-4 bg-slate-800 rounded-lg">
-            <p class="text-sm text-slate-400">Custo de Produção: <span id="custoProducao" class="text-white font-mono">R$ 0,00</span></p>
-            <p class="text-sm text-slate-400">Preço Sugerido (Lucro 100%): <span id="precoSugerido" class="text-green-400 font-bold text-lg">R$ 0,00</span></p>
-        </div>
-
-        <button class="btn-primary mt-4" onclick="registrarPedido()">Registrar e Baixar Estoque</button>
     </div>
 
-    <div class="card">
-        <h2 class="text-lg font-semibold mb-2">Estoque de Filamento</h2>
-        <div id="listaEstoque" class="text-sm space-y-2 text-slate-300">
-            Carregando estoque...
+    <div class="glass-card p-6 mb-6">
+        <h2 class="text-green-300 font-semibold mb-4">🔮 Calculadora de Impressão</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="text-xs text-slate-400">Peso da Peça (gramas)</label>
+                <input type="number" id="pesoPeca" placeholder="Ex: 150" oninput="calcularTudo()">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Tempo Estimado (horas)</label>
+                <input type="number" id="tempoHoras" placeholder="Ex: 12" oninput="calcularTudo()">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Material Utilizado</label>
+                <select id="selMaterial" onchange="calcularTudo()">
+                    <option value="120">PLA (R$ 120/kg)</option>
+                    <option value="110">PETG (R$ 110/kg)</option>
+                    <option value="150">ABS (R$ 150/kg)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Local de Venda</label>
+                <select id="selMkt" onchange="calcularTudo()">
+                    <option value="direta">Venda Direta (0%)</option>
+                    <option value="ml">Mercado Livre (17% + R$ 6,00)</option>
+                    <option value="shopee">Shopee (20%)</option>
+                </select>
+            </div>
         </div>
+
+        <div class="mt-8 p-4 bg-slate-900/50 rounded-xl border border-blue-500/30">
+            <div class="flex justify-between text-sm mb-1">
+                <span>Custo Real:</span>
+                <span id="resCusto" class="font-mono text-slate-300">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between text-lg font-bold border-t border-slate-700 pt-2 mt-2">
+                <span class="text-blue-400">Preço de Venda:</span>
+                <span id="resVenda" class="text-green-400">R$ 0,00</span>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2 text-center">Cálculo: Custo + 100% de margem + Taxas do Market.</p>
+        </div>
+
+        <button onclick="enviarPedido()" class="btn-action w-full mt-6 py-4 rounded-xl font-bold shadow-lg shadow-blue-900/20">
+            REALIZAR PEDIDO / BAIXAR ESTOQUE
+        </button>
     </div>
 
     <script>
-        // CONFIGURAÇÕES GERAIS (Mude aqui seus valores)
-        const CONFIG = {
-            precoKwh: 0.85,
-            consumoW: 150, // Watts da impressora
-            valorMaquina: 1800,
-            vidaUtilHoras: 5000,
-            precoFilamentoKg: 120,
-            margemLucro: 2.0 // 100% de lucro
-        };
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
 
-        function calcular() {
-            const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
-            const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
-            const mkt = document.getElementById('marketplace').value;
+        function calcularTudo() {
+            // Entradas
+            const kwh = parseFloat(document.getElementById('cfgKwh').value) || 0;
+            const watts = parseFloat(document.getElementById('cfgWatts').value) || 0;
+            const vMaq = parseFloat(document.getElementById('cfgMaq').value) || 0;
+            const vidaH = parseFloat(document.getElementById('cfgVida').value) || 0;
 
-            // Fórmulas
-            const custoFilamento = (peso / 1000) * CONFIG.precoFilamentoKg;
-            const custoEnergia = (CONFIG.consumoW / 1000) * horas * CONFIG.precoKwh;
-            const custoDepreciacao = (CONFIG.valorMaquina / CONFIG.vidaUtilHoras) * horas;
+            const pesoG = parseFloat(document.getElementById('pesoPeca').value) || 0;
+            const tempoH = parseFloat(document.getElementById('tempoHoras').value) || 0;
+            const precoKg = parseFloat(document.getElementById('selMaterial').value) || 0;
+            const mkt = document.getElementById('selMkt').value;
+
+            // Fórmulas de Custo
+            const custoFilamento = (pesoG / 1000) * precoKg;
+            const custoLuz = (watts / 1000) * tempoH * kwh;
+            const custoVida = (vMaq / vidaH) * tempoH;
             
-            const custoTotal = custoFilamento + custoEnergia + custoDepreciacao;
-            let precoFinal = custoTotal * CONFIG.margemLucro;
+            const custoTotal = custoFilamento + custoLuz + custoVida;
+            let precoComLucro = custoTotal * 2; // Margem de 100%
 
-            // Aplicar Taxas de Marketplace
+            // Taxas Marketplace
+            let precoFinal = precoComLucro;
             if (mkt === 'ml') {
-                precoFinal = (precoFinal + 6) / 0.83;
+                precoFinal = (precoComLucro + 6) / 0.83;
             } else if (mkt === 'shopee') {
-                precoFinal = precoFinal / 0.80;
+                precoFinal = precoComLucro / 0.80;
             }
 
-            document.getElementById('custoProducao').innerText = `R$ ${custoTotal.toFixed(2)}`;
-            document.getElementById('precoSugerido').innerText = `R$ ${precoFinal.toFixed(2)}`;
+            document.getElementById('resCusto').innerText = "R$ " + custoTotal.toFixed(2);
+            document.getElementById('resVenda').innerText = "R$ " + precoFinal.toFixed(2);
         }
 
-       async function registrarPedido() {
-    // COLE O SEU URL ENTRE AS ASPAS ABAIXO
-    const urlScript = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
-    
-    // O resto do código continua igual...
+        async function enviarPedido() {
+            const pesoG = document.getElementById('pesoPeca').value;
+            const matTxt = document.getElementById('selMaterial').options[document.getElementById('selMaterial').selectedIndex].text;
+            
+            if(!pesoG) return alert("Insira o peso!");
+
+            const payload = {
+                peca: "Nova Impressão",
+                material: matTxt.split(' ')[0],
+                pesoGasto: parseFloat(pesoG),
+                custo: document.getElementById('resCusto').innerText,
+                precoVenda: document.getElementById('resVenda').innerText,
+                mkt: document.getElementById('selMkt').value
+            };
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                alert("Pedido registrado e estoque baixado!");
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao conectar com a planilha. Verifique a URL do Script.");
+            }
         }
     </script>
-
 </body>
 </html>
