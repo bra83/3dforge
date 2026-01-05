@@ -3,91 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_TERMINAL_PRO_v4.0</title>
+    <title>3D_LOGISTICS_v4.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --neon: #00ff41; --bg: #0d0208; --card: #161b22; }
-        body { background-color: var(--bg); color: var(--neon); font-family: monospace; padding: 10px; }
-        .card { background-color: var(--card); border: 1px solid var(--neon); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        :root { --neon: #00ff41; --bg: #0d0208; }
+        body { background-color: var(--bg); color: var(--neon); font-family: monospace; padding: 15px; }
+        .card { background-color: #161b22; border: 1px solid var(--neon); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
         input, select { background-color: #000; border: 1px solid var(--neon); color: var(--neon); padding: 8px; width: 100%; margin-bottom: 10px; outline: none; }
         .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border: 1px solid var(--neon); text-transform: uppercase; }
-        .btn-main { background-color: var(--neon); color: #000; }
-        .tab-btn { padding: 8px; cursor: pointer; border: 1px solid #333; flex: 1; text-align: center; font-size: 0.7rem; }
         .active { background-color: var(--neon); color: #000; }
         .hidden { display: none; }
     </style>
 </head>
 <body class="max-w-lg mx-auto">
 
-    <header class="text-center mb-4 border-b border-green-900 pb-2 font-bold">CORE_SYSTEM_v4.0</header>
-
     <nav class="flex gap-1 mb-4">
-        <div id="t1" class="tab-btn active" onclick="tab(1)">CALC</div>
-        <div id="t2" class="tab-btn" onclick="tab(2)">ESTOQUE</div>
-        <div id="t3" class="tab-btn" onclick="tab(3)">CONFIG</div>
+        <div id="t1" class="flex-1 text-center p-2 border border-green-900 active" onclick="tab(1)">CALC</div>
+        <div id="t2" class="flex-1 text-center p-2 border border-green-900" onclick="tab(2)">ESTOQUE</div>
+        <div id="t3" class="flex-1 text-center p-2 border border-green-900" onclick="tab(3)">CONFIG</div>
     </nav>
 
     <div id="c1" class="tab-content">
         <div class="card">
-            <label>MATERIAL</label>
             <select id="selMat" onchange="calc()"></select>
-            <div class="grid grid-cols-2 gap-2">
-                <input type="number" id="p" placeholder="PESO(G)" oninput="calc()">
-                <input type="number" id="t" placeholder="HORAS" oninput="calc()">
-            </div>
+            <input type="number" id="p" placeholder="PESO(G)" oninput="calc()">
+            <input type="number" id="t" placeholder="HORAS" oninput="calc()">
             <select id="m" onchange="calc()">
                 <option value="direta">DIRETA</option>
                 <option value="ml">MERCADO LIVRE</option>
                 <option value="shopee">SHOPEE</option>
             </select>
-            <div class="p-3 bg-black border border-green-900 mb-4 text-xs">
-                <p>CUSTO: <span id="resC">R$ 0,00</span></p>
-                <p class="text-lg font-bold">VENDA: <span id="resV">R$ 0,00</span></p>
+            <div class="p-2 border border-green-900 mb-4">
+                <p class="text-xs">CUSTO: <span id="resC">R$ 0,00</span></p>
+                <p class="text-xl font-bold">VENDA: <span id="resV">R$ 0,00</span></p>
             </div>
-            <button class="btn btn-main" onclick="sendP()">REGISTRAR VENDA</button>
+            <button class="btn active" onclick="sendP()">REGISTRAR VENDA</button>
         </div>
     </div>
 
     <div id="c2" class="tab-content hidden">
         <div class="card">
-            <h2 class="mb-2 text-xs font-bold">> NOVO_FILAMENTO</h2>
             <input type="text" id="nN" placeholder="NOME/COR">
             <input type="number" id="nP" placeholder="PREÇO ROLO">
             <input type="number" id="nW" placeholder="PESO TOTAL G">
-            <button class="btn btn-main" onclick="sendF()">GRAVAR NA PLANILHA</button>
+            <button class="btn active" onclick="sendF()">GRAVAR NA PLANILHA</button>
         </div>
-        <div class="card" id="list"></div>
+        <div class="card" id="list">Carregando estoque...</div>
     </div>
 
     <div id="c3" class="tab-content hidden">
         <div class="card">
-            <label>MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
-            <label>MAQUINA(R$)</label><input type="number" id="cMV" value="2000">
-            <label>VIDA UTIL(H)</label><input type="number" id="cVU" value="5000">
-            <label>ENERGIA(KWH)</label><input type="number" id="cKW" value="0.85">
-            <label>LUCRO(%)</label><input type="number" id="cL" value="100">
-            <button class="btn btn-main" onclick="saveL()">SALVAR CONFIGS</button>
+            <label class="text-[10px]">LUCRO(%)</label><input type="number" id="cL" value="100">
+            <label class="text-[10px]">MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
+            <button class="btn active" onclick="saveL()">SALVAR CONFIGS</button>
         </div>
     </div>
 
     <script>
-        const URL = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+        const URL_BASE = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
         let db = [];
 
         function tab(n){
-            document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('hidden', i+1!==n));
-            document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', i+1!==n));
-        }
-
-        function saveL(){
-            ['cMO','cMV','cVU','cKW','cL'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
-            alert("CONFIGS SALVAS LOCALMENTE");
-            calc();
+            [1,2,3].forEach(i=>{
+                document.getElementById('c'+i).classList.toggle('hidden', i!==n);
+                document.getElementById('t'+i).classList.toggle('active', i===n);
+            });
         }
 
         async function load(){
-            ['cMO','cMV','cVU','cKW','cL'].forEach(k=>{if(localStorage.getItem(k)) document.getElementById(k).value=localStorage.getItem(k)});
-            const r = await fetch(URL);
+            const r = await fetch(URL_BASE);
             db = await r.json();
             const s = document.getElementById('selMat');
             const l = document.getElementById('list');
@@ -104,9 +88,7 @@
             const peso = parseFloat(document.getElementById('p').value)||0;
             const horas = parseFloat(document.getElementById('t').value)||0;
             const cM = (peso/mat[2])*mat[1];
-            const cL = (150/1000)*horas*parseFloat(document.getElementById('cKW').value);
-            const cD = (parseFloat(document.getElementById('cMV').value)/parseFloat(document.getElementById('cVU').value))*horas;
-            const cT = cM + cL + cD + (parseFloat(document.getElementById('cMO').value)*horas);
+            const cT = cM + (parseFloat(document.getElementById('cMO').value)*horas);
             let v = cT * (1+(parseFloat(document.getElementById('cL').value)/100));
             if(document.getElementById('m').value==='ml') v=(v+6)/0.83;
             if(document.getElementById('m').value==='shopee') v=v/0.80;
@@ -115,17 +97,37 @@
         }
 
         async function sendF(){
-            const d = {acao:"ADICIONAR_FILAMENTO", material:document.getElementById('nN').value, preco:document.getElementById('nP').value, peso:document.getElementById('nW').value};
-            await fetch(URL,{method:'POST', mode:'no-cors', body:JSON.stringify(d)});
-            alert("SOLICITAÇÃO ENVIADA! AGUARDE 5s E RECARREGUE.");
-            setTimeout(load, 5000);
+            const n = document.getElementById('nN').value;
+            const p = document.getElementById('nP').value;
+            const w = document.getElementById('nW').value;
+            // O segredo: enviamos tudo no LINK
+            const link = `${URL_BASE}?acao=ADICIONAR_FILAMENTO&material=${n}&preco=${p}&peso=${w}`;
+            
+            alert("Enviando comando...");
+            await fetch(link, {mode: 'no-cors'});
+            
+            setTimeout(()=>{ alert("Comando enviado. Recarregue a página em 5 segundos."); load(); }, 2000);
         }
 
         async function sendP(){
-            const d = {acao:"REGISTRAR_PEDIDO", material:document.getElementById('selMat').value, pesoGasto:document.getElementById('p').value, custo:document.getElementById('resC').innerText, precoVenda:document.getElementById('resV').innerText, mkt:document.getElementById('m').innerText};
-            await fetch(URL,{method:'POST', mode:'no-cors', body:JSON.stringify(d)});
-            alert("PEDIDO ENVIADO!");
-            setTimeout(load, 5000);
+            const mat = document.getElementById('selMat').value;
+            const peso = document.getElementById('p').value;
+            const cust = document.getElementById('resC').innerText;
+            const vend = document.getElementById('resV').innerText;
+            const mkt = document.getElementById('m').value;
+            
+            const link = `${URL_BASE}?acao=REGISTRAR_PEDIDO&material=${mat}&pesoGasto=${peso}&custo=${cust}&precoVenda=${vend}&mkt=${mkt}`;
+            
+            await fetch(link, {mode: 'no-cors'});
+            alert("Pedido enviado!");
+            setTimeout(load, 2000);
+        }
+
+        function saveL(){
+            localStorage.setItem('cL', document.getElementById('cL').value);
+            localStorage.setItem('cMO', document.getElementById('cMO').value);
+            alert("Salvo!");
+            calc();
         }
 
         load();
