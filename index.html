@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Precificação 3D</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <h1>Precificação 3D</h1>
 
+<!-- ================= NAVEGAÇÃO ================= -->
 <div class="tabs">
   <button onclick="showTab('projeto')">Projeto</button>
   <button onclick="showTab('estoque')">Estoque</button>
+  <button onclick="showTab('relatorio')">Relatório</button>
 </div>
 
 <!-- ================= PROJETO ================= -->
@@ -33,10 +35,10 @@
   <select id="filamento"></select>
 
   <label>Peso da peça (g)</label>
-  <input type="number" id="peso" />
+  <input type="number" id="peso">
 
   <label>Tempo de impressão (h)</label>
-  <input type="number" id="tempo" />
+  <input type="number" id="tempo">
 
   <label>Marketplace</label>
   <select id="market">
@@ -45,7 +47,7 @@
   </select>
 
   <label>Margem de lucro (%)</label>
-  <input type="number" id="margem" value="150" />
+  <input type="number" id="margem" value="150">
 
   <button onclick="calcularProjeto()">Calcular</button>
   <button onclick="executarProjeto()">Executar Projeto</button>
@@ -60,27 +62,42 @@
   <h2>Estoque de Filamentos</h2>
 
   <label>Nome do filamento</label>
-  <input type="text" id="nomeFil" />
+  <input type="text" id="nomeFil">
 
   <label>Preço por grama (R$)</label>
-  <input type="number" step="0.01" id="precoFil" />
+  <input type="number" step="0.01" id="precoFil">
 
   <label>Saldo inicial (g)</label>
-  <input type="number" id="saldoFil" />
+  <input type="number" id="saldoFil">
 
   <button onclick="addFilamento()">Cadastrar Filamento</button>
 
-  <hr />
+  <hr>
 
   <ul id="listaEstoque"></ul>
 
 </section>
 
+<!-- ================= RELATÓRIO ================= -->
+<section id="relatorio" class="card hidden">
+
+  <h2>Relatório de Projetos</h2>
+
+  <p>Projetos realizados (dados vêm da planilha):</p>
+
+  <ul id="listaRelatorio">
+    <!-- (vamos preencher pelo app.js no próximo passo) -->
+  </ul>
+
+</section>
+
+<!-- ================= SCRIPT ================= -->
 <script>
-  function showTab(tabId) {
+  function showTab(id) {
     document.getElementById("projeto").classList.add("hidden");
     document.getElementById("estoque").classList.add("hidden");
-    document.getElementById(tabId).classList.remove("hidden");
+    document.getElementById("relatorio").classList.add("hidden");
+    document.getElementById(id).classList.remove("hidden");
   }
 </script>
 
