@@ -46,7 +46,7 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 <label>Modo</label>
 <select id="modo">
   <option value="simular">Simular</option>
-  <option value="realizar">Realizar</option>
+  <option value="realizar">Realizar (baixa estoque)</option>
 </select>
 
 <label>Filamento</label>
@@ -85,16 +85,17 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 </section>
 
 <script>
-/* ====== BACKEND ====== */
-const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
+/* ================= BACKEND ================= */
+const FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
 const ENTRY_ACTION="entry.1318253980";
 const ENTRY_PAYLOAD="entry.1973534829";
 const API_URL="COLE_AQUI_SUA_URL_EXEC";
 
-/* ====== ESTADO ====== */
-let estado={
-  estoque:[],
-  config:{
+/* ================= ESTADO PADRÃO ================= */
+const ESTADO_PADRAO = {
+  estoque: [],
+  config: {
     maquina:4200,
     vida:8000,
     luz:0.85,
@@ -102,39 +103,63 @@ let estado={
     embalagem:5,
     margem:150
   },
-  relatorio:[]
+  relatorio: []
 };
 
-/* ====== NAVEGAÇÃO ====== */
+let estado = JSON.parse(JSON.stringify(ESTADO_PADRAO));
+
+/* ================= NAVEGAÇÃO ================= */
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-/* ====== BACKEND ====== */
+/* ================= BACKEND ================= */
 async function salvarEstado(){
   const f=new FormData();
   f.append(ENTRY_ACTION,"save");
   f.append(ENTRY_PAYLOAD,JSON.stringify(estado));
   await fetch(FORM_URL,{method:"POST",body:f,mode:"no-cors"});
 }
+
 async function carregarEstado(){
-  const r=await fetch(API_URL);
-  estado=await r.json();
+  const r = await fetch(API_URL);
+  const recebido = await r.json();
+
+  // 🔥 MERGE SEGURO (CORREÇÃO DO BUG)
+  estado = {
+    estoque: recebido.estoque || [],
+    config: {
+      ...ESTADO_PADRAO.config,
+      ...(recebido.config || {})
+    },
+    relatorio: recebido.relatorio || []
+  };
+
   render();
 }
 
-/* ====== ESTOQUE ====== */
+/* ================= ESTOQUE ================= */
 function addFilamento(){
+  if(!f_nome.value || f_preco.value<=0 || f_saldo.value<=0){
+    alert("Preencha corretamente");
+    return;
+  }
+
   estado.estoque.push({
     nome:f_nome.value,
     preco:+f_preco.value,
     saldo:+f_saldo.value
   });
+
   salvarEstado().then(carregarEstado);
+
+  f_nome.value="";
+  f_preco.value="";
+  f_saldo.value="";
 }
 
-/* ====== CONFIG ====== */
+/* ================= CONFIG ================= */
 function salvarConfig(){
   estado.config={
     maquina:+c_maquina.value,
@@ -148,11 +173,26 @@ function salvarConfig(){
   alert("Custos salvos");
 }
 
-/* ====== PROJETO ====== */
+/* ================= PROJETO ================= */
 function calcular(){
+  if(estado.estoque.length===0){
+    alert("Cadastre um filamento");
+    return;
+  }
+
   const f=estado.estoque[fil.value];
   const p=+peso.value;
   const h=+horas.value;
+
+  if(p<=0||h<=0){
+    alert("Valores inválidos");
+    return;
+  }
+
+  if(modo.value==="realizar" && p>f.saldo){
+    alert("Estoque insuficiente");
+    return;
+  }
 
   const dep=(estado.config.maquina/estado.config.vida)*h;
   const energia=estado.config.luz*h;
@@ -164,19 +204,18 @@ function calcular(){
   const preco=custo*(1+estado.config.margem/100);
 
   resultado.innerHTML=`
-  <div class="small">
-  Filamento: R$ ${filamento.toFixed(2)}<br>
-  Energia: R$ ${energia.toFixed(2)}<br>
-  Mão de obra: R$ ${mao.toFixed(2)}<br>
-  Depreciação: R$ ${dep.toFixed(2)}<br>
-  Embalagem: R$ ${embalagem.toFixed(2)}
-  </div>
-  <hr>
-  <strong>Preço final: R$ ${preco.toFixed(2)}</strong>
+    <div class="small">
+      Filamento: R$ ${filamento.toFixed(2)}<br>
+      Energia: R$ ${energia.toFixed(2)}<br>
+      Mão de obra: R$ ${mao.toFixed(2)}<br>
+      Depreciação: R$ ${dep.toFixed(2)}<br>
+      Embalagem: R$ ${embalagem.toFixed(2)}
+    </div>
+    <hr>
+    <strong>Preço final: R$ ${preco.toFixed(2)}</strong>
   `;
 
   if(modo.value==="realizar"){
-    if(p>f.saldo){alert("Estoque insuficiente");return;}
     f.saldo-=p;
     estado.relatorio.push({
       data:new Date().toLocaleString(),
@@ -188,7 +227,7 @@ function calcular(){
   }
 }
 
-/* ====== RENDER ====== */
+/* ================= RENDER ================= */
 function render(){
   listaEstoque.innerHTML="";
   fil.innerHTML="";
@@ -210,7 +249,7 @@ function render(){
   c_margem.value=estado.config.margem;
 }
 
-/* ====== INIT ====== */
+/* ================= INIT ================= */
 carregarEstado();
 </script>
 
