@@ -3,69 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grimório Industrial 3D</title>
+    <title>Painel de Forja 3D</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="manifest.json">
     <style>
-        body { background-color: #0f172a; color: #f1f5f9; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 16px; }
-        input, select { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; border-radius: 8px; width: 100%; transition: 0.3s; }
-        input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-        .btn-action { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: transform 0.2s; }
-        .btn-action:active { transform: scale(0.95); }
+        body { background-color: #0f172a; color: #f1f5f9; font-family: sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 16px; margin-bottom: 20px; }
+        input, select { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; border-radius: 8px; width: 100%; }
+        .btn-action { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; }
+        .status-low { color: #ef4444; font-weight: bold; }
+        .status-ok { color: #22c55e; }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto pb-24">
 
     <header class="text-center my-6">
-        <h1 class="text-3xl font-bold text-blue-400">Arquiteto 3D</h1>
-        <p class="text-slate-400 text-sm italic">Gestão de Forja e Mercadorias</p>
+        <h1 class="text-2xl font-bold text-blue-400">Mestre da Forja 3D</h1>
+        <p class="text-slate-400 text-sm">Sincronizado com Google Sheets</p>
     </header>
 
-    <div class="glass-card p-6 mb-6">
-        <h2 class="text-blue-300 font-semibold mb-4 flex items-center">⚙️ Configurações Base</h2>
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-xs text-slate-400">Preço kWh (R$)</label>
-                <input type="number" id="cfgKwh" value="0.85" step="0.01" oninput="calcularTudo()">
-            </div>
-            <div>
-                <label class="text-xs text-slate-400">Consumo (Watts)</label>
-                <input type="number" id="cfgWatts" value="150" oninput="calcularTudo()">
-            </div>
-            <div>
-                <label class="text-xs text-slate-400">Valor Máquina (R$)</label>
-                <input type="number" id="cfgMaq" value="2000" oninput="calcularTudo()">
-            </div>
-            <div>
-                <label class="text-xs text-slate-400">Vida Útil (Horas)</label>
-                <input type="number" id="cfgVida" value="5000" oninput="calcularTudo()">
-            </div>
+    <div class="glass-card p-4">
+        <h2 class="text-blue-300 font-semibold mb-3 flex justify-between">
+            📦 Estoque em Tempo Real
+            <button onclick="carregarDados()" class="text-xs bg-slate-700 px-2 py-1 rounded">🔄 Atualizar</button>
+        </h2>
+        <div id="tabelaEstoque" class="text-xs space-y-2">
+            <p>Carregando estoque da planilha...</p>
         </div>
     </div>
 
-    <div class="glass-card p-6 mb-6">
-        <h2 class="text-green-300 font-semibold mb-4">🔮 Calculadora de Impressão</h2>
+    <div class="glass-card p-6">
+        <h2 class="text-green-300 font-semibold mb-4">🔮 Nova Encomenda</h2>
         
         <div class="space-y-4">
             <div>
-                <label class="text-xs text-slate-400">Peso da Peça (gramas)</label>
-                <input type="number" id="pesoPeca" placeholder="Ex: 150" oninput="calcularTudo()">
-            </div>
-            <div>
-                <label class="text-xs text-slate-400">Tempo Estimado (horas)</label>
-                <input type="number" id="tempoHoras" placeholder="Ex: 12" oninput="calcularTudo()">
-            </div>
-            <div>
-                <label class="text-xs text-slate-400">Material Utilizado</label>
+                <label class="text-xs text-slate-400">Material</label>
                 <select id="selMaterial" onchange="calcularTudo()">
-                    <option value="120">PLA (R$ 120/kg)</option>
-                    <option value="110">PETG (R$ 110/kg)</option>
-                    <option value="150">ABS (R$ 150/kg)</option>
+                    <option value="">Carregando materiais...</option>
                 </select>
             </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs text-slate-400">Peso (g)</label>
+                    <input type="number" id="pesoPeca" placeholder="0" oninput="calcularTudo()">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400">Tempo (h)</label>
+                    <input type="number" id="tempoHoras" placeholder="0" oninput="calcularTudo()">
+                </div>
+            </div>
             <div>
-                <label class="text-xs text-slate-400">Local de Venda</label>
+                <label class="text-xs text-slate-400">Canal de Venda</label>
                 <select id="selMkt" onchange="calcularTudo()">
                     <option value="direta">Venda Direta (0%)</option>
                     <option value="ml">Mercado Livre (17% + R$ 6,00)</option>
@@ -74,67 +61,95 @@
             </div>
         </div>
 
-        <div class="mt-8 p-4 bg-slate-900/50 rounded-xl border border-blue-500/30">
-            <div class="flex justify-between text-sm mb-1">
-                <span>Custo Real:</span>
-                <span id="resCusto" class="font-mono text-slate-300">R$ 0,00</span>
+        <div class="mt-6 p-4 bg-slate-900/50 rounded-xl border border-blue-500/30">
+            <div class="flex justify-between text-sm">
+                <span>Custo de Produção:</span>
+                <span id="resCusto" class="font-mono">R$ 0,00</span>
             </div>
-            <div class="flex justify-between text-lg font-bold border-t border-slate-700 pt-2 mt-2">
-                <span class="text-blue-400">Preço de Venda:</span>
+            <div class="flex justify-between text-lg font-bold mt-2 pt-2 border-t border-slate-700">
+                <span class="text-blue-400">Preço Sugerido:</span>
                 <span id="resVenda" class="text-green-400">R$ 0,00</span>
             </div>
-            <p class="text-[10px] text-slate-500 mt-2 text-center">Cálculo: Custo + 100% de margem + Taxas do Market.</p>
         </div>
 
-        <button onclick="enviarPedido()" class="btn-action w-full mt-6 py-4 rounded-xl font-bold shadow-lg shadow-blue-900/20">
-            REALIZAR PEDIDO / BAIXAR ESTOQUE
+        <button onclick="enviarPedido()" id="btnEnviar" class="btn-action mt-6 shadow-lg">
+            CONFIRMAR E BAIXAR ESTOQUE
         </button>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+        let dadosEstoqueGlobal = [];
+
+        // Configurações fixas para custo de luz e máquina
+        const CONFIG = { kwh: 0.85, watts: 150, vMaq: 2000, vidaH: 5000 };
+
+        async function carregarDados() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                dadosEstoqueGlobal = data; // Salva para uso na calculadora
+                
+                // 1. Preencher a Tabela de Estoque Visual
+                let htmlEstoque = "";
+                let htmlSelect = "";
+                
+                // Começa do 1 para pular o cabeçalho da planilha
+                for(let i = 1; i < data.length; i++) {
+                    const [nome, preco, pesoTotal, pesoAtual] = data[i];
+                    const statusClass = pesoAtual < 200 ? 'status-low' : 'status-ok';
+                    
+                    htmlEstoque += `
+                        <div class="flex justify-between border-b border-slate-700 pb-1">
+                            <span>${nome}</span>
+                            <span class="${statusClass}">${pesoAtual}g restantes</span>
+                        </div>`;
+                    
+                    htmlSelect += `<option value="${preco}" data-nome="${nome}">${nome} (R$ ${preco}/kg)</option>`;
+                }
+                
+                document.getElementById('tabelaEstoque').innerHTML = htmlEstoque;
+                document.getElementById('selMaterial').innerHTML = htmlSelect;
+                calcularTudo();
+            } catch (e) {
+                document.getElementById('tabelaEstoque').innerHTML = "Erro ao carregar dados. Verifique a planilha.";
+            }
+        }
 
         function calcularTudo() {
-            // Entradas
-            const kwh = parseFloat(document.getElementById('cfgKwh').value) || 0;
-            const watts = parseFloat(document.getElementById('cfgWatts').value) || 0;
-            const vMaq = parseFloat(document.getElementById('cfgMaq').value) || 0;
-            const vidaH = parseFloat(document.getElementById('cfgVida').value) || 0;
-
+            const precoKg = parseFloat(document.getElementById('selMaterial').value) || 0;
             const pesoG = parseFloat(document.getElementById('pesoPeca').value) || 0;
             const tempoH = parseFloat(document.getElementById('tempoHoras').value) || 0;
-            const precoKg = parseFloat(document.getElementById('selMaterial').value) || 0;
             const mkt = document.getElementById('selMkt').value;
 
-            // Fórmulas de Custo
             const custoFilamento = (pesoG / 1000) * precoKg;
-            const custoLuz = (watts / 1000) * tempoH * kwh;
-            const custoVida = (vMaq / vidaH) * tempoH;
+            const custoLuz = (CONFIG.watts / 1000) * tempoH * CONFIG.kwh;
+            const custoVida = (CONFIG.vMaq / CONFIG.vidaH) * tempoH;
             
             const custoTotal = custoFilamento + custoLuz + custoVida;
-            let precoComLucro = custoTotal * 2; // Margem de 100%
+            let precoBase = custoTotal * 2; // Lucro 100%
 
-            // Taxas Marketplace
-            let precoFinal = precoComLucro;
-            if (mkt === 'ml') {
-                precoFinal = (precoComLucro + 6) / 0.83;
-            } else if (mkt === 'shopee') {
-                precoFinal = precoComLucro / 0.80;
-            }
+            if (mkt === 'ml') precoBase = (precoBase + 6) / 0.83;
+            if (mkt === 'shopee') precoBase = precoBase / 0.80;
 
             document.getElementById('resCusto').innerText = "R$ " + custoTotal.toFixed(2);
-            document.getElementById('resVenda').innerText = "R$ " + precoFinal.toFixed(2);
+            document.getElementById('resVenda').innerText = "R$ " + precoBase.toFixed(2);
         }
 
         async function enviarPedido() {
+            const btn = document.getElementById('btnEnviar');
             const pesoG = document.getElementById('pesoPeca').value;
-            const matTxt = document.getElementById('selMaterial').options[document.getElementById('selMaterial').selectedIndex].text;
-            
-            if(!pesoG) return alert("Insira o peso!");
+            const select = document.getElementById('selMaterial');
+            const nomeMat = select.options[select.selectedIndex].getAttribute('data-nome');
+
+            if(!pesoG || !nomeMat) return alert("Preencha os dados!");
+
+            btn.innerText = "PROCESSANDO...";
+            btn.disabled = true;
 
             const payload = {
-                peca: "Nova Impressão",
-                material: matTxt.split(' ')[0],
+                peca: "Pedido via Dashboard",
+                material: nomeMat,
                 pesoGasto: parseFloat(pesoG),
                 custo: document.getElementById('resCusto').innerText,
                 precoVenda: document.getElementById('resVenda').innerText,
@@ -142,16 +157,22 @@
             };
 
             try {
-                const response = await fetch(SCRIPT_URL, {
+                await fetch(SCRIPT_URL, {
                     method: 'POST',
+                    redirect: 'follow',
                     body: JSON.stringify(payload)
                 });
-                alert("Pedido registrado e estoque baixado!");
-            } catch (error) {
-                console.error(error);
-                alert("Erro ao conectar com a planilha. Verifique a URL do Script.");
+                alert("Sucesso! Estoque atualizado.");
+                location.reload(); // Recarrega para mostrar o novo estoque
+            } catch (e) {
+                alert("Erro ao salvar. Verifique o Apps Script.");
+                btn.innerText = "CONFIRMAR E BAIXAR ESTOQUE";
+                btn.disabled = false;
             }
         }
+
+        // Iniciar carregamento
+        window.onload = carregarDados;
     </script>
 </body>
 </html>
