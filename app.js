@@ -1,5 +1,5 @@
 // ================= CONFIG =================
-const API_URL = "COLE_AQUI_SUA_URL_DO_APPS_SCRIPT";
+const API_URL = "https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
 
 let CONFIG = {};
 let ESTOQUE = [];
