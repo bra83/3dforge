@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_LOGISTICS_v3.6</title>
+    <title>3D_LOGISTICS_v3.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --neon-green: #00ff41; --dark-bg: #0d0208; --panel-bg: #161b22; }
-        body { background-color: var(--dark-bg); color: var(--neon-green); font-family: 'Fira Code', monospace; padding: 10px; }
+        body { background-color: var(--dark-bg); color: var(--neon-green); font-family: monospace; padding: 10px; }
         .card { background-color: var(--panel-bg); border: 1px solid var(--neon-green); border-radius: 4px; padding: 15px; margin-bottom: 15px; }
-        input, select { background-color: #000; border: 1px solid var(--neon-green); color: var(--neon-green); padding: 8px; width: 100%; margin-bottom: 8px; outline: none; font-size: 0.85rem; }
-        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; border: 1px solid var(--neon-green); transition: 0.2s; margin-top: 5px; }
+        input, select { background-color: #000; border: 1px solid var(--neon-green); color: var(--neon-green); padding: 8px; width: 100%; margin-bottom: 8px; outline: none; }
+        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; border: 1px solid var(--neon-green); transition: 0.2s; }
         .btn-main { background-color: var(--neon-green); color: #000; }
-        .btn-save { background-color: transparent; color: var(--neon-green); border-style: dashed; }
         .tab-btn { padding: 8px; cursor: pointer; border: 1px solid #333; flex-grow: 1; text-align: center; font-size: 0.7rem; opacity: 0.6; }
         .active-tab { background-color: var(--neon-green); color: #000; font-weight: bold; opacity: 1; }
         .content-section { display: none; }
         .content-section.active { display: block; }
-        label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; }
         .progress-bg { background-color: #333; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--neon-green); transition: width 0.5s; }
     </style>
@@ -26,7 +23,7 @@
 <body class="max-w-lg mx-auto">
 
     <header class="mb-4 text-center border-b border-green-900 pb-2">
-        <h1 class="text-base font-bold tracking-widest text-white">SYSTEM.CORE_v3.6</h1>
+        <h1 class="text-base font-bold tracking-widest">3D_LOGISTICS_SYSTEM_v3.8</h1>
     </header>
 
     <nav class="flex gap-1 mb-4">
@@ -37,58 +34,50 @@
 
     <div id="content-1" class="content-section active">
         <div class="card">
-            <label>> MATERIAL</label>
+            <label>MATERIAL</label>
             <select id="selectMaterial" onchange="calcular()"></select>
             <div class="grid grid-cols-2 gap-2">
-                <div><label>> PESO (G)</label><input type="number" id="pesoPeca" oninput="calcular()" value="0"></div>
-                <div><label>> TEMPO (H)</label><input type="number" id="tempoHoras" oninput="calcular()" value="0"></div>
+                <div><label>PESO(G)</label><input type="number" id="pesoPeca" oninput="calcular()" value="0"></div>
+                <div><label>TEMPO(H)</label><input type="number" id="tempoHoras" oninput="calcular()" value="0"></div>
             </div>
-            <label>> CANAL</label>
+            <label>CANAL</label>
             <select id="mkt" onchange="calcular()">
                 <option value="direta">VENDA DIRETA</option>
                 <option value="ml">MERCADO LIVRE</option>
                 <option value="shopee">SHOPEE</option>
             </select>
-            <div class="p-3 bg-black border border-green-900 rounded mb-4 font-mono text-[0.65rem] space-y-1">
-                <div class="flex justify-between"><span>MATERIA:</span><span id="detMat">R$ 0,00</span></div>
-                <div class="flex justify-between"><span>FIXOS:</span><span id="detFix">R$ 0,00</span></div>
-                <div class="flex justify-between"><span>EXTRAS:</span><span id="detExtra">R$ 0,00</span></div>
-                <div class="text-sm flex justify-between font-bold text-white bg-green-900/20 p-1 mt-2">
-                    <span>VENDA:</span><span id="resVenda" class="text-green-400">R$ 0,00</span>
-                </div>
+            <div class="p-3 bg-black border border-green-900 rounded mb-4 text-[0.7rem]">
+                <p>CUSTO_TOTAL: <span id="resCusto">R$ 0,00</span></p>
+                <p class="text-lg font-bold">PRECO_SUGERIDO: <span id="resVenda">R$ 0,00</span></p>
             </div>
-            <button class="btn btn-main" onclick="registrarPedido()">EXECUTAR_ORDEM</button>
+            <button class="btn btn-main" onclick="registrarPedido()">REGISTRAR_PEDIDO</button>
         </div>
     </div>
 
     <div id="content-2" class="content-section">
         <div class="card">
-            <h2 class="mb-3 text-xs font-bold uppercase text-white">> NOVO_FILAMENTO</h2>
+            <h2 class="mb-2 text-xs font-bold">> NOVO_FILAMENTO</h2>
             <input type="text" id="novoNome" placeholder="NOME/COR">
             <input type="number" id="novoPreco" placeholder="PREÇO_ROLO">
             <input type="number" id="novoPeso" placeholder="PESO_TOTAL_G">
-            <button class="btn btn-main" onclick="adicionarFilamento()">GRAVAR_DATABASE</button>
+            <button id="btnSalvarFilamento" class="btn btn-main" onclick="adicionarFilamento()">GRAVAR_NA_PLANILHA</button>
         </div>
         <div class="card" id="listaEstoque"></div>
     </div>
 
     <div id="content-3" class="content-section">
         <div class="card">
-            <h2 class="mb-4 text-xs font-bold uppercase text-white">> PARAMETROS</h2>
-            <label>MÃO_DE_OBRA (R$/H)</label><input type="number" id="cfgMaoObra" value="15.00">
-            <label>EMBALAGEM (R$)</label><input type="number" id="cfgEmbalagem" value="5.00">
-            <label>PURGA (%)</label><input type="number" id="cfgPurga" value="15">
-            <label>LUCRO (%)</label><input type="number" id="cfgLucroPerc" value="100">
-            <div class="grid grid-cols-2 gap-2">
-                <div><label>LUZ(KWH)</label><input type="number" id="cfgKwh" value="0.85"></div>
-                <div><label>WATTS</label><input type="number" id="cfgConsumo" value="150"></div>
-            </div>
-            <button class="btn btn-save" onclick="salvarConfigLocal()">SALVAR_CONFIGURAÇÕES</button>
+            <h2 class="mb-4 text-xs font-bold">> CONFIGURACOES</h2>
+            <label>MÃO_DE_OBRA(R$/H)</label><input type="number" id="cfgMaoObra" value="15">
+            <label>EMBALAGEM(R$)</label><input type="number" id="cfgEmbalagem" value="5">
+            <label>PURGA(%)</label><input type="number" id="cfgPurga" value="15">
+            <label>LUCRO(%)</label><input type="number" id="cfgLucroPerc" value="100">
+            <button class="btn btn-main" onclick="salvarConfigLocal()">SALVAR_LOCAL</button>
         </div>
     </div>
 
     <script>
-        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec"; 
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
         let dadosEstoque = [];
 
         function switchTab(n) {
@@ -98,39 +87,30 @@
             document.getElementById('btn-' + n).classList.add('active-tab');
         }
 
-        function carregarConfigLocal() {
-            const keys = ['cfgMaoObra', 'cfgEmbalagem', 'cfgPurga', 'cfgLucroPerc', 'cfgKwh', 'cfgConsumo'];
-            keys.forEach(key => {
-                const saved = localStorage.getItem(key);
-                if (saved) document.getElementById(key).value = saved;
-            });
-        }
-
         function salvarConfigLocal() {
-            const keys = ['cfgMaoObra', 'cfgEmbalagem', 'cfgPurga', 'cfgLucroPerc', 'cfgKwh', 'cfgConsumo'];
-            keys.forEach(key => localStorage.setItem(key, document.getElementById(key).value));
-            alert("CONFIGURAÇÕES SALVAS LOCALMENTE.");
+            localStorage.setItem('cfgMaoObra', document.getElementById('cfgMaoObra').value);
+            localStorage.setItem('cfgEmbalagem', document.getElementById('cfgEmbalagem').value);
+            localStorage.setItem('cfgPurga', document.getElementById('cfgPurga').value);
+            localStorage.setItem('cfgLucroPerc', document.getElementById('cfgLucroPerc').value);
+            alert("CONFIGURAÇÕES SALVAS NO NAVEGADOR");
             calcular();
         }
 
         async function carregarDados() {
-            try {
-                const resp = await fetch(URL_SCRIPT);
-                dadosEstoque = await resp.json();
-                atualizarUI();
-                calcular();
-            } catch (e) { console.error("Erro de conexão."); }
+            const resp = await fetch(URL_SCRIPT);
+            dadosEstoque = await resp.json();
+            atualizarUI();
         }
 
         function atualizarUI() {
             const select = document.getElementById('selectMaterial');
             const lista = document.getElementById('listaEstoque');
             select.innerHTML = "";
-            lista.innerHTML = "<h3 class='mb-3 opacity-50 text-[0.6rem]'>INVENTÁRIO:</h3>";
+            lista.innerHTML = "";
             dadosEstoque.slice(1).forEach(item => {
                 const perc = (item[3] / item[2]) * 100;
                 select.innerHTML += `<option value="${item[0]}">${item[0]}</option>`;
-                lista.innerHTML += `<div class="mb-3"><div class="flex justify-between text-[0.6rem]"><span>${item[0]}</span><span>${item[3]}g</span></div><div class="progress-bg"><div class="progress-fill" style="width: ${perc}%"></div></div></div>`;
+                lista.innerHTML += `<div class="mb-2 text-[0.7rem]">${item[0]}: ${item[3]}g<div class="progress-bg"><div class="progress-fill" style="width: ${perc}%"></div></div></div>`;
             });
         }
 
@@ -140,38 +120,54 @@
             const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
             const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
             const purga = (parseFloat(document.getElementById('cfgPurga').value) / 100) + 1;
-            const lucro = (parseFloat(document.getElementById('cfgLucroPerc').value) / 100) + 1;
-
-            const cMat = ((peso * purga) / mat[2]) * mat[1];
-            const cLuz = (parseFloat(document.getElementById('cfgConsumo').value) / 1000) * horas * parseFloat(document.getElementById('cfgKwh').value);
-            const cExtras = (parseFloat(document.getElementById('cfgMaoObra').value) * horas) + parseFloat(document.getElementById('cfgEmbalagem').value);
             
-            const cTotal = cMat + cLuz + cExtras;
-            let final = cTotal * lucro;
-            if(document.getElementById('mkt').value === 'ml') final = (final + 6) / 0.83;
-            if(document.getElementById('mkt').value === 'shopee') final = final / 0.80;
+            const cMat = ((peso * purga) / mat[2]) * mat[1];
+            const cExtras = (parseFloat(document.getElementById('cfgMaoObra').value) * horas) + parseFloat(document.getElementById('cfgEmbalagem').value);
+            const total = cMat + cExtras;
+            const venda = total * ((parseFloat(document.getElementById('cfgLucroPerc').value) / 100) + 1);
 
-            document.getElementById('detMat').innerText = `R$ ${cMat.toFixed(2)}`;
-            document.getElementById('detFix').innerText = `R$ ${cLuz.toFixed(2)}`;
-            document.getElementById('detExtra').innerText = `R$ ${cExtras.toFixed(2)}`;
-            document.getElementById('resVenda').innerText = `R$ ${final.toFixed(2)}`;
-        }
-
-        async function registrarPedido() {
-            const data = { acao: "REGISTRAR_PEDIDO", material: document.getElementById('selectMaterial').value, peca: "Venda_3D", pesoGasto: parseFloat(document.getElementById('pesoPeca').value), custo: "Calculado", precoVenda: document.getElementById('resVenda').innerText, mkt: document.getElementById('mkt').value };
-            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
-            alert("PEDIDO REGISTRADO!");
-            carregarDados();
+            document.getElementById('resCusto').innerText = `R$ ${total.toFixed(2)}`;
+            document.getElementById('resVenda').innerText = `R$ ${venda.toFixed(2)}`;
         }
 
         async function adicionarFilamento() {
-            const data = { acao: "ADICIONAR_FILAMENTO", material: document.getElementById('novoNome').value, preco: parseFloat(document.getElementById('novoPreco').value), peso: parseFloat(document.getElementById('novoPeso').value) };
-            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
-            alert("FILAMENTO ADICIONADO!");
+            const btn = document.getElementById('btnSalvarFilamento');
+            btn.innerText = "GRAVANDO...";
+            const payload = {
+                acao: "ADICIONAR_FILAMENTO",
+                material: document.getElementById('novoNome').value,
+                preco: document.getElementById('novoPreco').value,
+                peso: document.getElementById('novoPeso').value
+            };
+            
+            await fetch(URL_SCRIPT, {
+                method: 'POST',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                body: JSON.stringify(payload)
+            });
+
+            setTimeout(() => {
+                alert("COMANDO ENVIADO! Verifique a planilha em alguns segundos.");
+                btn.innerText = "GRAVAR_NA_PLANILHA";
+                carregarDados();
+            }, 2000);
+        }
+
+        async function registrarPedido() {
+            const payload = {
+                acao: "REGISTRAR_PEDIDO",
+                material: document.getElementById('selectMaterial').value,
+                pesoGasto: document.getElementById('pesoPeca').value,
+                custo: document.getElementById('resCusto').innerText,
+                precoVenda: document.getElementById('resVenda').innerText,
+                mkt: document.getElementById('mkt').value
+            };
+            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            alert("PEDIDO ENVIADO!");
             carregarDados();
         }
 
-        carregarConfigLocal();
         carregarDados();
     </script>
 </body>
