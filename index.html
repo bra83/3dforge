@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_LOGISTICS_v4.5</title>
+    <title>3D_LOGISTICS_TERMINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --neon: #00ff41; --bg: #0d0208; }
         body { background-color: var(--bg); color: var(--neon); font-family: monospace; padding: 15px; }
         .card { background-color: #161b22; border: 1px solid var(--neon); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        input, select { background-color: #000; border: 1px solid var(--neon); color: var(--neon); padding: 8px; width: 100%; margin-bottom: 10px; outline: none; }
+        input, select { background-color: #000; border: 1px solid var(--neon); color: var(--neon); padding: 10px; width: 100%; margin-bottom: 10px; outline: none; }
         .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border: 1px solid var(--neon); text-transform: uppercase; }
         .active { background-color: var(--neon); color: #000; }
         .hidden { display: none; }
+        label { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; }
     </style>
 </head>
 <body class="max-w-lg mx-auto">
@@ -25,42 +26,50 @@
 
     <div id="c1" class="tab-content">
         <div class="card">
+            <label>FILAMENTO</label>
             <select id="selMat" onchange="calc()"></select>
-            <input type="number" id="p" placeholder="PESO(G)" oninput="calc()">
-            <input type="number" id="t" placeholder="HORAS" oninput="calc()">
-            <select id="m" onchange="calc()">
-                <option value="direta">DIRETA</option>
-                <option value="ml">MERCADO LIVRE</option>
-                <option value="shopee">SHOPEE</option>
-            </select>
-            <div class="p-2 border border-green-900 mb-4">
-                <p class="text-xs">CUSTO: <span id="resC">R$ 0,00</span></p>
-                <p class="text-xl font-bold">VENDA: <span id="resV">R$ 0,00</span></p>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label>PESO (G)</label><input type="number" id="p" oninput="calc()"></div>
+                <div><label>TEMPO (H)</label><input type="number" id="t" oninput="calc()"></div>
             </div>
-            <button class="btn active" onclick="sendP()">REGISTRAR VENDA</button>
+            <label>MARKETPLACE</label>
+            <select id="m" onchange="calc()">
+                <option value="direta">VENDA DIRETA</option>
+                <option value="ml">MERCADO LIVRE (17% + R$6)</option>
+                <option value="shopee">SHOPEE (20%)</option>
+            </select>
+            <div class="p-3 bg-black border border-green-900 mb-4 text-xs space-y-1">
+                <p>CUSTO TOTAL: <span id="resC">R$ 0,00</span></p>
+                <p class="text-lg font-bold">VENDA SUGERIDA: <span id="resV">R$ 0,00</span></p>
+            </div>
+            <button class="btn active" onclick="sendV()">REGISTRAR VENDA</button>
         </div>
     </div>
 
     <div id="c2" class="tab-content hidden">
         <div class="card">
+            <h2 class="mb-2 font-bold text-xs">> NOVO MATERIAL</h2>
             <input type="text" id="nN" placeholder="NOME/COR">
             <input type="number" id="nP" placeholder="PREÇO ROLO">
             <input type="number" id="nW" placeholder="PESO TOTAL G">
-            <button class="btn active" onclick="sendF()">GRAVAR NA PLANILHA</button>
+            <button class="btn active" onclick="sendA()">SALVAR NA PLANILHA</button>
         </div>
-        <div class="card" id="list">Carregando estoque...</div>
+        <div class="card" id="list">CARREGANDO...</div>
     </div>
 
     <div id="c3" class="tab-content hidden">
         <div class="card">
-            <label class="text-[10px]">LUCRO(%)</label><input type="number" id="cL" value="100">
-            <label class="text-[10px]">MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
-            <button class="btn active" onclick="saveL()">SALVAR CONFIGS</button>
+            <label>LUCRO (%)</label><input type="number" id="cL" value="100">
+            <label>MÃO DE OBRA/H</label><input type="number" id="cMO" value="15">
+            <label>VALOR MÁQUINA</label><input type="number" id="cVM" value="2000">
+            <label>VIDA ÚTIL (H)</label><input type="number" id="cVU" value="5000">
+            <label>ENERGIA (KWH)</label><input type="number" id="cEK" value="0.85">
+            <button class="btn active" onclick="save()">SALVAR CONFIGS</button>
         </div>
     </div>
 
     <script>
-        const URL_BASE = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
+        const URL_API = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
         let db = [];
 
         function tab(n){
@@ -71,14 +80,15 @@
         }
 
         async function load(){
-            const r = await fetch(URL_BASE);
+            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>{if(localStorage.getItem(k)) document.getElementById(k).value=localStorage.getItem(k)});
+            const r = await fetch(URL_API);
             db = await r.json();
             const s = document.getElementById('selMat');
             const l = document.getElementById('list');
-            s.innerHTML = ""; l.innerHTML = "ESTOQUE:<br>";
+            s.innerHTML = ""; l.innerHTML = "ESTOQUE ATUAL:<br><br>";
             db.slice(1).forEach(i=>{
                 s.innerHTML+=`<option value="${i[0]}">${i[0]}</option>`;
-                l.innerHTML+=`<div class="text-[10px] mb-1">${i[0]}: ${i[3]}g</div>`;
+                l.innerHTML+=`<div class="text-[10px] mb-2 border-b border-green-900 pb-1">${i[0]}: ${i[3]}g</div>`;
             });
             calc();
         }
@@ -88,7 +98,10 @@
             const peso = parseFloat(document.getElementById('p').value)||0;
             const horas = parseFloat(document.getElementById('t').value)||0;
             const cM = (peso/mat[2])*mat[1];
-            const cT = cM + (parseFloat(document.getElementById('cMO').value)*horas);
+            const cL = (150/1000)*horas*parseFloat(document.getElementById('cEK').value);
+            const cD = (parseFloat(document.getElementById('cVM').value)/parseFloat(document.getElementById('cVU').value))*horas;
+            const cO = parseFloat(document.getElementById('cMO').value)*horas;
+            const cT = cM + cL + cD + cO;
             let v = cT * (1+(parseFloat(document.getElementById('cL').value)/100));
             if(document.getElementById('m').value==='ml') v=(v+6)/0.83;
             if(document.getElementById('m').value==='shopee') v=v/0.80;
@@ -96,37 +109,31 @@
             document.getElementById('resV').innerText="R$ "+v.toFixed(2);
         }
 
-        async function sendF(){
+        async function sendA(){
             const n = document.getElementById('nN').value;
             const p = document.getElementById('nP').value;
             const w = document.getElementById('nW').value;
-            // O segredo: enviamos tudo no LINK
-            const link = `${URL_BASE}?acao=ADICIONAR_FILAMENTO&material=${n}&preco=${p}&peso=${w}`;
-            
-            alert("Enviando comando...");
+            const link = `${URL_API}?acao=ADD&mat=${n}&pre=${p}&pes=${w}`;
             await fetch(link, {mode: 'no-cors'});
-            
-            setTimeout(()=>{ alert("Comando enviado. Recarregue a página em 5 segundos."); load(); }, 2000);
+            alert("Sincronizando...");
+            setTimeout(load, 3000);
         }
 
-        async function sendP(){
+        async function sendV(){
             const mat = document.getElementById('selMat').value;
-            const peso = document.getElementById('p').value;
-            const cust = document.getElementById('resC').innerText;
-            const vend = document.getElementById('resV').innerText;
+            const psg = document.getElementById('p').value;
+            const cus = document.getElementById('resC').innerText;
+            const ven = document.getElementById('resV').innerText;
             const mkt = document.getElementById('m').value;
-            
-            const link = `${URL_BASE}?acao=REGISTRAR_PEDIDO&material=${mat}&pesoGasto=${peso}&custo=${cust}&precoVenda=${vend}&mkt=${mkt}`;
-            
+            const link = `${URL_API}?acao=VENDA&mat=${mat}&psg=${psg}&cus=${cus}&ven=${ven}&mkt=${mkt}&pec=Impressao`;
             await fetch(link, {mode: 'no-cors'});
-            alert("Pedido enviado!");
-            setTimeout(load, 2000);
+            alert("Venda registrada!");
+            setTimeout(load, 3000);
         }
 
-        function saveL(){
-            localStorage.setItem('cL', document.getElementById('cL').value);
-            localStorage.setItem('cMO', document.getElementById('cMO').value);
-            alert("Salvo!");
+        function save(){
+            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
+            alert("Configurações locais salvas!");
             calc();
         }
 
