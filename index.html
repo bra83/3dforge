@@ -3,38 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D TERMINAL v2.0 - LOGISTICS</title>
+    <title>3D TERMINAL v2.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --neon-green: #00ff41;
-            --dark-bg: #0d0208;
-            --panel-bg: #161b22;
+        :root { --neon-green: #00ff41; --dark-bg: #0d0208; --panel-bg: #161b22; }
+        body { background-color: var(--dark-bg); color: var(--neon-green); font-family: monospace; padding: 15px; }
+        .card { background-color: var(--panel-bg); border: 1px solid var(--neon-green); border-radius: 4px; padding: 15px; margin-bottom: 15px; }
+        input, select { background-color: #000; border: 1px solid var(--neon-green); color: var(--neon-green); padding: 10px; width: 100%; margin-bottom: 10px; outline: none; }
+        .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; border: 1px solid var(--neon-green); transition: 0.2s; }
+        .btn-main { background-color: var(--neon-green); color: #000; }
+        .tab-btn { padding: 10px; cursor: pointer; border: 1px solid #333; flex-grow: 1; text-align: center; font-size: 0.8rem; }
+        .active-tab { background-color: var(--neon-green); color: #000; font-weight: bold; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .progress-bg { background-color: #333; height: 10px; border-radius: 5px; width: 100%; margin-top: 5px; }
+        .progress-fill { height: 100%; background-color: var(--neon-green); transition: width 0.5s; }
+    </style>
+</head>
+<body>
+
+    <header class="mb-4 text-center border-b border-green-900 pb-2">
+        <h1 class="text-lg font-bold uppercase">System.Terminal_3D_v2.5</h1>
+    </header>
+
+    <nav class="flex gap-2 mb-6">
+        <div id="btn-1" class="tab-btn active-tab" onclick="switchTab(1)">CALC</div>
+        <div id="btn-2" class="tab-btn" onclick="switchTab(2)">ESTOQUE</div>
+        <div id="btn-3" class="tab-btn" onclick="switchTab(3)">CONFIG</div>
+    </nav>
+
+    <div id="content-1" class="content-section active">
+        <div class="card">
+            <label>> SELECIONAR_MATERIAL</label>
+            <select id="selectMaterial" onchange="calcular()"></select>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div><label>> PESO (G)</label><input type="number" id="pesoPeca" oninput="calcular()" value="0"></div>
+                <div><label>> TEMPO (H)</label><input type="number" id="tempoHoras" oninput="calcular()" value="0"></div>
+            </div>
+
+            <label>> CANAL_VENDA</label>
+            <select id="mkt" onchange="calcular()">
+                <option value="direta">VENDA DIRETA (0%)</option>
+                <option value="ml">MERCADO LIVRE (17%+6)</option>
+                <option value="shopee">SHOPEE (20%)</option>
+            </select>
+
+            <div class="p-4 bg-black border border-green-900 rounded mb-4">
+                <p class="text-xs opacity-70">CUSTO_TOTAL: <span id="resCusto">R$ 0,00</span></p>
+                <p class="text-lg font-bold text-white">VENDA_SUGERIDA: <span id="resVenda" class="text-green-400">R$ 0,00</span></p>
+            </div>
+            <button class="btn btn-main" onclick="registrarPedido()">EXECUTAR_PEDIDO</button>
+        </div>
+    </div>
+
+    <div id="content-2" class="content-section">
+        <div class="card">
+            <h2 class="mb-2 font-bold">> NOVO_FILAMENTO</h2>
+            <input type="text" id="novoNome" placeholder="NOME/COR">
+            <input type="number" id="novoPreco" placeholder="PREÇO_ROLO">
+            <input type="number" id="novoPeso" placeholder="PESO_G_TOTAL">
+            <button class="btn btn-main" onclick="adicionarFilamento()">ADICIONAR_DATABASE</button>
+        </div>
+        <div class="card" id="listaEstoque">
+            <p class="text-xs opacity-50">Sincronizando com banco de dados...</p>
+        </div>
+    </div>
+
+    <div id="content-3" class="content-section">
+        <div class="card">
+            <h2 class="mb-4 font-bold">> PARAMETROS_GLOBAIS</h2>
+            <label>FALHA_SEGURANÇA (%)</label>
+            <input type="number" id="cfgFalha" value="10" oninput="calcular()">
+            <label>LUCRO_MULTIPLICADOR (x)</label>
+            <input type="number" id="cfgLucro" value="2" step="0.1" oninput="calcular()">
+            <label>ENERGIA_KWH (R$)</label>
+            <input type="number" id="cfgKwh" value="0.85" oninput="calcular()">
+        </div>
+    </div>
+
+    <script>
+        // COLE SUA URL AQUI ENTRE AS ASPAS
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec"; 
+        let dadosEstoque = [];
+
+        function switchTab(n) {
+            // Esconde todas as seções
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            // Remove destaque de todos os botões
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+            
+            // Mostra a seção clicada
+            document.getElementById('content-' + n).classList.add('active');
+            // Destaca o botão clicado
+            document.getElementById('btn-' + n).classList.add('active-tab');
         }
-        body { 
-            background-color: var(--dark-bg); 
-            color: var(--neon-green); 
-            font-family: 'Fira Code', monospace; 
+
+        async function carregarDados() {
+            if(URL_SCRIPT.includes("COLE_AQUI")) return;
+            try {
+                const resp = await fetch(URL_SCRIPT);
+                dadosEstoque = await resp.json();
+                atualizarUI();
+            } catch (e) { console.error("Erro ao carregar dados da planilha."); }
         }
-        .card { 
-            background-color: var(--panel-bg); 
-            border: 1px solid var(--neon-green); 
-            border-radius: 4px; 
-            padding: 20px; 
-            margin-bottom: 20px;
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+
+        function atualizarUI() {
+            const select = document.getElementById('selectMaterial');
+            const lista = document.getElementById('listaEstoque');
+            select.innerHTML = "";
+            lista.innerHTML = "<h3 class='mb-2 opacity-50 text-xs'>SITUACAO_ESTOQUE</h3>";
+
+            dadosEstoque.slice(1).forEach(item => {
+                const perc = (item[3] / item[2]) * 100;
+                select.innerHTML += `<option value="${item[0]}">${item[0]}</option>`;
+                lista.innerHTML += `
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs mb-1"><span>${item[0]}</span><span>${item[3]}g</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: ${perc}%"></div></div>
+                    </div>`;
+            });
         }
-        input, select { 
-            background-color: #000; 
-            border: 1px solid var(--neon-green); 
-            color: var(--neon-green); 
-            padding: 10px; 
-            width: 100%; 
-            margin-bottom: 10px;
-            outline: none;
+
+        function calcular() {
+            const materialNome = document.getElementById('selectMaterial').value;
+            const mat = dadosEstoque.find(i => i[0] === materialNome) || ["Padrão", 120, 1000, 1000];
+
+            const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
+            const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
+            const falha = (parseFloat(document.getElementById('cfgFalha').value) / 100) + 1;
+            const lucro = parseFloat(document.getElementById('cfgLucro').value);
+            const kwhVal = parseFloat(document.getElementById('cfgKwh').value);
+
+            const custoMaterial = ((peso * falha) / mat[2]) * mat[1];
+            const custoLuz = (150 / 1000) * horas * kwhVal; 
+            const custoMaq = (1800 / 5000) * horas; 
+            
+            const custoTotal = custoMaterial + custoLuz + custoMaq;
+            let venda = custoTotal * lucro;
+
+            if(document.getElementById('mkt').value === 'ml') venda = (venda + 6) / 0.83;
+            if(document.getElementById('mkt').value === 'shopee') venda = venda / 0.80;
+
+            document.getElementById('resCusto').innerText = `R$ ${custoTotal.toFixed(2)}`;
+            document.getElementById('resVenda').innerText = `R$ ${venda.toFixed(2)}`;
         }
-        input:focus { box-shadow: 0 0 5px var(--neon-green); }
+
+        async function registrarPedido() {
+            const btn = event.target;
+            btn.innerText = "PROCESSANDO...";
+            const data = {
+                acao: "REGISTRAR_PEDIDO",
+                material: document.getElementById('selectMaterial').value,
+                peca: "Job_" + Math.floor(Math.random()*1000),
+                pesoGasto: parseFloat(document.getElementById('pesoPeca').value),
+                custo: document.getElementById('resCusto').innerText,
+                precoVenda: document.getElementById('resVenda').innerText,
+                mkt: document.getElementById('mkt').value
+            };
+            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
+            btn.innerText = "EXECUTAR_PEDIDO";
+            alert("SUCESSO: PEDIDO REGISTRADO.");
+            carregarDados();
+        }
+
+        async function adicionarFilamento() {
+            const data = {
+                acao: "ADICIONAR_FILAMENTO",
+                material: document.getElementById('novoNome').value,
+                preco: parseFloat(document.getElementById('novoPreco').value),
+                peso: parseFloat(document.getElementById('novoPeso').value)
+            };
+            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
+            alert("SUCESSO: MATERIAL ADICIONADO.");
+            carregarDados();
+        }
+
+        carregarDados();
+    </script>
+</body>
+</html>        input:focus { box-shadow: 0 0 5px var(--neon-green); }
         .btn { 
             padding: 12px; 
             font-weight: bold; 
