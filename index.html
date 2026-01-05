@@ -1,195 +1,89 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Precificação 3D</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Precificação 3D</title>
 
-<link rel="manifest" href="manifest.json">
-
-<style>
-body{font-family:Arial;background:#111;color:#fff;padding:15px}
-h1{margin-top:0}
-section{display:none}
-section.active{display:block}
-input,select,button{width:100%;padding:10px;margin:6px 0;font-size:16px}
-button{background:#00c853;border:none;font-weight:bold}
-.box{background:#1e1e1e;padding:15px;border-radius:10px;margin-bottom:15px}
-ul{padding-left:18px}
-.card{background:#000;padding:10px;border-radius:8px;margin-bottom:10px}
-.small{font-size:13px;color:#bbb}
-</style>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
 <h1>Precificação 3D</h1>
 
-<button onclick="show('projeto')">Projeto</button>
-<button onclick="show('custos')">Custos</button>
-<button onclick="show('painel')">Painel</button>
-<button onclick="show('estoque')">Estoque</button>
+<div class="tabs">
+  <button onclick="showTab('projeto')">Projeto</button>
+  <button onclick="showTab('estoque')">Estoque</button>
+</div>
 
 <!-- ================= PROJETO ================= -->
-<section id="projeto" class="box active">
-<h2>Projeto</h2>
+<section id="projeto" class="card">
 
-<select id="modo">
-  <option value="simular">Simular</option>
-  <option value="realizar">Realizar</option>
-</select>
+  <h2>Projeto</h2>
 
-<select id="canal">
-  <option value="direto">Venda Direta</option>
-  <option value="shopee">Shopee</option>
-  <option value="ml">Mercado Livre</option>
-</select>
+  <label>Modo</label>
+  <select id="modo">
+    <option value="simular">Simular</option>
+    <option value="real">Realizar</option>
+  </select>
 
-<select id="fil"></select>
-<input id="peso" type="number" placeholder="Peso (g)">
-<input id="horas" type="number" placeholder="Horas">
-<button onclick="calcular()">Calcular</button>
+  <label>Filamento</label>
+  <select id="filamento"></select>
 
-<div id="resultado"></div>
-</section>
+  <label>Peso da peça (g)</label>
+  <input type="number" id="peso" />
 
-<!-- ================= CUSTOS ================= -->
-<section id="custos" class="box">
-<h2>Custos</h2>
+  <label>Tempo de impressão (h)</label>
+  <input type="number" id="tempo" />
 
-<input id="c_maquina" placeholder="Máquina (R$)">
-<input id="c_vida" placeholder="Vida útil (h)">
-<input id="c_luz" placeholder="Energia R$/h">
-<input id="c_mao" placeholder="Mão de obra R$/h">
-<input id="c_emb" placeholder="Embalagem (R$)">
-<input id="c_margem" placeholder="Margem (%)">
+  <label>Marketplace</label>
+  <select id="market">
+    <option value="Shopee">Shopee</option>
+    <option value="Mercado Livre">Mercado Livre</option>
+  </select>
 
-<h3>Shopee</h3>
-<input id="s_pct" placeholder="% Shopee">
-<input id="s_fix" placeholder="Taxa fixa Shopee">
+  <label>Margem de lucro (%)</label>
+  <input type="number" id="margem" value="150" />
 
-<h3>Mercado Livre</h3>
-<input id="m_pct" placeholder="% ML">
-<input id="m_fix" placeholder="Taxa fixa ML">
+  <button onclick="calcularProjeto()">Calcular</button>
+  <button onclick="executarProjeto()">Executar Projeto</button>
 
-<button onclick="salvarConfig()">Salvar custos</button>
-</section>
+  <h2 id="resultado">Preço Final: R$ 0,00</h2>
 
-<!-- ================= PAINEL ================= -->
-<section id="painel" class="box">
-<h2>Painel Financeiro</h2>
-
-<div class="card">Faturamento: R$ <span id="fat">0</span></div>
-<div class="card">Custos: R$ <span id="cust">0</span></div>
-<div class="card">Lucro: R$ <span id="luc">0</span></div>
-<div class="card">Projetos: <span id="qtd">0</span></div>
 </section>
 
 <!-- ================= ESTOQUE ================= -->
-<section id="estoque" class="box">
-<h2>Estoque</h2>
-<ul id="listaEstoque"></ul>
+<section id="estoque" class="card hidden">
+
+  <h2>Estoque de Filamentos</h2>
+
+  <label>Nome do filamento</label>
+  <input type="text" id="nomeFil" />
+
+  <label>Preço por grama (R$)</label>
+  <input type="number" step="0.01" id="precoFil" />
+
+  <label>Saldo inicial (g)</label>
+  <input type="number" id="saldoFil" />
+
+  <button onclick="addFilamento()">Cadastrar Filamento</button>
+
+  <hr />
+
+  <ul id="listaEstoque"></ul>
+
 </section>
 
 <script>
-/* ===== BACKEND ===== */
-const FORM_URL="https://docs.google.com/forms/d/e/1FAIpQLSf26oMv7EjnQC124clAojJSrWSwCLl4Afqe1fk5No7WBfDP0w/formResponse";
-const ENTRY_ACTION="entry.1318253980";
-const ENTRY_PAYLOAD="entry.1973534829";
-const API_URL="https://script.google.com/macros/s/AKfycby4SPov2vVUGhoSAoQ4juRakKstF8hgoUuDVzsQD-28Fc394F_aSqfVCe5jTqMjtQfT/exec";
-
-/* ===== ESTADO ===== */
-let estado={
-  estoque:[],
-  relatorio:[],
-  config:{
-    maquina:4200,vida:8000,luz:0.85,mao:5,emb:5,margem:150,
-    shopee:{pct:12,fix:4},
-    ml:{pct:16,fix:6}
+  function showTab(tabId) {
+    document.getElementById("projeto").classList.add("hidden");
+    document.getElementById("estoque").classList.add("hidden");
+    document.getElementById(tabId).classList.remove("hidden");
   }
-};
-
-/* ===== UI ===== */
-function show(id){
-  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-/* ===== BACKEND ===== */
-async function salvar(){
-  const f=new FormData();
-  f.append(ENTRY_ACTION,"save");
-  f.append(ENTRY_PAYLOAD,JSON.stringify(estado));
-  await fetch(FORM_URL,{method:"POST",body:f,mode:"no-cors"});
-}
-async function carregar(){
-  const r=await fetch(API_URL);
-  const d=await r.json();
-  estado={...estado,...d};
-  render();
-}
-
-/* ===== PROJETO ===== */
-function calcular(){
-  const f=estado.estoque[fil.value];
-  const p=+peso.value,h=+horas.value;
-  const c=estado.config;
-
-  let custo =
-    (p*f.preco) +
-    (h*(c.luz+c.mao)) +
-    (h*(c.maquina/c.vida)) +
-    c.emb;
-
-  let preco=custo*(1+c.margem/100);
-
-  if(canal.value==="shopee"){
-    preco+=preco*(c.shopee.pct/100)+c.shopee.fix;
-  }
-  if(canal.value==="ml"){
-    preco+=preco*(c.ml.pct/100)+c.ml.fix;
-  }
-
-  resultado.innerHTML=`Preço final: <strong>R$ ${preco.toFixed(2)}</strong>`;
-
-  if(modo.value==="realizar"){
-    f.saldo-=p;
-    estado.relatorio.push({preco,custo,canal:canal.value});
-    salvar().then(carregar);
-  }
-}
-
-/* ===== PAINEL ===== */
-function atualizarPainel(){
-  let fat=0,cust=0;
-  estado.relatorio.forEach(r=>{
-    fat+=r.preco;
-    cust+=r.custo;
-  });
-  fat.textContent=fat.toFixed(2);
-  cust.textContent=cust.toFixed(2);
-  luc.textContent=(fat-cust).toFixed(2);
-  qtd.textContent=estado.relatorio.length;
-}
-
-/* ===== RENDER ===== */
-function render(){
-  fil.innerHTML="";
-  estado.estoque.forEach((f,i)=>{
-    fil.innerHTML+=`<option value="${i}">${f.nome}</option>`;
-  });
-  listaEstoque.innerHTML=estado.estoque.map(f=>`<li>${f.nome} — ${f.saldo}g</li>`).join("");
-  atualizarPainel();
-}
-
-/* ===== INIT ===== */
-carregar();
-
-/* ===== PWA ===== */
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js");
-}
 </script>
 
+<script src="app.js"></script>
 </body>
 </html>
