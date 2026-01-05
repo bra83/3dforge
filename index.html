@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D_ULTIMATE_v3.5</title>
+    <title>3D_TERMINAL_CORE_v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --neon-green: #00ff41; --dark-bg: #0d0208; --panel-bg: #161b22; }
-        body { background-color: var(--dark-bg); color: var(--neon-green); font-family: monospace; padding: 15px; }
-        .card { background-color: var(--panel-bg); border: 1px solid var(--neon-green); border-radius: 4px; padding: 15px; margin-bottom: 15px; }
-        input, select { background-color: #000; border: 1px solid var(--neon-green); color: var(--neon-green); padding: 8px; width: 100%; margin-bottom: 8px; outline: none; font-size: 0.9rem; }
+        body { background-color: var(--dark-bg); color: var(--neon-green); font-family: 'Fira Code', monospace; padding: 10px; }
+        .card { background-color: var(--panel-bg); border: 1px solid var(--neon-green); border-radius: 4px; padding: 15px; margin-bottom: 15px; box-shadow: 0 0 10px rgba(0, 255, 65, 0.05); }
+        input, select { background-color: #000; border: 1px solid var(--neon-green); color: var(--neon-green); padding: 8px; width: 100%; margin-bottom: 8px; outline: none; font-size: 0.85rem; }
         .btn { padding: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; border: 1px solid var(--neon-green); transition: 0.2s; }
         .btn-main { background-color: var(--neon-green); color: #000; }
-        .tab-btn { padding: 10px; cursor: pointer; border: 1px solid #333; flex-grow: 1; text-align: center; font-size: 0.7rem; }
-        .active-tab { background-color: var(--neon-green); color: #000; font-weight: bold; }
+        .btn-main:hover { background-color: #000; color: var(--neon-green); }
+        .tab-btn { padding: 8px; cursor: pointer; border: 1px solid #333; flex-grow: 1; text-align: center; font-size: 0.7rem; opacity: 0.6; }
+        .active-tab { background-color: var(--neon-green); color: #000; font-weight: bold; opacity: 1; }
         .content-section { display: none; }
         .content-section.active { display: block; }
-        label { font-size: 0.65rem; opacity: 0.8; }
+        label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; display: block; margin-bottom: 2px; }
+        .progress-bg { background-color: #333; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: var(--neon-green); transition: width 0.5s; }
     </style>
 </head>
-<body>
+<body class="max-w-lg mx-auto">
 
     <header class="mb-4 text-center border-b border-green-900 pb-2">
-        <h1 class="text-lg font-bold">CORE_LOGISTICS_v3.5</h1>
+        <h1 class="text-base font-bold tracking-widest">3D_LOGISTICS_CORE_v3.0</h1>
     </header>
 
     <nav class="flex gap-1 mb-4">
@@ -33,56 +37,82 @@
 
     <div id="content-1" class="content-section active">
         <div class="card">
-            <label>> MATERIAL</label>
+            <label>> MATERIAL_SELECIONADO</label>
             <select id="selectMaterial" onchange="calcular()"></select>
+            
             <div class="grid grid-cols-2 gap-2">
-                <div><label>> PESO(G)</label><input type="number" id="pesoPeca" oninput="calcular()" value="0"></div>
-                <div><label>> TEMPO(H)</label><input type="number" id="tempoHoras" oninput="calcular()" value="0"></div>
+                <div><label>> PESO_PEÇA (G)</label><input type="number" id="pesoPeca" oninput="calcular()" value="0"></div>
+                <div><label>> TEMPO_IMP (H)</label><input type="number" id="tempoHoras" oninput="calcular()" value="0"></div>
             </div>
-            <label>> CANAL</label>
+
+            <label>> CANAL_DE_SAÍDA</label>
             <select id="mkt" onchange="calcular()">
-                <option value="direta">DIRETA</option>
-                <option value="ml">MERCADO LIVRE</option>
-                <option value="shopee">SHOPEE</option>
+                <option value="direta">VENDA DIRETA / LOCAL</option>
+                <option value="ml">MERCADO LIVRE (COMM+FIXO)</option>
+                <option value="shopee">SHOPEE (COMISSÃO_BASE)</option>
             </select>
-            <div class="p-3 bg-black border border-green-900 rounded mb-4">
-                <p class="text-[0.7rem]">CUSTO_TOTAL: <span id="resCusto">R$ 0,00</span></p>
-                <p class="text-lg font-bold">VENDA: <span id="resVenda" class="text-green-400">R$ 0,00</span></p>
+
+            <div class="p-3 bg-black border border-green-900 rounded mb-4 font-mono text-[0.65rem] space-y-1">
+                <div class="flex justify-between"><span>MATERIA+PURGA:</span><span id="detMat">R$ 0,00</span></div>
+                <div class="flex justify-between"><span>ENERGIA+DEPREC:</span><span id="detFix">R$ 0,00</span></div>
+                <div class="flex justify-between"><span>MÃO_OBRA+EMBAL:</span><span id="detExtra">R$ 0,00</span></div>
+                <div class="border-t border-green-900 mt-2 pt-2 text-xs flex justify-between font-bold">
+                    <span>CUSTO_PROD:</span><span id="resCusto">R$ 0,00</span>
+                </div>
+                <div class="text-sm flex justify-between font-bold text-white bg-green-900/20 p-1">
+                    <span>VALOR_FINAL:</span><span id="resVenda" class="text-green-400">R$ 0,00</span>
+                </div>
             </div>
-            <button class="btn btn-main" onclick="registrarPedido()">REGISTRAR_VENDA</button>
+            <button class="btn btn-main" onclick="registrarPedido()">EXECUTAR_ORDEM_VENDA</button>
         </div>
     </div>
 
     <div id="content-2" class="content-section">
         <div class="card">
-            <h2 class="mb-2 text-xs font-bold">> NOVO_FILAMENTO</h2>
-            <input type="text" id="novoNome" placeholder="NOME/COR">
-            <input type="number" id="novoPreco" placeholder="PREÇO_ROLO">
-            <input type="number" id="novoPeso" placeholder="PESO_G">
-            <button class="btn btn-main" onclick="adicionarFilamento()">ADICIONAR</button>
+            <h2 class="mb-3 text-xs font-bold uppercase">> ENTRADA_DE_DADOS_FILAMENTO</h2>
+            <input type="text" id="novoNome" placeholder="NOME/COR/MATERIAL">
+            <input type="number" id="novoPreco" placeholder="VALOR_DO_ROLO (R$)">
+            <input type="number" id="novoPeso" placeholder="PESO_BRUTO (G)">
+            <button class="btn btn-main" onclick="adicionarFilamento()">SINCRONIZAR_DB</button>
         </div>
-        <div class="card" id="listaEstoque"></div>
+        <div class="card" id="listaEstoque">
+            <p class="text-[0.6rem] opacity-50">SINCRONIZANDO_RECURSOS...</p>
+        </div>
     </div>
 
     <div id="content-3" class="content-section">
         <div class="card">
-            <h2 class="mb-3 text-xs font-bold">> PARAMETROS_FIXOS</h2>
-            <label>MÃO DE OBRA (R$/H)</label><input type="number" id="cfgMaoObra" value="15">
-            <label>EMBALAGEM (R$)</label><input type="number" id="cfgEmbalagem" value="5">
-            <label>PURGA (%)</label><input type="number" id="cfgPurga" value="15">
-            <label>LUCRO (%)</label><input type="number" id="cfgLucro" value="100">
-            <label>ENERGIA (KWH)</label><input type="number" id="cfgKwh" value="0.85">
-            <label>CONSUMO (W)</label><input type="number" id="cfgConsumo" value="150">
-            <label>VALOR MAQ (R$)</label><input type="number" id="cfgMaqVal" value="2000">
-            <label>VIDA MAQ (H)</label><input type="number" id="cfgVidaH" value="5000">
-            <button class="btn btn-main mt-4" onclick="salvarConfig()">SALVAR_NA_NUVEM</button>
+            <h2 class="mb-4 text-xs font-bold uppercase">> CONFIGURAÇÃO_DE_MARGENS</h2>
+            
+            <label>MÃO_DE_OBRA (R$ POR HORA)</label>
+            <input type="number" id="cfgMaoObra" value="15.00" oninput="calcular()">
+
+            <label>CUSTO_MÉDIO_EMBALAGEM (R$)</label>
+            <input type="number" id="cfgEmbalagem" value="5.00" oninput="calcular()">
+
+            <label>TAXA_PURGA/SUPORTE (%)</label>
+            <input type="number" id="cfgPurga" value="15" oninput="calcular()">
+
+            <label>MARGEM_LUCRO_LÍQUIDO (%)</label>
+            <input type="number" id="cfgLucroPerc" value="100" oninput="calcular()">
+
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <div><label>LUZ (R$/KWH)</label><input type="number" id="cfgKwh" value="0.85" oninput="calcular()"></div>
+                <div><label>CONSUMO (W)</label><input type="number" id="cfgConsumo" value="150" oninput="calcular()"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div><label>VALOR_MÁQ (R$)</label><input type="number" id="cfgMaqVal" value="2000" oninput="calcular()"></div>
+                <div><label>VIDA_ÚTIL (H)</label><input type="number" id="cfgVidaH" value="5000" oninput="calcular()"></div>
+            </div>
         </div>
     </div>
 
     <script>
+        // URL Sincronizada com seu Google Apps Script
         const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec"; 
+        
         let dadosEstoque = [];
-        let configPlanilha = {};
 
         function switchTab(n) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
@@ -92,82 +122,95 @@
         }
 
         async function carregarDados() {
-            if(URL_SCRIPT.includes("https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec")) return;
-            const resp = await fetch(URL_SCRIPT);
-            const data = await resp.json();
-            dadosEstoque = data.estoque;
-            
-            // Carregar configurações da planilha para os inputs
-            data.config.slice(1).forEach(c => {
-                const idMap = { "MaoObra": "cfgMaoObra", "Embalagem": "cfgEmbalagem", "Purga": "cfgPurga", "Lucro": "cfgLucro", "Kwh": "cfgKwh", "Consumo": "cfgConsumo", "MaqVal": "cfgMaqVal", "VidaH": "cfgVidaH" };
-                if(idMap[c[0]]) document.getElementById(idMap[c[0]]).value = c[1];
-            });
-            atualizarUI();
+            try {
+                const resp = await fetch(URL_SCRIPT);
+                dadosEstoque = await resp.json();
+                atualizarUI();
+            } catch (e) { console.error("Falha ao ler banco de dados."); }
         }
 
         function atualizarUI() {
             const select = document.getElementById('selectMaterial');
             const lista = document.getElementById('listaEstoque');
             select.innerHTML = "";
-            lista.innerHTML = "";
+            lista.innerHTML = "<h3 class='mb-3 opacity-50 text-[0.6rem]'>INVENTÁRIO_DETECTADO:</h3>";
+
             dadosEstoque.slice(1).forEach(item => {
+                const perc = (item[3] / item[2]) * 100;
                 select.innerHTML += `<option value="${item[0]}">${item[0]}</option>`;
-                lista.innerHTML += `<div class="flex justify-between text-[0.7rem] border-b border-green-900 py-1"><span>${item[0]}</span><span>${item[3]}g</span></div>`;
+                lista.innerHTML += `
+                    <div class="mb-3">
+                        <div class="flex justify-between text-[0.6rem] mb-1"><span>${item[0]}</span><span>${item[3]}G / ${item[2]}G</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: ${perc}%"></div></div>
+                    </div>`;
             });
-            calcular();
         }
 
         function calcular() {
             const materialNome = document.getElementById('selectMaterial').value;
-            const mat = dadosEstoque.find(i => i[0] === materialNome) || ["-", 120, 1000, 1000];
+            const mat = dadosEstoque.find(i => i[0] === materialNome) || ["Padrão", 120, 1000, 1000];
+
             const peso = parseFloat(document.getElementById('pesoPeca').value) || 0;
             const horas = parseFloat(document.getElementById('tempoHoras').value) || 0;
 
-            const purga = (parseFloat(document.getElementById('cfgPurga').value)/100)+1;
-            const lucro = (parseFloat(document.getElementById('cfgLucro').value)/100)+1;
-            
-            const cMat = ((peso * purga) / mat[2]) * mat[1];
-            const cLuz = (parseFloat(document.getElementById('cfgConsumo').value)/1000) * horas * parseFloat(document.getElementById('cfgKwh').value);
-            const cDep = (parseFloat(document.getElementById('cfgMaqVal').value)/parseFloat(document.getElementById('cfgVidaH').value)) * horas;
-            const cMao = parseFloat(document.getElementById('cfgMaoObra').value) * horas;
-            const cEmb = parseFloat(document.getElementById('cfgEmbalagem').value);
+            const purga = (parseFloat(document.getElementById('cfgPurga').value) / 100) + 1;
+            const maoObra = parseFloat(document.getElementById('cfgMaoObra').value);
+            const embalagem = parseFloat(document.getElementById('cfgEmbalagem').value);
+            const margemLucro = (parseFloat(document.getElementById('cfgLucroPerc').value) / 100) + 1;
+            const kwh = parseFloat(document.getElementById('cfgKwh').value);
+            const watts = parseFloat(document.getElementById('cfgConsumo').value);
+            const vMaq = parseFloat(document.getElementById('cfgMaqVal').value);
+            const vVida = parseFloat(document.getElementById('cfgVidaH').value);
 
-            const total = cMat + cLuz + cDep + cMao + cEmb;
-            let venda = total * lucro;
-            if(document.getElementById('mkt').value === 'ml') venda = (venda + 6) / 0.83;
-            if(document.getElementById('mkt').value === 'shopee') venda = venda / 0.80;
+            const cMaterial = ((peso * purga) / mat[2]) * mat[1];
+            const cLuz = (watts / 1000) * horas * kwh; 
+            const cDeprec = (vMaq / vVida) * horas; 
+            const cMaoObra = maoObra * horas;
 
-            document.getElementById('resCusto').innerText = `R$ ${total.toFixed(2)}`;
-            document.getElementById('resVenda').innerText = `R$ ${venda.toFixed(2)}`;
-        }
+            const cTotal = cMaterial + cLuz + cDeprec + cMaoObra + embalagem;
+            let precoSugerido = cTotal * margemLucro;
 
-        async function salvarConfig() {
-            const btn = event.target; btn.innerText = "SALVANDO...";
-            const valores = {
-                MaoObra: document.getElementById('cfgMaoObra').value,
-                Embalagem: document.getElementById('cfgEmbalagem').value,
-                Purga: document.getElementById('cfgPurga').value,
-                Lucro: document.getElementById('cfgLucro').value,
-                Kwh: document.getElementById('cfgKwh').value,
-                Consumo: document.getElementById('cfgConsumo').value,
-                MaqVal: document.getElementById('cfgMaqVal').value,
-                VidaH: document.getElementById('cfgVidaH').value
-            };
-            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify({acao: "SALVAR_CONFIG", valores: valores}) });
-            btn.innerText = "SALVAR_NA_NUVEM";
-            alert("CONFIGURAÇÕES SINCRONIZADAS COM A PLANILHA!");
+            const canal = document.getElementById('mkt').value;
+            if(canal === 'ml') precoSugerido = (precoSugerido + 6) / 0.83;
+            if(canal === 'shopee') precoSugerido = precoSugerido / 0.80;
+
+            document.getElementById('detMat').innerText = `R$ ${cMaterial.toFixed(2)}`;
+            document.getElementById('detFix').innerText = `R$ ${(cLuz + cDeprec).toFixed(2)}`;
+            document.getElementById('detExtra').innerText = `R$ ${(cMaoObra + embalagem).toFixed(2)}`;
+            document.getElementById('resCusto').innerText = `R$ ${cTotal.toFixed(2)}`;
+            document.getElementById('resVenda').innerText = `R$ ${precoSugerido.toFixed(2)}`;
         }
 
         async function registrarPedido() {
-            const data = { acao: "REGISTRAR_PEDIDO", material: document.getElementById('selectMaterial').value, peca: "Venda", pesoGasto: parseFloat(document.getElementById('pesoPeca').value), custo: document.getElementById('resCusto').innerText, precoVenda: document.getElementById('resVenda').innerText, mkt: document.getElementById('mkt').value };
-            await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
-            alert("VENDA REGISTRADA!"); carregarDados();
+            const btn = event.target;
+            btn.innerText = "PROCESSANDO...";
+            const data = {
+                acao: "REGISTRAR_PEDIDO",
+                material: document.getElementById('selectMaterial').value,
+                peca: "Impressão_3D",
+                pesoGasto: parseFloat(document.getElementById('pesoPeca').value),
+                custo: document.getElementById('resCusto').innerText,
+                precoVenda: document.getElementById('resVenda').innerText,
+                mkt: document.getElementById('mkt').value
+            };
+            try {
+                await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
+                alert("REGISTRO_COMPLETO.");
+                carregarDados();
+            } catch(e) { alert("ERRO_DE_CONEXÃO"); }
+            btn.innerText = "EXECUTAR_ORDEM_VENDA";
         }
 
         async function adicionarFilamento() {
-            const data = { acao: "ADICIONAR_FILAMENTO", material: document.getElementById('novoNome').value, preco: parseFloat(document.getElementById('novoPreco').value), peso: parseFloat(document.getElementById('novoPeso').value) };
+            const data = {
+                acao: "ADICIONAR_FILAMENTO",
+                material: document.getElementById('novoNome').value,
+                preco: parseFloat(document.getElementById('novoPreco').value),
+                peso: parseFloat(document.getElementById('novoPeso').value)
+            };
             await fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(data) });
-            alert("FILAMENTO ADICIONADO!"); carregarDados();
+            alert("NOVO_MATERIAL_SINCRONIZADO.");
+            carregarDados();
         }
 
         carregarDados();
