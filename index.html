@@ -1,197 +1,560 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magistrum_3D_v6.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DecoNerd 3D - Gestão de Elite</title>
+    
+    <!-- Configurações PWA -->
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DecoNerd 3D">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
     <style>
-        :root { 
-            --gold: #c5a059; 
-            --lich-green: #a8f0a8; 
-            --dark-bg: #0a0a0b; 
-            --panel-bg: #1a1a1c;
-            --border: #3a3a3c;
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        
+        :root {
+            --bg-deep: #020617;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
         }
+
         body { 
-            background-color: var(--dark-bg); 
-            color: #e0e0e0; 
-            font-family: 'Lora', serif; 
-            padding: 20px;
-            background-image: radial-gradient(circle at top, #1a1a2e 0%, #0a0a0b 100%);
-        }
-        h1, h2, .tab-btn, .btn { font-family: 'Cinzel', serif; letter-spacing: 1px; }
-        
-        .card { 
-            background-color: var(--panel-bg); 
-            border: 1px solid var(--border); 
-            padding: 20px; 
-            margin-bottom: 20px; 
-            border-radius: 2px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
-        }
-        .card::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-deep); 
+            color: #f8fafc; 
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        input, select { 
-            background-color: #000; border: 1px solid var(--border); 
-            color: var(--lich-green); padding: 12px; width: 100%; 
-            margin-bottom: 12px; outline: none; transition: 0.3s;
+        .glass { 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.05); 
         }
-        input:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(197, 160, 89, 0.2); }
 
-        .btn { 
-            padding: 15px; font-weight: bold; width: 100%; cursor: pointer; 
-            border: 1px solid var(--gold); background: transparent; color: var(--gold);
-            text-transform: uppercase; transition: 0.4s; position: relative; overflow: hidden;
+        .ai-gradient { 
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%); 
         }
-        .btn:hover { background: var(--gold); color: #000; box-shadow: 0 0 20px rgba(197, 160, 89, 0.4); }
 
-        .tab-btn { padding: 12px; cursor: pointer; border-bottom: 2px solid transparent; flex: 1; text-align: center; color: #666; font-size: 0.8rem; }
-        .active-tab { color: var(--gold); border-bottom: 2px solid var(--gold); text-shadow: 0 0 10px rgba(197, 160, 89, 0.5); }
-        
-        .result-box {
-            background: rgba(0,0,0,0.4); border-left: 3px solid var(--lich-green); padding: 15px; margin: 15px 0;
+        .btn-primary { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        .hidden { display: none; }
-        label { font-size: 0.75rem; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
+
+        .btn-primary:active { transform: scale(0.95); }
+
+        .progress-bar { transition: width 1s ease-in-out; }
         
-        .progress-bar { background: #111; height: 4px; width: 100%; margin-top: 5px; }
-        .progress-fill { height: 100%; background: var(--lich-green); box-shadow: 0 0 10px var(--lich-green); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        @keyframes pulse-ai { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.02); } }
+        .loading-ai { animation: pulse-ai 1.5s infinite; }
+
+        input, select, textarea { 
+            background: #1e293b !important; 
+            border: 1px solid #334155 !important; 
+            color: white !important; 
+            outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent-blue) !important; }
     </style>
 </head>
-<body class="max-w-lg mx-auto">
+<body class="min-h-screen pb-24">
 
-    <header class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-white uppercase tracking-[4px]">Magistrum 3D</h1>
-        <p class="text-[0.6rem] italic text-gray-500 uppercase tracking-widest mt-1">Gestão de Artefatos & Alquimia de Custos</p>
+    <!-- CABEÇALHO -->
+    <header class="p-6 border-b border-slate-800 glass sticky top-0 z-50">
+        <div class="max-w-[1500px] mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 p-3 rounded-2xl shadow-xl shadow-blue-900/20">
+                    <i data-lucide="sparkles" class="text-white w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight uppercase">DecoNerd <span class="text-blue-500">3D</span> Pro</h1>
+                    <p class="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase">Gestão Cloud & IA Ativa</p>
+                </div>
+            </div>
+            <div class="flex gap-4 items-center">
+                <button id="pwa-install" class="hidden bg-green-600 hover:bg-green-700 text-white p-2.5 rounded-xl transition-all shadow-lg border border-green-500">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                </button>
+                <div class="text-right hidden sm:block border-l border-slate-800 pl-6">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Meta Mensal</p>
+                    <p class="text-xl font-black text-green-400" id="header-meta-val">R$ 6.600,00</p>
+                </div>
+                <button onclick="abrirConfig()" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl transition-all border border-slate-700">
+                    <i data-lucide="settings-2" class="w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+        </div>
     </header>
 
-    <nav class="flex gap-4 mb-8">
-        <div id="t1" class="tab-btn active-tab" onclick="tab(1)">Cálculo</div>
-        <div id="t2" class="tab-btn" onclick="tab(2)">Depósito</div>
-        <div id="t3" class="tab-btn" onclick="tab(3)">Decretos</div>
-    </nav>
+    <main class="max-w-[1500px] mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- CALCULADORA DE PRECISÃO -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="glass p-8 rounded-[32px] border-blue-500/20 shadow-2xl">
+                <h2 class="text-xl font-bold mb-8 flex items-center gap-3">
+                    <i data-lucide="calculator" class="text-blue-500 w-5 h-5"></i> Simulação de Custos
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nome do Projeto</label>
+                        <input type="text" id="c-nome-produto" placeholder="Ex: Diorama Star Wars" class="w-full rounded-2xl p-4 text-sm outline-none">
+                    </div>
 
-    <div id="c1" class="tab-content">
-        <div class="card">
-            <label>Essência do Material</label>
-            <select id="selMat" onchange="calc()"></select>
-            <div class="grid grid-cols-2 gap-4">
-                <div><label>Massa (G)</label><input type="number" id="p" oninput="calc()" value="0"></div>
-                <div><label>Tempo (H)</label><input type="number" id="t" oninput="calc()" value="0"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tempo Impressão (h)</label>
+                            <input type="number" id="c-tempo" value="10" class="w-full rounded-2xl p-4 text-sm outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Peso Estimado (g)</label>
+                            <input type="number" id="c-peso" value="100" class="w-full rounded-2xl p-4 text-sm outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Filamento</label>
+                            <select id="c-material" class="w-full rounded-2xl p-4 text-sm outline-none"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pintura</label>
+                            <select id="c-pintura" class="w-full rounded-2xl p-4 text-sm outline-none">
+                                <option value="0">Sem Pintura</option>
+                                <option value="simples">Simples (R$ 15)</option>
+                                <option value="media" selected>Média (R$ 35)</option>
+                                <option value="profissional">Profissional (R$ 60)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-900/20 rounded-[28px] p-6 border border-blue-500/20 mt-6 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
+                                <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Venda Direta</p>
+                                <p class="text-lg font-black text-white" id="res-cliente">R$ 0,00</p>
+                                <p class="text-[8px] text-green-500 font-bold uppercase" id="lucro-cliente">Lucro: R$ 0</p>
+                            </div>
+                            <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
+                                <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Shopee</p>
+                                <p class="text-lg font-black text-white" id="res-shopee">R$ 0,00</p>
+                            </div>
+                            <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
+                                <p class="text-[9px] font-black text-slate-500 uppercase mb-1">M. Livre</p>
+                                <p class="text-lg font-black text-white" id="res-ml">R$ 0,00</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-blue-500/10 grid grid-cols-2 gap-2 text-[9px] font-bold text-slate-500 uppercase">
+                            <p>Custo Mat: <span id="det-mat" class="text-slate-300">R$ 0</span></p>
+                            <p>Energia: <span id="det-luz" class="text-slate-300">R$ 0</span></p>
+                            <p>Amortização: <span id="det-amort" class="text-slate-300">R$ 0</span></p>
+                            <p>Custos Fixos: <span id="det-fixo" class="text-slate-300">R$ 0</span></p>
+                        </div>
+                    </div>
+
+                    <button onclick="confirmarVenda('Direta')" id="btn-venda" class="w-full btn-primary text-white font-extrabold py-5 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg">
+                        <i data-lucide="check-square" class="w-5 h-5"></i> Fechar Pedido e Baixar Stock
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <button onclick="gerarMarketingIA()" class="ai-gradient text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg">
+                            Marketing IA ✨
+                        </button>
+                        <button onclick="gerarSlicerIA()" class="bg-slate-800 text-blue-400 border border-blue-500/20 font-bold py-3 rounded-xl text-[10px] uppercase flex items-center justify-center gap-2">
+                            Slicer Tips ✨
+                        </button>
+                    </div>
+                </div>
             </div>
-            <label>Mercado de Destino</label>
-            <select id="m" onchange="calc()">
-                <option value="direta">Venda Direta</option>
-                <option value="ml">Mercado Livre</option>
-                <option value="shopee">Shopee</option>
-            </select>
-            <div class="result-box">
-                <p class="text-[0.65rem] opacity-60 uppercase">Custo de Forja</p>
-                <p id="resC" class="text-lg text-white">R$ 0,00</p>
-                <p class="text-[0.65rem] opacity-60 uppercase mt-2">Valor de Oferta</p>
-                <p id="resV" class="text-2xl font-bold text-[#a8f0a8] shadow-green-900">R$ 0,00</p>
+        </div>
+
+        <!-- DASHBOARD CENTRAL -->
+        <div class="lg:col-span-7 space-y-8">
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass p-8 rounded-[32px] border-l-4 border-blue-500 shadow-xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Faturamento</p>
+                    <p class="text-3xl font-black" id="kpi-faturamento">R$ 0,00</p>
+                    <div class="w-full bg-slate-800 h-2 rounded-full mt-6">
+                        <div id="meta-progress" class="bg-blue-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="glass p-8 rounded-[32px] border-l-4 border-green-500 shadow-xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Lucro Líquido</p>
+                    <p class="text-3xl font-black text-green-400" id="kpi-lucro">R$ 0,00</p>
+                </div>
+
+                <div class="glass p-8 rounded-[32px] border-l-4 border-orange-500 shadow-xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Monitor Cloud</p>
+                    <div class="flex items-center gap-3 mt-2">
+                        <div id="sync-dot" class="w-3 h-3 rounded-full bg-slate-600 animate-pulse"></div>
+                        <p id="sync-text" class="text-xs font-bold text-slate-400 uppercase">Consultando...</p>
+                    </div>
+                    <button onclick="sincronizarEntrada()" class="mt-4 text-[10px] font-black text-blue-500 uppercase hover:text-white transition-colors flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar Agora
+                    </button>
+                </div>
             </div>
-            <button class="btn" onclick="sendV()">Registrar Venda</button>
+
+            <!-- IA CONTAINER -->
+            <div id="ai-container" class="hidden glass p-10 rounded-[40px] border border-purple-500/30 relative bg-gradient-to-br from-purple-900/10 to-transparent shadow-2xl">
+                <button onclick="fecharIA()" class="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="bg-purple-600 p-3 rounded-2xl shadow-lg">
+                        <i data-lucide="brain-circuit" class="text-white w-7 h-7"></i>
+                    </div>
+                    <h3 id="ai-title" class="text-2xl font-black text-purple-400 uppercase tracking-widest italic">Análise Gemini</h3>
+                </div>
+                <div id="ai-content" class="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap font-medium max-h-[350px] overflow-y-auto custom-scrollbar pr-4"></div>
+            </div>
+
+            <!-- INVENTÁRIO -->
+            <div class="glass rounded-[40px] overflow-hidden border border-slate-800 shadow-2xl">
+                <div class="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
+                    <h3 class="font-bold text-lg uppercase tracking-widest flex items-center gap-3">
+                        <i data-lucide="layers" class="text-blue-500 w-5 h-5"></i> Saúde do Stock
+                    </h3>
+                    <div class="flex gap-3">
+                        <button onclick="gerarRelatorioIA()" class="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-slate-700 hover:text-white transition-all">
+                            Estratégia IA ✨
+                        </button>
+                        <button onclick="abrirModalMaterial()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">
+                            + Novo Rolo
+                        </button>
+                    </div>
+                </div>
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6" id="lista-estoque"></div>
+            </div>
+
+            <!-- HISTÓRICO -->
+            <div class="glass rounded-[40px] overflow-hidden border border-slate-800 shadow-2xl">
+                <div class="p-8 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+                    <h3 class="font-bold text-sm uppercase tracking-widest flex items-center gap-3">
+                        <i data-lucide="history" class="text-blue-500 w-4 h-4"></i> Últimas Vendas
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="text-[10px] font-bold text-slate-500 uppercase border-b border-slate-800/50">
+                                <th class="p-6">Data</th>
+                                <th class="p-6">Item</th>
+                                <th class="p-6 text-right">Venda</th>
+                                <th class="p-6 text-right text-green-400">Lucro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-vendas" class="divide-y divide-slate-800/30"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: CONFIGURAÇÕES -->
+    <div id="modal-config" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] backdrop-blur-xl p-4">
+        <div class="glass p-10 rounded-[40px] max-w-4xl w-full border border-slate-700 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
+            <h3 class="text-2xl font-black mb-10 text-white text-center uppercase tracking-widest">Painel de Controlo Cloud</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="config-fields"></div>
+            <div class="mt-8 pt-8 border-t border-slate-800 space-y-4">
+                <label class="text-[10px] font-bold text-blue-500 uppercase tracking-widest ml-1">Webhook URL</label>
+                <input type="text" id="cfg-url-write" class="w-full rounded-2xl p-4 text-xs outline-none">
+            </div>
+            <div class="flex gap-4 mt-10">
+                <button onclick="fecharConfig()" class="flex-1 text-slate-500 font-bold py-4 text-xs uppercase tracking-widest">Sair</button>
+                <button onclick="salvarConfigCloud()" class="flex-1 btn-primary text-white font-black py-4 rounded-2xl text-xs uppercase shadow-xl">Guardar</button>
+            </div>
         </div>
     </div>
 
-    <div id="c2" class="tab-content hidden">
-        <div class="card">
-            <h2 class="mb-4 text-sm text-gold">Adicionar Suprimento</h2>
-            <input type="text" id="nN" placeholder="Nome do Material">
-            <input type="number" id="nP" placeholder="Preço do Rolo">
-            <input type="number" id="nW" placeholder="Peso Total (G)">
-            <button class="btn" onclick="sendA()">Sincronizar com Planilha</button>
+    <!-- MODAL: NOVO MATERIAL -->
+    <div id="modal-material" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] backdrop-blur-xl p-4">
+        <div class="glass p-10 rounded-[40px] max-w-md w-full border border-slate-700 shadow-2xl">
+            <h3 class="text-2xl font-black mb-8 text-white text-center uppercase tracking-widest">Novo Filamento</h3>
+            <div class="space-y-5">
+                <input type="text" id="new-m-nome" placeholder="Nome / Marca" class="w-full rounded-2xl p-4 text-sm outline-none">
+                <input type="number" id="new-m-peso" value="1000" class="w-full rounded-2xl p-4 text-sm outline-none">
+                <input type="number" id="new-m-preco" value="120.00" class="w-full rounded-2xl p-4 text-sm outline-none">
+                <div class="flex gap-4 pt-6">
+                    <button onclick="fecharModalMaterial()" class="flex-1 text-slate-400 font-bold py-5 text-xs uppercase">Voltar</button>
+                    <button onclick="registrarMaterialCloud()" id="btn-save-mat" class="flex-1 btn-primary text-white font-black py-5 rounded-2xl text-xs uppercase">Gravar Agora</button>
+                </div>
+            </div>
         </div>
-        <div id="list" class="space-y-4"></div>
     </div>
 
-    <div id="c3" class="tab-content hidden">
-        <div class="card">
-            <label>Margem de Lucro (%)</label><input type="number" id="cL" value="100">
-            <label>Valor da Hora (R$)</label><input type="number" id="cMO" value="15">
-            <label>Valor da Máquina (R$)</label><input type="number" id="cVM" value="2000">
-            <label>Vida Útil (H)</label><input type="number" id="cVU" value="5000">
-            <label>Energia (KWH)</label><input type="number" id="cEK" value="0.85">
-            <button class="btn" onclick="save()">Salvar Decretos</button>
-        </div>
-    </div>
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-10 py-5 rounded-3xl shadow-2xl opacity-0 translate-y-10 transition-all duration-500 z-[300] font-black text-xs uppercase tracking-widest">Notificação</div>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbws1Ltn_D-VG5s7utXwyBc1m5764U9naa26jo3tnR38UcEnq3270-0b6ttBlCVWr43m/exec";
-        let db = [];
+        // --- PWA CONFIG (Sem Service Worker por limitações de URL de Blob) ---
+        try {
+            const manifest = {
+                "name": "DecoNerd 3D Pro", "short_name": "DecoNerd3D", "start_url": ".", "display": "standalone",
+                "background_color": "#020617", "theme_color": "#020617",
+                "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/575/575454.png", "sizes": "512x512", "type": "image/png" }]
+            };
+            const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
+            const linkManifest = document.createElement('link'); linkManifest.rel = 'manifest'; linkManifest.href = manifestURL; document.head.appendChild(linkManifest);
+        } catch(e) { console.log("Erro ao gerar Manifesto PWA"); }
 
-        function tab(n){
-            [1,2,3].forEach(i=>{
-                document.getElementById('c'+i).classList.toggle('hidden', i!==n);
-                document.getElementById('t'+i).classList.toggle('active-tab', i===n);
+        // --- CORE STATE ---
+        const apiKey = ""; 
+        const modelName = "gemini-2.5-flash-preview-09-2025";
+        const DEFAULT_URL_READ = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCBq2SPd_0aPaNJZzu0vH02ZtYc0KYhSHfYyoJiVMRwk9wkmPWPQXngFKpZFUZPwWJ7_sdlMiccny8/pub?gid=0&single=true&output=csv";
+        const DEFAULT_URL_WRITE = "https://script.google.com/macros/s/AKfycbwEQYbvahyzNbicUb_C4aUmmfy1w2iTKbEbSnGk8pPBhHOaPcmqrDEURXe6KHfsdwGl1w/exec";
+
+        let state = {
+            estoque: [],
+            vendas: JSON.parse(localStorage.getItem('3d_vend')) || [],
+            settings: JSON.parse(localStorage.getItem('3d_sett')) || {
+                aluguel: 210, softwares: 95, ecommerce: 59.9, mei: 60, publicidade: 100, condominio: 100,
+                kwh: 1.14, potencia: 350, precoMaq: 1500, vidaUtil: 24, embalagem: 3, markup: 2.5,
+                pintSimples: 15, pintMedia: 35, pintProf: 60, meta: 6600, urlRead: DEFAULT_URL_READ, urlWrite: DEFAULT_URL_WRITE
+            }
+        };
+
+        // --- GEMINI API CALLER ---
+        async function callGemini(prompt, system) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            try {
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{parts:[{text: prompt}]}], systemInstruction: {parts:[{text: system}]} }) });
+                const data = await res.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch(e) { return "Erro ao contactar a IA."; }
+        }
+
+        function init() {
+            lucide.createIcons();
+            popularCamposConfig();
+            sincronizarEntrada();
+            atualizarUI();
+            ['c-peso', 'c-tempo', 'c-material', 'c-pintura'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', calcularOrcamento);
+            });
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('pwa-install');
+                if(btn) { btn.classList.remove('hidden'); btn.onclick = () => e.prompt(); }
             });
         }
 
-        async function load(){
-            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>{if(localStorage.getItem(k)) document.getElementById(k).value=localStorage.getItem(k)});
-            const r = await fetch(API);
-            db = await r.json();
-            const s = document.getElementById('selMat');
-            const l = document.getElementById('list');
-            s.innerHTML = ""; l.innerHTML = "";
-            db.slice(1).forEach(i=>{
-                s.innerHTML+=`<option value="${i[0]}">${i[0]}</option>`;
-                const perc = (i[3]/i[2])*100;
-                l.innerHTML+=`<div class="card"><div class="flex justify-between text-xs mb-1"><span>${i[0]}</span><span>${i[3]}g</span></div><div class="progress-bar"><div class="progress-fill" style="width:${perc}%"></div></div></div>`;
-            });
-            calc();
+        async function sincronizarEntrada() {
+            if(!state.settings.urlRead) return;
+            mostrarSyncStatus(null, "Consultando...");
+            try {
+                const res = await fetch(state.settings.urlRead + "&cache=" + Date.now());
+                const csv = await res.text();
+                Papa.parse(csv, {
+                    header: true, skipEmptyLines: true,
+                    complete: (results) => {
+                        state.estoque = results.data.map((row, i) => {
+                            const k = {}; Object.keys(row).forEach(key => k[key.trim().toLowerCase()] = row[key]);
+                            return { id: i, nome: k.nome || k.material || "Sem Nome", peso: parseFloat(k.peso || 0), preco: parseFloat(k.preco || 0) };
+                        }).filter(m => m.nome !== "Sem Nome");
+                        atualizarUI(); mostrarSyncStatus(true, "Cloud Ativa");
+                    }
+                });
+            } catch(e) { mostrarSyncStatus(false, "Erro Link"); }
         }
 
-        function calc(){
-            const mat = db.find(i=>i[0]===document.getElementById('selMat').value) || ["-",120,1000,1000];
-            const p = parseFloat(document.getElementById('p').value)||0;
-            const t = parseFloat(document.getElementById('t').value)||0;
-            const cM = (p/mat[2])*mat[1];
-            const cL = (150/1000)*t*parseFloat(document.getElementById('cEK').value);
-            const cD = (parseFloat(document.getElementById('cVM').value)/parseFloat(document.getElementById('cVU').value))*t;
-            const cO = parseFloat(document.getElementById('cMO').value)*t;
-            const total = cM + cL + cD + cO;
-            let v = total * (1+(parseFloat(document.getElementById('cL').value)/100));
-            if(document.getElementById('m').value==='ml') v=(v+6)/0.83;
-            if(document.getElementById('m').value==='shopee') v=v/0.80;
-            document.getElementById('resC').innerText="R$ "+total.toFixed(2);
-            document.getElementById('resV').innerText="R$ "+v.toFixed(2);
+        function calcularOrcamento() {
+            const peso = parseFloat(document.getElementById('c-peso')?.value) || 0;
+            const tempo = parseFloat(document.getElementById('c-tempo')?.value) || 0;
+            const pintura = document.getElementById('c-pintura')?.value;
+            const matId = document.getElementById('c-material')?.value;
+
+            if (!state.estoque.length) return null;
+            const mat = state.estoque.find(x => x.id == matId) || state.estoque[0];
+
+            const cMat = (peso / 1000) * mat.preco;
+            const cLuz = (state.settings.potencia / 1000) * tempo * state.settings.kwh;
+            const cAmort = (state.settings.precoMaq / state.settings.vidaUtil / 30 / 24) * tempo;
+            const tFixoT = parseFloat(state.settings.aluguel) + parseFloat(state.settings.softwares) + parseFloat(state.settings.ecommerce) + parseFloat(state.settings.mei) + parseFloat(state.settings.publicidade) + parseFloat(state.settings.condominio);
+            const cFixo = (tFixoT / 4000) * tempo;
+            
+            let cPint = 0;
+            if(pintura === "simples") cPint = parseFloat(state.settings.pintSimples);
+            if(pintura === "media") cPint = parseFloat(state.settings.pintMedia);
+            if(pintura === "profissional") cPint = parseFloat(state.settings.pintProf);
+
+            const cTotal = cMat + cLuz + cAmort + cFixo + parseFloat(state.settings.embalagem) + cPint;
+            const pCliente = cTotal * state.settings.markup;
+            const lucro = pCliente - cTotal;
+
+            const ut = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            ut('res-cliente', `R$ ${pCliente.toFixed(2)}`);
+            ut('lucro-cliente', `Lucro: R$ ${lucro.toFixed(2)}`);
+            ut('res-shopee', `R$ ${((pCliente + 4) / 0.8).toFixed(2)}`);
+            ut('res-ml', `R$ ${((pCliente + 6) / 0.81).toFixed(2)}`);
+            ut('det-mat', `R$ ${cMat.toFixed(2)}`);
+            ut('det-luz', `R$ ${cLuz.toFixed(2)}`);
+            ut('det-amort', `R$ ${cAmort.toFixed(2)}`);
+            ut('det-fixo', `R$ ${cFixo.toFixed(2)}`);
+
+            return { preco: pCliente, lucro, peso, nome: mat.nome };
         }
 
-        async function sendA(){
-            const n = document.getElementById('nN').value;
-            const p = document.getElementById('nP').value;
-            const w = document.getElementById('nW').value;
-            await fetch(`${API}?acao=ADICIONAR_FILAMENTO&material=${encodeURIComponent(n)}&preco=${p}&peso=${w}`, {mode: 'no-cors'});
-            alert("Suprimento registrado no Grande Livro.");
-            setTimeout(load, 3000);
+        async function confirmarVenda(plataforma) {
+            const d = calcularOrcamento(); if (!d) return;
+            const btn = document.getElementById('btn-venda'); if(btn) { btn.disabled = true; btn.innerHTML = `Processando...`; }
+            
+            const url = new URL(state.settings.urlWrite);
+            url.searchParams.append('type', 'venda'); url.searchParams.append('data', new Date().toLocaleDateString('pt-br'));
+            url.searchParams.append('item', (document.getElementById('c-nome-produto')?.value || "Peça 3D") + " (" + plataforma + ")");
+            url.searchParams.append('material', d.nome); url.searchParams.append('peso', d.peso);
+            url.searchParams.append('venda', d.preco.toFixed(2)); url.searchParams.append('lucro', d.lucro.toFixed(2));
+
+            try {
+                await fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
+                const mat = state.estoque.find(x => x.nome === d.nome); if(mat) mat.peso -= d.peso;
+                state.vendas.push({ item: d.nome, bruto: d.preco, lucro: d.lucro, data: new Date().toLocaleDateString('pt-br') });
+                localStorage.setItem('3d_vend', JSON.stringify(state.vendas));
+                mostrarToast("✅ Venda guardada e stock baixado!");
+                atualizarUI();
+            } catch(e) { mostrarToast("Erro na ligação", "bg-red-500"); }
+            finally { if(btn) { btn.disabled = false; btn.innerHTML = `<i data-lucide="check-square" class="w-5 h-5"></i> Fechar Pedido e Baixar Stock`; } lucide.createIcons(); }
         }
 
-        async function sendV(){
-            const mat = document.getElementById('selMat').value;
-            const psg = document.getElementById('p').value;
-            const cus = document.getElementById('resC').innerText;
-            const ven = document.getElementById('resV').innerText;
-            const mkt = document.getElementById('m').value;
-            await fetch(`${API}?acao=REGISTRAR_PEDIDO&material=${encodeURIComponent(mat)}&pesoGasto=${psg}&custo=${cus}&precoVenda=${ven}&mkt=${mkt}`, {mode: 'no-cors'});
-            alert("Venda selada com sucesso.");
-            setTimeout(load, 3000);
+        async function registrarMaterialCloud() {
+            const n = document.getElementById('new-m-nome')?.value; const p = document.getElementById('new-m-peso')?.value; const v = document.getElementById('new-m-preco')?.value;
+            if(!n || !p || !v) return mostrarToast("Preencha tudo!");
+            const btn = document.getElementById('btn-save-mat'); if(btn) { btn.disabled = true; btn.innerHTML = "A gravar..."; }
+            const url = new URL(state.settings.urlWrite);
+            url.searchParams.append('type', 'estoque'); url.searchParams.append('nome', n); url.searchParams.append('peso', p); url.searchParams.append('preco', v);
+            try {
+                await fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
+                mostrarToast("✅ Novo material enviado!");
+                fecharModalMaterial(); sincronizarEntrada();
+            } catch(e) { mostrarToast("Erro Cloud", "bg-red-500"); }
+            finally { if(btn) { btn.disabled = false; btn.innerHTML = "Gravar Agora"; } }
         }
 
-        function save(){
-            ['cL','cMO','cVM','cVU','cEK'].forEach(k=>localStorage.setItem(k, document.getElementById(k).value));
-            alert("Decretos salvos na memória da oficina.");
-            calc();
+        async function gerarRelatorioIA() {
+            const tx = await prepararIA("Estratégia de Negócio ✨");
+            const f = state.vendas.reduce((a,v) => a + v.bruto, 0); const l = state.vendas.reduce((a,v) => a + v.lucro, 0);
+            const prompt = `Faturamento R$ ${f.toFixed(2)}, Lucro R$ ${l.toFixed(2)}. Meta R$ 6.600. Analise e dê 3 conselhos de mestre.`;
+            tx.innerText = await callGemini(prompt, "Consultor financeiro 3D.");
+            tx.classList.remove('loading-ai');
         }
 
-        load();
+        async function sugerirProdutoIA() {
+            const tx = await prepararIA("O que imprimir hoje? ✨");
+            const st = state.estoque.map(m => `${m.nome} (${m.peso}g)`).join(', ');
+            tx.innerText = await callGemini(`Stock: ${st}. Sugira 3 produtos rentáveis.`, "Analista de mercado geek.");
+            tx.classList.remove('loading-ai');
+        }
+
+        async function gerarMarketingIA() {
+            const tx = await prepararIA("Marketing de Elite ✨");
+            const n = document.getElementById('c-nome-produto')?.value || "Peça 3D";
+            tx.innerText = await callGemini(`Crie um anúncio magnético para: ${n}.`, "Copywriter ninja.");
+            tx.classList.remove('loading-ai');
+        }
+
+        async function gerarSlicerIA() {
+            const tx = await prepararIA("Dicas Slicer ✨");
+            tx.innerText = await callGemini(`Dicas de fatiamento para: ${document.getElementById('c-nome-produto')?.value || 'peça'}.`, "Técnico 3D.");
+            tx.classList.remove('loading-ai');
+        }
+
+        async function prepararIA(tit) {
+            const c = document.getElementById('ai-container'); const tx = document.getElementById('ai-content'); const t = document.getElementById('ai-title');
+            c.classList.remove('hidden'); t.innerText = tit; tx.innerText = "Gemini a pensar..."; tx.classList.add('loading-ai');
+            c.scrollIntoView({ behavior: 'smooth' }); return tx;
+        }
+
+        function atualizarUI() {
+            const sel = document.getElementById('c-material'); if (sel) sel.innerHTML = state.estoque.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+            const lista = document.getElementById('lista-estoque');
+            if (lista) {
+                lista.innerHTML = state.estoque.map(m => {
+                    const p = Math.max(0, Math.min(100, (m.peso / 1000) * 100));
+                    return `<div class="glass p-6 rounded-3xl border border-slate-800"><div class="flex justify-between mb-4"><div><h4 class="font-bold text-sm text-slate-200">${m.nome}</h4></div><p class="text-xs font-black text-slate-300">${m.peso.toFixed(0)}g</p></div><div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden"><div class="progress-bar h-full ${p < 20 ? 'bg-red-500' : 'bg-blue-500'}" style="width: ${p}%"></div></div></div>`;
+                }).join('');
+            }
+            const f = state.vendas.reduce((a,v) => a + v.bruto, 0); const l = state.vendas.reduce((a,v) => a + v.lucro, 0);
+            const ut = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            ut('kpi-faturamento', `R$ ${f.toLocaleString('pt-br', {minimumFractionDigits: 2})}`); ut('kpi-lucro', `R$ ${l.toLocaleString('pt-br', {minimumFractionDigits: 2})}`);
+            const metaP = document.getElementById('meta-progress'); if(metaP) metaP.style.width = Math.min((f/state.settings.meta)*100, 100) + "%";
+            ut('header-meta-val', `R$ ${state.settings.meta.toLocaleString('pt-br')}`); lucide.createIcons(); calcularOrcamento();
+        }
+
+        function popularCamposConfig() {
+            const c = document.getElementById('config-fields'); if(!c) return;
+            const s = state.settings; const fields = [{id:'aluguel', label:'Aluguer'}, {id:'softwares', label:'Softwares'}, {id:'ecommerce', label:'E-com'}, {id:'mei', label:'MEI'}, {id:'publicidade', label:'Ads'}, {id:'condominio', label:'Condo'}, {id:'kwh', label:'KWh'}, {id:'potencia', label:'Watts'}, {id:'precoMaq', label:'R$ Maq'}, {id:'vidaUtil', label:'Meses Uso'}, {id:'markup', label:'Markup'}, {id:'meta', label:'Meta'}];
+            c.innerHTML = fields.map(x => `<div class="space-y-1"><label class="text-[9px] font-bold text-slate-500 uppercase">${x.label}</label><input type="number" id="cfg-${x.id}" value="${s[x.id]}" class="w-full rounded-xl p-3 text-xs outline-none"></div>`).join('');
+        }
+
+        async function salvarConfigCloud() {
+            const inputs = document.getElementById('config-fields').querySelectorAll('input');
+            inputs.forEach(i => state.settings[i.id.replace('cfg-','')] = parseFloat(i.value) || state.settings[i.id.replace('cfg-','')]);
+            state.settings.urlWrite = document.getElementById('cfg-url-write')?.value || state.settings.urlWrite;
+            localStorage.setItem('3d_sett', JSON.stringify(state.settings));
+            mostrarToast("⚙️ Definições Guardadas!"); fecharConfig(); init();
+        }
+
+        function mostrarSyncStatus(ok, msg) {
+            const d = document.getElementById('sync-dot'); const t = document.getElementById('sync-text'); if(!d || !t) return;
+            d.className = `w-3 h-3 rounded-full ${ok===null?'bg-blue-500 animate-pulse':(ok?'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]':'bg-red-500')}`; t.innerText = msg;
+        }
+
+        function mostrarToast(m, c="bg-blue-600") {
+            const t = document.getElementById('toast'); if(!t) return;
+            t.innerText = m; t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 ${c} text-white px-10 py-5 rounded-3xl shadow-2xl opacity-100 translate-y-0 transition-all z-[300] font-black text-xs uppercase tracking-widest`;
+            setTimeout(() => { if(t) t.classList.add('opacity-0', 'translate-y-10'); }, 4000);
+        }
+
+        function abrirConfig() { document.getElementById('modal-config').classList.remove('hidden'); document.getElementById('modal-config').classList.add('flex'); }
+        function fecharConfig() { document.getElementById('modal-config').classList.add('hidden'); }
+        function abrirModalMaterial() { document.getElementById('modal-material').classList.remove('hidden'); document.getElementById('modal-material').classList.add('flex'); }
+        function fecharModalMaterial() { document.getElementById('modal-material').classList.add('hidden'); }
+        function fecharIA() { document.getElementById('ai-container').classList.add('hidden'); }
+
+        window.onload = init;
     </script>
 </body>
+
+<!-- 
+    CÓDIGO GOOGLE APPS SCRIPT (WEBHOOK.GS) - COPIE E COLE NA SUA PLANILHA
+    
+    function doGet(e) {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var params = e.parameter;
+      var type = params.type;
+      if (!type) return ContentService.createTextOutput("Erro");
+      try {
+        if (type === 'venda') {
+          var sheetSales = ss.getSheetByName("Vendas");
+          var sheetStock = ss.getSheetByName("Estoque");
+          sheetSales.appendRow([params.data, params.item, params.material, params.peso + "g", params.venda, params.lucro]);
+          var stockData = sheetStock.getDataRange().getValues();
+          for (var i = 1; i < stockData.length; i++) {
+            if (stockData[i][0].toString().trim().toLowerCase() === params.material.toString().trim().toLowerCase()) {
+              var pesoAtual = parseFloat(stockData[i][1]);
+              sheetStock.getRange(i + 1, 2).setValue(pesoAtual - parseFloat(params.peso));
+              break;
+            }
+          }
+          return ContentService.createTextOutput("Venda e Stock Sincronizados");
+        } 
+        else if (type === 'estoque') {
+          var sheetStock = ss.getSheetByName("Estoque");
+          sheetStock.appendRow([params.nome, params.peso, params.preco]);
+          return ContentService.createTextOutput("Novo Material Gravado");
+        }
+      } catch (err) { return ContentService.createTextOutput("Erro: " + err.message); }
+    }
+-->
+
 </html>
