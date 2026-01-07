@@ -1,560 +1,545 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DecoNerd 3D - Gestão de Elite</title>
+    <title>333 Print Studio - Gestão</title>
     
-    <!-- Configurações PWA -->
-    <meta name="theme-color" content="#020617">
+    <!-- Meta tags PWA -->
+    <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DecoNerd 3D">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
+    <!-- Bibliotecas Base -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@900&display=swap');
         
         :root {
-            --bg-deep: #020617;
-            --accent-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
+            --studio-white: #ffffff;
+            --studio-ice: #f8fafc;
+            --studio-border: #f1f5f9;
+            --studio-accent: #3b82f6;
+            --studio-text: #0f172a;
+            --studio-muted: #94a3b8;
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg-deep); 
-            color: #f8fafc; 
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
+            background-color: var(--studio-white); 
+            color: var(--studio-text);
+            -webkit-font-smoothing: antialiased;
         }
 
-        .glass { 
-            background: rgba(15, 23, 42, 0.8); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255,255,255,0.05); 
+        /* Logo 333 simulando BBB (Estilo Super Mellow) */
+        .logo-333 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.18em; 
+            font-size: 3rem;
+            line-height: 0.7;
+            color: var(--studio-text);
+            display: inline-block;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));
+            transform: scaleY(1.05);
         }
 
-        .ai-gradient { 
-            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%); 
+        .clean-card {
+            background: #ffffff;
+            border: 1px solid var(--studio-border);
+            border-radius: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
         }
 
-        .btn-primary { 
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-
-        .btn-primary:active { transform: scale(0.95); }
-
-        .progress-bar { transition: width 1s ease-in-out; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-
-        @keyframes pulse-ai { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.02); } }
-        .loading-ai { animation: pulse-ai 1.5s infinite; }
-
-        input, select, textarea { 
-            background: #1e293b !important; 
-            border: 1px solid #334155 !important; 
-            color: white !important; 
+        .studio-input {
+            background: var(--studio-ice) !important;
+            border: 1px solid var(--studio-border) !important;
+            border-radius: 14px;
+            padding: 1rem;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 600;
             outline: none;
+            transition: all 0.2s;
         }
-        input:focus, select:focus { border-color: var(--accent-blue) !important; }
+
+        .studio-input:focus {
+            border-color: var(--studio-accent) !important;
+            background: white !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.04);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--studio-muted);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            background: var(--studio-ice);
+            color: var(--studio-text);
+            box-shadow: inset 0 0 0 1px var(--studio-border);
+        }
+
+        .btn-studio-black {
+            background: var(--studio-text);
+            color: white;
+            padding: 1.2rem;
+            border-radius: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 11px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-studio-black:active { transform: scale(0.96); }
+
+        .progress-bar-fill { transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--studio-border); border-radius: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.5s ease forwards; }
     </style>
 </head>
-<body class="min-h-screen pb-24">
+<body>
+    <div id="root"></div>
 
-    <!-- CABEÇALHO -->
-    <header class="p-6 border-b border-slate-800 glass sticky top-0 z-50">
-        <div class="max-w-[1500px] mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <div class="bg-blue-600 p-3 rounded-2xl shadow-xl shadow-blue-900/20">
-                    <i data-lucide="sparkles" class="text-white w-7 h-7"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight uppercase">DecoNerd <span class="text-blue-500">3D</span> Pro</h1>
-                    <p class="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase">Gestão Cloud & IA Ativa</p>
-                </div>
-            </div>
-            <div class="flex gap-4 items-center">
-                <button id="pwa-install" class="hidden bg-green-600 hover:bg-green-700 text-white p-2.5 rounded-xl transition-all shadow-lg border border-green-500">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                </button>
-                <div class="text-right hidden sm:block border-l border-slate-800 pl-6">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Meta Mensal</p>
-                    <p class="text-xl font-black text-green-400" id="header-meta-val">R$ 6.600,00</p>
-                </div>
-                <button onclick="abrirConfig()" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl transition-all border border-slate-700">
-                    <i data-lucide="settings-2" class="w-5 h-5 text-slate-400"></i>
-                </button>
-            </div>
-        </div>
-    </header>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, Fragment } = React;
 
-    <main class="max-w-[1500px] mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- CALCULADORA DE PRECISÃO -->
-        <div class="lg:col-span-5 space-y-6">
-            <div class="glass p-8 rounded-[32px] border-blue-500/20 shadow-2xl">
-                <h2 class="text-xl font-bold mb-8 flex items-center gap-3">
-                    <i data-lucide="calculator" class="text-blue-500 w-5 h-5"></i> Simulação de Custos
-                </h2>
-                
-                <div class="space-y-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nome do Projeto</label>
-                        <input type="text" id="c-nome-produto" placeholder="Ex: Diorama Star Wars" class="w-full rounded-2xl p-4 text-sm outline-none">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tempo Impressão (h)</label>
-                            <input type="number" id="c-tempo" value="10" class="w-full rounded-2xl p-4 text-sm outline-none">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Peso Estimado (g)</label>
-                            <input type="number" id="c-peso" value="100" class="w-full rounded-2xl p-4 text-sm outline-none">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Filamento</label>
-                            <select id="c-material" class="w-full rounded-2xl p-4 text-sm outline-none"></select>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pintura</label>
-                            <select id="c-pintura" class="w-full rounded-2xl p-4 text-sm outline-none">
-                                <option value="0">Sem Pintura</option>
-                                <option value="simples">Simples (R$ 15)</option>
-                                <option value="media" selected>Média (R$ 35)</option>
-                                <option value="profissional">Profissional (R$ 60)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="bg-blue-900/20 rounded-[28px] p-6 border border-blue-500/20 mt-6 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                            <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
-                                <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Venda Direta</p>
-                                <p class="text-lg font-black text-white" id="res-cliente">R$ 0,00</p>
-                                <p class="text-[8px] text-green-500 font-bold uppercase" id="lucro-cliente">Lucro: R$ 0</p>
-                            </div>
-                            <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
-                                <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Shopee</p>
-                                <p class="text-lg font-black text-white" id="res-shopee">R$ 0,00</p>
-                            </div>
-                            <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
-                                <p class="text-[9px] font-black text-slate-500 uppercase mb-1">M. Livre</p>
-                                <p class="text-lg font-black text-white" id="res-ml">R$ 0,00</p>
-                            </div>
-                        </div>
-
-                        <div class="pt-4 border-t border-blue-500/10 grid grid-cols-2 gap-2 text-[9px] font-bold text-slate-500 uppercase">
-                            <p>Custo Mat: <span id="det-mat" class="text-slate-300">R$ 0</span></p>
-                            <p>Energia: <span id="det-luz" class="text-slate-300">R$ 0</span></p>
-                            <p>Amortização: <span id="det-amort" class="text-slate-300">R$ 0</span></p>
-                            <p>Custos Fixos: <span id="det-fixo" class="text-slate-300">R$ 0</span></p>
-                        </div>
-                    </div>
-
-                    <button onclick="confirmarVenda('Direta')" id="btn-venda" class="w-full btn-primary text-white font-extrabold py-5 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg">
-                        <i data-lucide="check-square" class="w-5 h-5"></i> Fechar Pedido e Baixar Stock
-                    </button>
-
-                    <div class="grid grid-cols-2 gap-3 pt-2">
-                        <button onclick="gerarMarketingIA()" class="ai-gradient text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg">
-                            Marketing IA ✨
-                        </button>
-                        <button onclick="gerarSlicerIA()" class="bg-slate-800 text-blue-400 border border-blue-500/20 font-bold py-3 rounded-xl text-[10px] uppercase flex items-center justify-center gap-2">
-                            Slicer Tips ✨
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- DASHBOARD CENTRAL -->
-        <div class="lg:col-span-7 space-y-8">
-            <!-- KPIs -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass p-8 rounded-[32px] border-l-4 border-blue-500 shadow-xl">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Faturamento</p>
-                    <p class="text-3xl font-black" id="kpi-faturamento">R$ 0,00</p>
-                    <div class="w-full bg-slate-800 h-2 rounded-full mt-6">
-                        <div id="meta-progress" class="bg-blue-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="glass p-8 rounded-[32px] border-l-4 border-green-500 shadow-xl">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Lucro Líquido</p>
-                    <p class="text-3xl font-black text-green-400" id="kpi-lucro">R$ 0,00</p>
-                </div>
-
-                <div class="glass p-8 rounded-[32px] border-l-4 border-orange-500 shadow-xl">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Monitor Cloud</p>
-                    <div class="flex items-center gap-3 mt-2">
-                        <div id="sync-dot" class="w-3 h-3 rounded-full bg-slate-600 animate-pulse"></div>
-                        <p id="sync-text" class="text-xs font-bold text-slate-400 uppercase">Consultando...</p>
-                    </div>
-                    <button onclick="sincronizarEntrada()" class="mt-4 text-[10px] font-black text-blue-500 uppercase hover:text-white transition-colors flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar Agora
-                    </button>
-                </div>
-            </div>
-
-            <!-- IA CONTAINER -->
-            <div id="ai-container" class="hidden glass p-10 rounded-[40px] border border-purple-500/30 relative bg-gradient-to-br from-purple-900/10 to-transparent shadow-2xl">
-                <button onclick="fecharIA()" class="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="bg-purple-600 p-3 rounded-2xl shadow-lg">
-                        <i data-lucide="brain-circuit" class="text-white w-7 h-7"></i>
-                    </div>
-                    <h3 id="ai-title" class="text-2xl font-black text-purple-400 uppercase tracking-widest italic">Análise Gemini</h3>
-                </div>
-                <div id="ai-content" class="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap font-medium max-h-[350px] overflow-y-auto custom-scrollbar pr-4"></div>
-            </div>
-
-            <!-- INVENTÁRIO -->
-            <div class="glass rounded-[40px] overflow-hidden border border-slate-800 shadow-2xl">
-                <div class="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
-                    <h3 class="font-bold text-lg uppercase tracking-widest flex items-center gap-3">
-                        <i data-lucide="layers" class="text-blue-500 w-5 h-5"></i> Saúde do Stock
-                    </h3>
-                    <div class="flex gap-3">
-                        <button onclick="gerarRelatorioIA()" class="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-slate-700 hover:text-white transition-all">
-                            Estratégia IA ✨
-                        </button>
-                        <button onclick="abrirModalMaterial()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">
-                            + Novo Rolo
-                        </button>
-                    </div>
-                </div>
-                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6" id="lista-estoque"></div>
-            </div>
-
-            <!-- HISTÓRICO -->
-            <div class="glass rounded-[40px] overflow-hidden border border-slate-800 shadow-2xl">
-                <div class="p-8 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
-                    <h3 class="font-bold text-sm uppercase tracking-widest flex items-center gap-3">
-                        <i data-lucide="history" class="text-blue-500 w-4 h-4"></i> Últimas Vendas
-                    </h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead>
-                            <tr class="text-[10px] font-bold text-slate-500 uppercase border-b border-slate-800/50">
-                                <th class="p-6">Data</th>
-                                <th class="p-6">Item</th>
-                                <th class="p-6 text-right">Venda</th>
-                                <th class="p-6 text-right text-green-400">Lucro</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-vendas" class="divide-y divide-slate-800/30"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- MODAL: CONFIGURAÇÕES -->
-    <div id="modal-config" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] backdrop-blur-xl p-4">
-        <div class="glass p-10 rounded-[40px] max-w-4xl w-full border border-slate-700 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
-            <h3 class="text-2xl font-black mb-10 text-white text-center uppercase tracking-widest">Painel de Controlo Cloud</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="config-fields"></div>
-            <div class="mt-8 pt-8 border-t border-slate-800 space-y-4">
-                <label class="text-[10px] font-bold text-blue-500 uppercase tracking-widest ml-1">Webhook URL</label>
-                <input type="text" id="cfg-url-write" class="w-full rounded-2xl p-4 text-xs outline-none">
-            </div>
-            <div class="flex gap-4 mt-10">
-                <button onclick="fecharConfig()" class="flex-1 text-slate-500 font-bold py-4 text-xs uppercase tracking-widest">Sair</button>
-                <button onclick="salvarConfigCloud()" class="flex-1 btn-primary text-white font-black py-4 rounded-2xl text-xs uppercase shadow-xl">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: NOVO MATERIAL -->
-    <div id="modal-material" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] backdrop-blur-xl p-4">
-        <div class="glass p-10 rounded-[40px] max-w-md w-full border border-slate-700 shadow-2xl">
-            <h3 class="text-2xl font-black mb-8 text-white text-center uppercase tracking-widest">Novo Filamento</h3>
-            <div class="space-y-5">
-                <input type="text" id="new-m-nome" placeholder="Nome / Marca" class="w-full rounded-2xl p-4 text-sm outline-none">
-                <input type="number" id="new-m-peso" value="1000" class="w-full rounded-2xl p-4 text-sm outline-none">
-                <input type="number" id="new-m-preco" value="120.00" class="w-full rounded-2xl p-4 text-sm outline-none">
-                <div class="flex gap-4 pt-6">
-                    <button onclick="fecharModalMaterial()" class="flex-1 text-slate-400 font-bold py-5 text-xs uppercase">Voltar</button>
-                    <button onclick="registrarMaterialCloud()" id="btn-save-mat" class="flex-1 btn-primary text-white font-black py-5 rounded-2xl text-xs uppercase">Gravar Agora</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TOAST -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-10 py-5 rounded-3xl shadow-2xl opacity-0 translate-y-10 transition-all duration-500 z-[300] font-black text-xs uppercase tracking-widest">Notificação</div>
-
-    <script>
-        // --- PWA CONFIG (Sem Service Worker por limitações de URL de Blob) ---
-        try {
-            const manifest = {
-                "name": "DecoNerd 3D Pro", "short_name": "DecoNerd3D", "start_url": ".", "display": "standalone",
-                "background_color": "#020617", "theme_color": "#020617",
-                "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/575/575454.png", "sizes": "512x512", "type": "image/png" }]
+        // --- ICONES INLINE (SVG Puro para evitar erros de compilação) ---
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const icons = {
+                calc: <path d="M16 2H8a2 2 0 00-2 2v16a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zM8 6h8M8 10h8M8 14h8M8 18h8" />,
+                stock: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />,
+                settings: (
+                    <Fragment>
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                    </Fragment>
+                ),
+                trash: <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />,
+                edit: <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />,
+                plus: <path d="M12 5v14M5 12h14" />,
+                refresh: <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />,
+                check: <path d="M20 6L9 17l-5-5" />,
+                save: <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8" />
             };
-            const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
-            const linkManifest = document.createElement('link'); linkManifest.rel = 'manifest'; linkManifest.href = manifestURL; document.head.appendChild(linkManifest);
-        } catch(e) { console.log("Erro ao gerar Manifesto PWA"); }
-
-        // --- CORE STATE ---
-        const apiKey = ""; 
-        const modelName = "gemini-2.5-flash-preview-09-2025";
-        const DEFAULT_URL_READ = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCBq2SPd_0aPaNJZzu0vH02ZtYc0KYhSHfYyoJiVMRwk9wkmPWPQXngFKpZFUZPwWJ7_sdlMiccny8/pub?gid=0&single=true&output=csv";
-        const DEFAULT_URL_WRITE = "https://script.google.com/macros/s/AKfycbwEQYbvahyzNbicUb_C4aUmmfy1w2iTKbEbSnGk8pPBhHOaPcmqrDEURXe6KHfsdwGl1w/exec";
-
-        let state = {
-            estoque: [],
-            vendas: JSON.parse(localStorage.getItem('3d_vend')) || [],
-            settings: JSON.parse(localStorage.getItem('3d_sett')) || {
-                aluguel: 210, softwares: 95, ecommerce: 59.9, mei: 60, publicidade: 100, condominio: 100,
-                kwh: 1.14, potencia: 350, precoMaq: 1500, vidaUtil: 24, embalagem: 3, markup: 2.5,
-                pintSimples: 15, pintMedia: 35, pintProf: 60, meta: 6600, urlRead: DEFAULT_URL_READ, urlWrite: DEFAULT_URL_WRITE
-            }
+            return (
+                <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    {icons[name]}
+                </svg>
+            );
         };
 
-        // --- GEMINI API CALLER ---
-        async function callGemini(prompt, system) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-            try {
-                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{parts:[{text: prompt}]}], systemInstruction: {parts:[{text: system}]} }) });
-                const data = await res.json();
-                return data.candidates[0].content.parts[0].text;
-            } catch(e) { return "Erro ao contactar a IA."; }
-        }
-
-        function init() {
-            lucide.createIcons();
-            popularCamposConfig();
-            sincronizarEntrada();
-            atualizarUI();
-            ['c-peso', 'c-tempo', 'c-material', 'c-pintura'].forEach(id => {
-                document.getElementById(id)?.addEventListener('input', calcularOrcamento);
+        const App = () => {
+            // --- NAVEGAÇÃO E DADOS ---
+            const [page, setPage] = useState('calc');
+            const [state, setState] = useState({
+                estoque: [],
+                vendas: [],
+                syncing: false,
+                settings: JSON.parse(localStorage.getItem('333_vfinal_config')) || {
+                    aluguel: 210, softwares: 95, ecommerce: 59.9, mei: 60, publicidade: 100, condominio: 100,
+                    kwh: 1.14, potencia: 350, precoMaq: 1500, vidaUtil: 24, embalagem: 3, markup: 2.5,
+                    pintSimples: 15, pintMedia: 35, pintProf: 60, meta: 6600, 
+                    urlRead: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCBq2SPd_0aPaNJZzu0vH02ZtYc0KYhSHfYyoJiVMRwk9wkmPWPQXngFKpZFUZPwWJ7_sdlMiccny8/pub?gid=0&single=true&output=csv",
+                    urlReadVendas: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCBq2SPd_0aPaNJZzu0vH02ZtYc0KYhSHfYyoJiVMRwk9wkmPWPQXngFKpZFUZPwWJ7_sdlMiccny8/pub?gid=77191586&single=true&output=csv",
+                    urlWrite: "https://script.google.com/macros/s/AKfycbwEQYbvahyzNbicUb_C4aUmmfy1w2iTKbEbSnGk8pPBhHOaPcmqrDEURXe6KHfsdwGl1w/exec"
+                }
             });
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('pwa-install');
-                if(btn) { btn.classList.remove('hidden'); btn.onclick = () => e.prompt(); }
-            });
-        }
 
-        async function sincronizarEntrada() {
-            if(!state.settings.urlRead) return;
-            mostrarSyncStatus(null, "Consultando...");
-            try {
-                const res = await fetch(state.settings.urlRead + "&cache=" + Date.now());
-                const csv = await res.text();
-                Papa.parse(csv, {
-                    header: true, skipEmptyLines: true,
-                    complete: (results) => {
-                        state.estoque = results.data.map((row, i) => {
-                            const k = {}; Object.keys(row).forEach(key => k[key.trim().toLowerCase()] = row[key]);
-                            return { id: i, nome: k.nome || k.material || "Sem Nome", peso: parseFloat(k.peso || 0), preco: parseFloat(k.preco || 0) };
-                        }).filter(m => m.nome !== "Sem Nome");
-                        atualizarUI(); mostrarSyncStatus(true, "Cloud Ativa");
-                    }
-                });
-            } catch(e) { mostrarSyncStatus(false, "Erro Link"); }
-        }
+            const [calcForm, setCalcForm] = useState({ nome: '', tempo: 10, peso: 100, matIdx: 0, pintura: 'media' });
+            const [matForm, setMatForm] = useState({ nome: '', peso: 1000, preco: 120, editing: false });
+            const [toast, setToast] = useState({ show: false, msg: '' });
 
-        function calcularOrcamento() {
-            const peso = parseFloat(document.getElementById('c-peso')?.value) || 0;
-            const tempo = parseFloat(document.getElementById('c-tempo')?.value) || 0;
-            const pintura = document.getElementById('c-pintura')?.value;
-            const matId = document.getElementById('c-material')?.value;
+            const showToast = (msg) => {
+                setToast({ show: true, msg });
+                setTimeout(() => setToast({ show: false, msg: '' }), 3000);
+            };
 
-            if (!state.estoque.length) return null;
-            const mat = state.estoque.find(x => x.id == matId) || state.estoque[0];
+            const sincronizar = async () => {
+                setState(prev => ({ ...prev, syncing: true }));
+                try {
+                    const [stRes, saRes] = await Promise.all([
+                        fetch(`${state.settings.urlRead}&t=${Date.now()}`).then(r => r.text()),
+                        fetch(`${state.settings.urlReadVendas}&t=${Date.now()}`).then(r => r.text())
+                    ]);
 
-            const cMat = (peso / 1000) * mat.preco;
-            const cLuz = (state.settings.potencia / 1000) * tempo * state.settings.kwh;
-            const cAmort = (state.settings.precoMaq / state.settings.vidaUtil / 30 / 24) * tempo;
-            const tFixoT = parseFloat(state.settings.aluguel) + parseFloat(state.settings.softwares) + parseFloat(state.settings.ecommerce) + parseFloat(state.settings.mei) + parseFloat(state.settings.publicidade) + parseFloat(state.settings.condominio);
-            const cFixo = (tFixoT / 4000) * tempo;
-            
-            let cPint = 0;
-            if(pintura === "simples") cPint = parseFloat(state.settings.pintSimples);
-            if(pintura === "media") cPint = parseFloat(state.settings.pintMedia);
-            if(pintura === "profissional") cPint = parseFloat(state.settings.pintProf);
+                    const stData = Papa.parse(stRes, { header: true, skipEmptyLines: true }).data.map((r, i) => {
+                        const k = {}; Object.keys(r).forEach(key => k[key.trim().toLowerCase()] = r[key]);
+                        return { id: i, nome: k.nome || k.material || "Filamento", peso: parseFloat(String(k.peso).replace(',', '.')) || 0, preco: parseFloat(String(k.preco).replace(',', '.')) || 0 };
+                    }).filter(x => x.nome);
 
-            const cTotal = cMat + cLuz + cAmort + cFixo + parseFloat(state.settings.embalagem) + cPint;
-            const pCliente = cTotal * state.settings.markup;
-            const lucro = pCliente - cTotal;
+                    const saData = Papa.parse(saRes, { header: true, skipEmptyLines: true }).data.map(r => {
+                        const k = {}; Object.keys(r).forEach(key => k[key.trim().toLowerCase()] = r[key]);
+                        const fix = (v) => parseFloat(String(v || 0).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+                        return { data: k.data || "-", item: k.item || "Venda", venda: fix(k.venda), lucro: fix(k.lucro) };
+                    }).filter(v => v.venda > 0);
 
-            const ut = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-            ut('res-cliente', `R$ ${pCliente.toFixed(2)}`);
-            ut('lucro-cliente', `Lucro: R$ ${lucro.toFixed(2)}`);
-            ut('res-shopee', `R$ ${((pCliente + 4) / 0.8).toFixed(2)}`);
-            ut('res-ml', `R$ ${((pCliente + 6) / 0.81).toFixed(2)}`);
-            ut('det-mat', `R$ ${cMat.toFixed(2)}`);
-            ut('det-luz', `R$ ${cLuz.toFixed(2)}`);
-            ut('det-amort', `R$ ${cAmort.toFixed(2)}`);
-            ut('det-fixo', `R$ ${cFixo.toFixed(2)}`);
+                    setState(prev => ({ ...prev, estoque: stData, vendas: saData, syncing: false }));
+                    showToast("Dados Sincronizados");
+                } catch (e) { setState(prev => ({ ...prev, syncing: false })); showToast("Erro Cloud"); }
+            };
 
-            return { preco: pCliente, lucro, peso, nome: mat.nome };
-        }
+            useEffect(() => { sincronizar(); }, []);
 
-        async function confirmarVenda(plataforma) {
-            const d = calcularOrcamento(); if (!d) return;
-            const btn = document.getElementById('btn-venda'); if(btn) { btn.disabled = true; btn.innerHTML = `Processando...`; }
-            
-            const url = new URL(state.settings.urlWrite);
-            url.searchParams.append('type', 'venda'); url.searchParams.append('data', new Date().toLocaleDateString('pt-br'));
-            url.searchParams.append('item', (document.getElementById('c-nome-produto')?.value || "Peça 3D") + " (" + plataforma + ")");
-            url.searchParams.append('material', d.nome); url.searchParams.append('peso', d.peso);
-            url.searchParams.append('venda', d.preco.toFixed(2)); url.searchParams.append('lucro', d.lucro.toFixed(2));
+            // --- LÓGICA FINANCEIRA ---
+            const financeiro = useMemo(() => {
+                if (!state.estoque.length) return null;
+                const mat = state.estoque[calcForm.matIdx] || state.estoque[0];
+                const cMat = (calcForm.peso / 1000) * mat.preco;
+                const cLuz = (state.settings.potencia / 1000) * calcForm.tempo * state.settings.kwh;
+                const cAmort = (state.settings.precoMaq / state.settings.vidaUtil / 30 / 24) * calcForm.tempo;
+                const tFixoTotal = parseFloat(state.settings.aluguel) + parseFloat(state.settings.softwares) + parseFloat(state.settings.ecommerce) + parseFloat(state.settings.mei) + parseFloat(state.settings.publicidade) + parseFloat(state.settings.condominio);
+                const cFixoProp = (tFixoTotal / 4000) * calcForm.tempo;
 
-            try {
-                await fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
-                const mat = state.estoque.find(x => x.nome === d.nome); if(mat) mat.peso -= d.peso;
-                state.vendas.push({ item: d.nome, bruto: d.preco, lucro: d.lucro, data: new Date().toLocaleDateString('pt-br') });
-                localStorage.setItem('3d_vend', JSON.stringify(state.vendas));
-                mostrarToast("✅ Venda guardada e stock baixado!");
-                atualizarUI();
-            } catch(e) { mostrarToast("Erro na ligação", "bg-red-500"); }
-            finally { if(btn) { btn.disabled = false; btn.innerHTML = `<i data-lucide="check-square" class="w-5 h-5"></i> Fechar Pedido e Baixar Stock`; } lucide.createIcons(); }
-        }
+                const custoBaseReal = cMat + cLuz + cAmort + cFixoProp + parseFloat(state.settings.embalagem);
 
-        async function registrarMaterialCloud() {
-            const n = document.getElementById('new-m-nome')?.value; const p = document.getElementById('new-m-peso')?.value; const v = document.getElementById('new-m-preco')?.value;
-            if(!n || !p || !v) return mostrarToast("Preencha tudo!");
-            const btn = document.getElementById('btn-save-mat'); if(btn) { btn.disabled = true; btn.innerHTML = "A gravar..."; }
-            const url = new URL(state.settings.urlWrite);
-            url.searchParams.append('type', 'estoque'); url.searchParams.append('nome', n); url.searchParams.append('peso', p); url.searchParams.append('preco', v);
-            try {
-                await fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
-                mostrarToast("✅ Novo material enviado!");
-                fecharModalMaterial(); sincronizarEntrada();
-            } catch(e) { mostrarToast("Erro Cloud", "bg-red-500"); }
-            finally { if(btn) { btn.disabled = false; btn.innerHTML = "Gravar Agora"; } }
-        }
+                let cPint = 0;
+                if(calcForm.pintura === "simples") cPint = parseFloat(state.settings.pintSimples);
+                else if(calcForm.pintura === "media") cPint = parseFloat(state.settings.pintMedia);
+                else if(calcForm.pintura === "profissional") cPint = parseFloat(state.settings.pintProf);
 
-        async function gerarRelatorioIA() {
-            const tx = await prepararIA("Estratégia de Negócio ✨");
-            const f = state.vendas.reduce((a,v) => a + v.bruto, 0); const l = state.vendas.reduce((a,v) => a + v.lucro, 0);
-            const prompt = `Faturamento R$ ${f.toFixed(2)}, Lucro R$ ${l.toFixed(2)}. Meta R$ 6.600. Analise e dê 3 conselhos de mestre.`;
-            tx.innerText = await callGemini(prompt, "Consultor financeiro 3D.");
-            tx.classList.remove('loading-ai');
-        }
+                const sugerido = (custoBaseReal + cPint) * state.settings.markup;
 
-        async function sugerirProdutoIA() {
-            const tx = await prepararIA("O que imprimir hoje? ✨");
-            const st = state.estoque.map(m => `${m.nome} (${m.peso}g)`).join(', ');
-            tx.innerText = await callGemini(`Stock: ${st}. Sugira 3 produtos rentáveis.`, "Analista de mercado geek.");
-            tx.classList.remove('loading-ai');
-        }
+                return {
+                    custoBase: custoBaseReal,
+                    sugerido,
+                    lucro: sugerido - (custoBaseReal + cPint),
+                    shopee: (sugerido + 4) / 0.8,
+                    ml: (sugerido + 6) / 0.81
+                };
+            }, [calcForm, state.settings, state.estoque]);
 
-        async function gerarMarketingIA() {
-            const tx = await prepararIA("Marketing de Elite ✨");
-            const n = document.getElementById('c-nome-produto')?.value || "Peça 3D";
-            tx.innerText = await callGemini(`Crie um anúncio magnético para: ${n}.`, "Copywriter ninja.");
-            tx.classList.remove('loading-ai');
-        }
+            // --- AÇÕES API ---
+            const apiCall = async (type, data) => {
+                showToast("Aguarde...");
+                const q = new URLSearchParams({ type, ...data });
+                try {
+                    await fetch(`${state.settings.urlWrite}?${q.toString()}`, { method: 'GET', mode: 'no-cors' });
+                    setTimeout(sincronizar, 2500);
+                    showToast("Sucesso!");
+                    return true;
+                } catch (e) { showToast("Erro no servidor"); return false; }
+            };
 
-        async function gerarSlicerIA() {
-            const tx = await prepararIA("Dicas Slicer ✨");
-            tx.innerText = await callGemini(`Dicas de fatiamento para: ${document.getElementById('c-nome-produto')?.value || 'peça'}.`, "Técnico 3D.");
-            tx.classList.remove('loading-ai');
-        }
+            const fatTotal = state.vendas.reduce((acc, v) => acc + v.venda, 0);
+            const lucTotal = state.vendas.reduce((acc, v) => acc + v.lucro, 0);
 
-        async function prepararIA(tit) {
-            const c = document.getElementById('ai-container'); const tx = document.getElementById('ai-content'); const t = document.getElementById('ai-title');
-            c.classList.remove('hidden'); t.innerText = tit; tx.innerText = "Gemini a pensar..."; tx.classList.add('loading-ai');
-            c.scrollIntoView({ behavior: 'smooth' }); return tx;
-        }
+            return (
+                <div className="flex flex-col lg:flex-row min-h-screen bg-white">
+                    
+                    {/* SIDEBAR */}
+                    <aside className="w-full lg:w-72 border-b lg:border-r border-slate-50 p-8 flex flex-col bg-white">
+                        <div className="mb-12 flex items-center gap-4">
+                            <div className="logo-333">333</div>
+                            <div className="h-10 w-px bg-slate-100"></div>
+                            <span className="font-extrabold text-[11px] text-slate-300 uppercase tracking-[0.2em] leading-tight">Print<br/>Studio</span>
+                        </div>
+                        
+                        <nav className="space-y-2 flex-1">
+                            <div onClick={() => setPage('calc')} className={`nav-item ${page === 'calc' ? 'active' : ''}`}>
+                                <Icon name="calc" className="w-4 h-4" /> Calculadora
+                            </div>
+                            <div onClick={() => setPage('estoque')} className={`nav-item ${page === 'estoque' ? 'active' : ''}`}>
+                                <Icon name="stock" className="w-4 h-4" /> Gerir Estoque
+                            </div>
+                            <div onClick={() => setPage('settings')} className={`nav-item ${page === 'settings' ? 'active' : ''}`}>
+                                <Icon name="settings" className="w-4 h-4" /> Definições
+                            </div>
+                        </nav>
 
-        function atualizarUI() {
-            const sel = document.getElementById('c-material'); if (sel) sel.innerHTML = state.estoque.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
-            const lista = document.getElementById('lista-estoque');
-            if (lista) {
-                lista.innerHTML = state.estoque.map(m => {
-                    const p = Math.max(0, Math.min(100, (m.peso / 1000) * 100));
-                    return `<div class="glass p-6 rounded-3xl border border-slate-800"><div class="flex justify-between mb-4"><div><h4 class="font-bold text-sm text-slate-200">${m.nome}</h4></div><p class="text-xs font-black text-slate-300">${m.peso.toFixed(0)}g</p></div><div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden"><div class="progress-bar h-full ${p < 20 ? 'bg-red-500' : 'bg-blue-500'}" style="width: ${p}%"></div></div></div>`;
-                }).join('');
-            }
-            const f = state.vendas.reduce((a,v) => a + v.bruto, 0); const l = state.vendas.reduce((a,v) => a + v.lucro, 0);
-            const ut = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-            ut('kpi-faturamento', `R$ ${f.toLocaleString('pt-br', {minimumFractionDigits: 2})}`); ut('kpi-lucro', `R$ ${l.toLocaleString('pt-br', {minimumFractionDigits: 2})}`);
-            const metaP = document.getElementById('meta-progress'); if(metaP) metaP.style.width = Math.min((f/state.settings.meta)*100, 100) + "%";
-            ut('header-meta-val', `R$ ${state.settings.meta.toLocaleString('pt-br')}`); lucide.createIcons(); calcularOrcamento();
-        }
+                        <div className="mt-12 p-6 bg-slate-50 rounded-[24px] border border-slate-100">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Conexão Cloud</p>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-2.5 h-2.5 rounded-full ${state.syncing ? 'bg-blue-400 animate-pulse' : 'bg-emerald-400'}`}></div>
+                                <span className="text-[10px] font-black text-slate-900 uppercase">Banco Online</span>
+                            </div>
+                        </div>
+                    </aside>
 
-        function popularCamposConfig() {
-            const c = document.getElementById('config-fields'); if(!c) return;
-            const s = state.settings; const fields = [{id:'aluguel', label:'Aluguer'}, {id:'softwares', label:'Softwares'}, {id:'ecommerce', label:'E-com'}, {id:'mei', label:'MEI'}, {id:'publicidade', label:'Ads'}, {id:'condominio', label:'Condo'}, {id:'kwh', label:'KWh'}, {id:'potencia', label:'Watts'}, {id:'precoMaq', label:'R$ Maq'}, {id:'vidaUtil', label:'Meses Uso'}, {id:'markup', label:'Markup'}, {id:'meta', label:'Meta'}];
-            c.innerHTML = fields.map(x => `<div class="space-y-1"><label class="text-[9px] font-bold text-slate-500 uppercase">${x.label}</label><input type="number" id="cfg-${x.id}" value="${s[x.id]}" class="w-full rounded-xl p-3 text-xs outline-none"></div>`).join('');
-        }
+                    {/* CONTENT */}
+                    <main className="flex-1 p-8 md:p-12 lg:p-20 overflow-y-auto custom-scrollbar animate-fade">
+                        
+                        {/* PAGE: CALCULADORA */}
+                        {page === 'calc' && (
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 max-w-[1200px]">
+                                <section className="space-y-10">
+                                    <header>
+                                        <h2 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-3">Orçamentista</h2>
+                                        <p className="text-3xl font-bold text-slate-900">Configurar Ordem</p>
+                                    </header>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nome do Item</label>
+                                            <input type="text" value={calcForm.nome} onChange={e => setCalcForm(p => ({...p, nome: e.target.value}))} className="studio-input" placeholder="Ex: Diorama S-333" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Tempo (h)</label>
+                                                <input type="number" value={calcForm.tempo} onChange={e => setCalcForm(p => ({...p, tempo: parseFloat(e.target.value)}))} className="studio-input" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Peso (g)</label>
+                                                <input type="number" value={calcForm.peso} onChange={e => setCalcForm(p => ({...p, peso: parseFloat(e.target.value)}))} className="studio-input" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Insumo</label>
+                                                <select value={calcForm.matIdx} onChange={e => setCalcForm(p => ({...p, matIdx: e.target.value}))} className="studio-input appearance-none">
+                                                    {state.estoque.map((m, i) => <option key={i} value={i}>{m.nome}</option>)}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Pintura</label>
+                                                <select value={calcForm.pintura} onChange={e => setCalcForm(p => ({...p, pintura: e.target.value}))} className="studio-input appearance-none">
+                                                    <option value="0">Cru</option>
+                                                    <option value="simples">Simples</option>
+                                                    <option value="media">Média</option>
+                                                    <option value="profissional">Profissional</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => apiCall('venda', {
+                                            item: calcForm.nome || "Item 333",
+                                            material: state.estoque[calcForm.matIdx]?.nome || "Padrão",
+                                            peso: calcForm.peso,
+                                            venda: financeiro?.sugerido.toFixed(2),
+                                            lucro: financeiro?.lucro.toFixed(2)
+                                        })} className="w-full btn-studio-black shadow-xl shadow-slate-100">Registrar na Planilha</button>
+                                    </div>
+                                </section>
 
-        async function salvarConfigCloud() {
-            const inputs = document.getElementById('config-fields').querySelectorAll('input');
-            inputs.forEach(i => state.settings[i.id.replace('cfg-','')] = parseFloat(i.value) || state.settings[i.id.replace('cfg-','')]);
-            state.settings.urlWrite = document.getElementById('cfg-url-write')?.value || state.settings.urlWrite;
-            localStorage.setItem('3d_sett', JSON.stringify(state.settings));
-            mostrarToast("⚙️ Definições Guardadas!"); fecharConfig(); init();
-        }
+                                <section className="space-y-8">
+                                    <div className="clean-card p-10 space-y-10">
+                                        <div className="flex justify-between items-center bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Custo Real da Peça</span>
+                                            <span className="text-xl font-bold text-slate-500 italic">R$ {financeiro?.custoBase.toFixed(2)}</span>
+                                        </div>
 
-        function mostrarSyncStatus(ok, msg) {
-            const d = document.getElementById('sync-dot'); const t = document.getElementById('sync-text'); if(!d || !t) return;
-            d.className = `w-3 h-3 rounded-full ${ok===null?'bg-blue-500 animate-pulse':(ok?'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]':'bg-red-500')}`; t.innerText = msg;
-        }
+                                        <div className="space-y-10">
+                                            <div className="text-center">
+                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-4">Sugerido p/ Venda</p>
+                                                <p className="text-4xl font-black text-slate-900 tracking-tighter italic underline decoration-blue-500 decoration-4 underline-offset-8">R$ {financeiro?.sugerido.toFixed(2)}</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-4">Lucro Líquido</p>
+                                                <p className="text-4xl font-black text-blue-500 tracking-tighter italic">R$ {financeiro?.lucro.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-50">
+                                            <div className="p-4 bg-slate-50/50 rounded-2xl text-center border border-slate-100">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Shopee</p>
+                                                <p className="font-bold text-slate-700">R$ {financeiro?.shopee.toFixed(2)}</p>
+                                            </div>
+                                            <div className="p-4 bg-slate-50/50 rounded-2xl text-center border border-slate-100">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">M. Livre</p>
+                                                <p className="font-bold text-slate-700">R$ {financeiro?.ml.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        )}
 
-        function mostrarToast(m, c="bg-blue-600") {
-            const t = document.getElementById('toast'); if(!t) return;
-            t.innerText = m; t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 ${c} text-white px-10 py-5 rounded-3xl shadow-2xl opacity-100 translate-y-0 transition-all z-[300] font-black text-xs uppercase tracking-widest`;
-            setTimeout(() => { if(t) t.classList.add('opacity-0', 'translate-y-10'); }, 4000);
-        }
+                        {/* PAGE: ESTOQUE */}
+                        {page === 'estoque' && (
+                            <div className="max-w-[1000px] space-y-16">
+                                <header className="flex justify-between items-end">
+                                    <div>
+                                        <h2 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-3">Suprimentos</h2>
+                                        <p className="text-3xl font-bold text-slate-900">Gestão de Filamentos</p>
+                                    </div>
+                                    <button onClick={sincronizar} className="p-3 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors"><Icon name="refresh" className="w-4 h-4 text-slate-400" /></button>
+                                </header>
 
-        function abrirConfig() { document.getElementById('modal-config').classList.remove('hidden'); document.getElementById('modal-config').classList.add('flex'); }
-        function fecharConfig() { document.getElementById('modal-config').classList.add('hidden'); }
-        function abrirModalMaterial() { document.getElementById('modal-material').classList.remove('hidden'); document.getElementById('modal-material').classList.add('flex'); }
-        function fecharModalMaterial() { document.getElementById('modal-material').classList.add('hidden'); }
-        function fecharIA() { document.getElementById('ai-container').classList.add('hidden'); }
+                                {/* Formulário de Edição/Criação */}
+                                <div className="clean-card p-10 bg-slate-50/30">
+                                    <h3 className="text-[10px] font-black uppercase text-slate-400 mb-8 tracking-widest flex items-center gap-2">
+                                        {matForm.editing ? <Icon name="edit" className="w-3 h-3"/> : <Icon name="plus" className="w-3 h-3"/>}
+                                        {matForm.editing ? 'Alterar Registro' : 'Lançar Insumo'}
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Descrição</label>
+                                            <input type="text" value={matForm.nome} onChange={e => setMatForm(p => ({...p, nome: e.target.value}))} className="studio-input" placeholder="Ex: PLA 333 Silk White" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Peso (g)</label>
+                                            <input type="number" value={matForm.peso} onChange={e => setMatForm(p => ({...p, peso: parseFloat(e.target.value)}))} className="studio-input" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Preço Unitário</label>
+                                            <input type="number" value={matForm.preco} onChange={e => setMatForm(p => ({...p, preco: parseFloat(e.target.value)}))} className="studio-input" />
+                                        </div>
+                                        <div className="md:col-span-3 flex gap-4">
+                                            <button onClick={() => {
+                                                apiCall(matForm.editing ? 'edit_estoque' : 'estoque', matForm);
+                                                setMatForm({nome:'', peso:1000, preco:120, editing:false});
+                                            }} className="flex-1 btn-studio-black">
+                                                {matForm.editing ? 'Finalizar Edição' : 'Registrar Insumo'}
+                                            </button>
+                                            {matForm.editing && <button onClick={() => setMatForm({nome:'', peso:1000, preco:120, editing:false})} className="px-6 py-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-400 uppercase">Cancelar</button>}
+                                        </div>
+                                    </div>
+                                </div>
 
-        window.onload = init;
+                                {/* LISTA DE MATERIAIS */}
+                                <div className="grid grid-cols-1 gap-6">
+                                    {state.estoque.map((m, i) => {
+                                        const p = Math.max(0, Math.min(100, (m.peso / 1000) * 100));
+                                        return (
+                                            <div key={i} className="clean-card p-8 flex flex-col md:flex-row md:items-center justify-between gap-10">
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-end mb-3">
+                                                        <span className="font-extrabold text-slate-900 uppercase tracking-tighter text-lg">{m.nome}</span>
+                                                        <span className="font-mono text-xs text-slate-300">{m.peso.toFixed(0)}g</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                                        <div className={`h-full progress-bar-fill ${p < 20 ? 'bg-rose-400' : 'bg-blue-400'}`} style={{ width: `${p}%` }}></div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-6">
+                                                    <span className="font-bold text-slate-900 text-sm">R$ {m.preco.toFixed(2)}</span>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => setMatForm({...m, editing: true})} className="p-3 hover:bg-blue-50 text-slate-300 hover:text-blue-500 rounded-xl border border-slate-50 transition-all"><Icon name="edit" className="w-4 h-4" /></button>
+                                                        <button onClick={() => apiCall('delete_estoque', { nome: m.nome })} className="p-3 hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-xl border border-slate-50 transition-all"><Icon name="trash" className="w-4 h-4" /></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PAGE: SETTINGS */}
+                        {page === 'settings' && (
+                            <div className="max-w-[1000px] space-y-16">
+                                <div>
+                                    <h2 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-3">System Node</h2>
+                                    <p className="text-3xl font-bold text-slate-900">Parâmetros do Studio</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+                                    {Object.keys(state.settings).filter(k => typeof state.settings[k] === 'number').map(key => (
+                                        <div key={key} className="space-y-3">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{key}</label>
+                                            <input 
+                                                type="number" 
+                                                value={state.settings[key]} 
+                                                onChange={e => setState(p => ({...p, settings: {...p.settings, [key]: parseFloat(e.target.value)}}))} 
+                                                className="studio-input font-bold" 
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="space-y-8 pt-12 border-t border-slate-100">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest ml-1">URL de Escrita Cloud</label>
+                                        <input type="text" value={state.settings.urlWrite} onChange={e => setState(p => ({...p, settings: {...p.settings, urlWrite: e.target.value}}))} className="studio-input font-mono text-xs opacity-50 focus:opacity-100" />
+                                    </div>
+                                    <button onClick={() => { 
+                                        localStorage.setItem('333_v10_settings', JSON.stringify(state.settings)); 
+                                        showToast("Configurações Salvas Localmente"); 
+                                    }} className="btn-studio-black w-full shadow-2xl shadow-slate-100">Sincronizar Definições</button>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* TOAST */}
+                    {toast.show && (
+                        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-950 text-white px-12 py-5 rounded-3xl shadow-2xl z-[1000] font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-4 animate-fade border border-slate-800">
+                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> {toast.msg}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 
+<!-- WEBHOOK GOOGLE APPS SCRIPT ATUALIZADO (COPIE TUDO) -->
 <!-- 
-    CÓDIGO GOOGLE APPS SCRIPT (WEBHOOK.GS) - COPIE E COLE NA SUA PLANILHA
-    
-    function doGet(e) {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
-      var params = e.parameter;
-      var type = params.type;
-      if (!type) return ContentService.createTextOutput("Erro");
-      try {
-        if (type === 'venda') {
-          var sheetSales = ss.getSheetByName("Vendas");
-          var sheetStock = ss.getSheetByName("Estoque");
-          sheetSales.appendRow([params.data, params.item, params.material, params.peso + "g", params.venda, params.lucro]);
-          var stockData = sheetStock.getDataRange().getValues();
-          for (var i = 1; i < stockData.length; i++) {
-            if (stockData[i][0].toString().trim().toLowerCase() === params.material.toString().trim().toLowerCase()) {
-              var pesoAtual = parseFloat(stockData[i][1]);
-              sheetStock.getRange(i + 1, 2).setValue(pesoAtual - parseFloat(params.peso));
-              break;
-            }
-          }
-          return ContentService.createTextOutput("Venda e Stock Sincronizados");
-        } 
-        else if (type === 'estoque') {
-          var sheetStock = ss.getSheetByName("Estoque");
-          sheetStock.appendRow([params.nome, params.peso, params.preco]);
-          return ContentService.createTextOutput("Novo Material Gravado");
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var params = e.parameter;
+  var type = params.type;
+  if (!type) return ContentService.createTextOutput("Erro");
+  
+  try {
+    if (type === 'venda') {
+      var sheetSales = ss.getSheetByName("Vendas");
+      var sheetStock = ss.getSheetByName("Estoque");
+      sheetSales.appendRow([params.data, params.item, params.material, params.peso + "g", "R$ " + params.venda, "R$ " + params.lucro]);
+      var stockData = sheetStock.getDataRange().getValues();
+      for (var i = 1; i < stockData.length; i++) {
+        if (stockData[i][0].toString().trim().toLowerCase() === params.material.toString().trim().toLowerCase()) {
+          var pesoAtual = parseFloat(stockData[i][1]);
+          sheetStock.getRange(i + 1, 2).setValue(pesoAtual - parseFloat(params.peso));
+          break;
         }
-      } catch (err) { return ContentService.createTextOutput("Erro: " + err.message); }
+      }
+      return ContentService.createTextOutput("Sucesso");
+    } 
+    
+    else if (type === 'estoque') {
+      var sheetStock = ss.getSheetByName("Estoque");
+      sheetStock.appendRow([params.nome, params.peso, params.preco]);
+      return ContentService.createTextOutput("Material Adicionado");
     }
--->
 
+    else if (type === 'edit_estoque') {
+      var sheetStock = ss.getSheetByName("Estoque");
+      var data = sheetStock.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0].toString().trim().toLowerCase() === params.nome.toString().trim().toLowerCase()) {
+          sheetStock.getRange(i + 1, 2).setValue(params.peso);
+          sheetStock.getRange(i + 1, 3).setValue(params.preco);
+          break;
+        }
+      }
+      return ContentService.createTextOutput("Editado");
+    }
+
+    else if (type === 'delete_estoque') {
+      var sheetStock = ss.getSheetByName("Estoque");
+      var data = sheetStock.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0].toString().trim().toLowerCase() === params.nome.toString().trim().toLowerCase()) {
+          sheetStock.deleteRow(i + 1);
+          break;
+        }
+      }
+      return ContentService.createTextOutput("Deletado");
+    }
+  } catch (err) { return ContentService.createTextOutput("Erro: " + err.message); }
+}
+-->
 </html>
