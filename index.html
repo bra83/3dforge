@@ -1,129 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>333 Print Studio - Gestão Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>333 Print Studio - Gestão Pro</title>
 
-  <meta name="theme-color" content="#ffffff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@900&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .logo-333 { font-family: 'Outfit', sans-serif; font-weight: 900; letter-spacing: -0.22em; font-size: 2.2rem; }
-    .nav-item { cursor:pointer; padding:10px; font-weight:800; }
-    .nav-item.active { background:#fffbeb; }
-    .studio-input { padding:0.7rem; border:1px solid #fde68a; border-radius:10px; width:100%; }
-    .btn-studio-black { background:#0f172a; color:white; padding:1rem; border-radius:12px; font-weight:800; }
-  </style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@900&display=swap');
+body { font-family:'Plus Jakarta Sans',sans-serif; background:#fff; }
+.logo-333{font-family:'Outfit',sans-serif;font-weight:900;letter-spacing:-.22em;font-size:2.2rem}
+.clean-card{background:#fff;border:1px solid #f1f5f9;border-radius:20px;padding:1.5rem}
+.studio-input{background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:.8rem;width:100%;font-weight:600}
+.btn-studio-black{background:#0f172a;color:#fff;padding:1rem;border-radius:12px;font-weight:800}
+.nav-item{cursor:pointer;font-weight:800;font-size:11px}
+.nav-item.active{background:#fffbeb;padding:.5rem 1rem;border-radius:12px}
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f1f5f9;display:flex;justify-content:space-around}
+</style>
 </head>
 
-<body class="pb-24 md:pb-0">
+<body class="pb-24">
 <div id="root"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useMemo, Fragment } = React;
+const {useState,useEffect,useMemo} = React;
 
 const App = () => {
-  const [page, setPage] = useState('calc');
 
-  const [state, setState] = useState({
-    estoque: [],
-    vendas: [],
-    gastos: [],
-    syncing: false,
-    settings: JSON.parse(localStorage.getItem('333_vFINAL_stable')) || {
-      fatPrevisto: 4000,
-      urlWrite: "https://script.google.com/macros/s/AKfycbzJVgbVULF0NArQCZI7KUWoh8c1fy8qxEpEh5NHFHWfuRqR5NDl4VxRjsCWbMraK0SKhQ/exec"
-    }
-  });
+const [page,setPage] = useState('calc');
+const [state,setState] = useState({
+  estoque:[],
+  vendas:[],
+  gastos:[],
+  syncing:false,
+  settings: JSON.parse(localStorage.getItem('333_vFINAL_stable')) || {
+    aluguel:210,softwares:95,ecommerce:59.9,mei:60,publicidade:100,condominio:100,
+    kwh:1.14,potencia:350,precoMaq:1500,vidaUtil:24,
+    embalagem:3,markup:2.5,
+    pintSimples:15,pintMedia:35,pintProf:60,
+    urlWrite:"https://script.google.com/macros/s/AKfycbzJVgbVULF0NArQCZI7KUWoh8c1fy8qxEpEh5NHFHWfuRqR5NDl4VxRjsCWbMraK0SKhQ/exec"
+  }
+});
 
-  const sync = async () => {
-    setState(p => ({ ...p, syncing:true }));
-    try {
-      const r = await fetch(`${state.settings.urlWrite}?type=read_data&nocache=${Date.now()}`);
-      const d = await r.json();
+const [calcForm,setCalcForm] = useState({nome:'',tempo:10,peso:100,matIdx:0,pintura:'media'});
+const [gastoDesc,setGastoDesc] = useState('');
+const [gastoValor,setGastoValor] = useState('');
 
-      setState(p => ({
-        ...p,
-        estoque: d.estoque || [],
-        vendas: d.vendas || [],
-        gastos: (d.gastos || []).map(g => ({ ...g, valor:Number(g.valor)||0 })),
-        syncing:false
-      }));
-    } catch {
-      setState(p => ({ ...p, syncing:false }));
-    }
-  };
-
-  useEffect(() => { sync(); }, []);
-
-  const debitoTotal = useMemo(
-    () => state.gastos.reduce((a,g)=>a+g.valor,0),
-    [state.gastos]
-  );
-
-  const fatTotal = useMemo(
-    () => state.vendas.reduce((a,v)=>a+Number(v.venda||0),0),
-    [state.vendas]
-  );
-
-  const debitoRestante = useMemo(() => {
-    if(!state.settings.fatPrevisto) return debitoTotal;
-    const abatido = debitoTotal * (fatTotal / state.settings.fatPrevisto);
-    return Math.max(0, debitoTotal - abatido);
-  }, [debitoTotal, fatTotal, state.settings.fatPrevisto]);
-
-  const addGasto = async () => {
-    const desc = document.getElementById("gdesc").value;
-    const val = Number(document.getElementById("gval").value);
-    if(!desc || !val) return;
-
-    await fetch(`${state.settings.urlWrite}?type=add_gasto&descricao=${encodeURIComponent(desc)}&valor=${val}&data=${new Date().toLocaleDateString("pt-BR")}`, {
-      mode:"no-cors"
-    });
-    setTimeout(sync,1500);
-  };
-
-  return (
-    <div className="p-6 space-y-6">
-      <header className="flex gap-4">
-        {['calc','gastos'].map(p => (
-          <div key={p}
-            onClick={()=>setPage(p)}
-            className={`nav-item ${page===p?'active':''}`}>
-            {p.toUpperCase()}
-          </div>
-        ))}
-      </header>
-
-      {page==='gastos' && (
-        <div className="space-y-4 max-w-md">
-          <input id="gdesc" className="studio-input" placeholder="Descrição"/>
-          <input id="gval" type="number" className="studio-input" placeholder="Valor"/>
-          <button className="btn-studio-black w-full" onClick={addGasto}>
-            Registrar Gasto
-          </button>
-
-          <div className="pt-4">
-            <p><b>Débito total:</b> R$ {debitoTotal.toFixed(2)}</p>
-            <p><b>Débito restante:</b> R$ {debitoRestante.toFixed(2)}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+const sync = async () => {
+  setState(p=>({...p,syncing:true}));
+  const r = await fetch(`${state.settings.urlWrite}?type=read_data`);
+  const d = await r.json();
+  setState(p=>({
+    ...p,
+    estoque:d.estoque||[],
+    vendas:d.vendas||[],
+    gastos:d.gastos||[],
+    syncing:false
+  }));
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-</script>
+useEffect(()=>{ sync(); },[]);
 
+const apiCall = async (type,data={})=>{
+  const q = new URLSearchParams({type,...data});
+  await fetch(`${state.settings.urlWrite}?${q.toString()}`,{mode:'no-cors'});
+  setTimeout(sync,1500);
+};
+
+const simulacao = useMemo(()=>{
+  if(!state.estoque.length) return null;
+  const mat = state.estoque[calcForm.matIdx];
+  const cMat = (calcForm.peso/1000)*mat.preco;
+  const cLuz = (state.settings.potencia/1000)*calcForm.tempo*state.settings.kwh;
+  const cFixo = (state.settings.aluguel+state.settings.softwares+state.settings.ecommerce+state.settings.mei)/4000*calcForm.tempo;
+  let cPint=0;
+  if(calcForm.pintura==='simples')cPint=state.settings.pintSimples;
+  if(calcForm.pintura==='media')cPint=state.settings.pintMedia;
+  if(calcForm.pintura==='prof')cPint=state.settings.pintProf;
+  const custo = cMat+cLuz+cFixo+state.settings.embalagem+cPint;
+  return { custo, venda:custo*state.settings.markup };
+},[calcForm,state]);
+
+return (
+<div>
+<header className="p-4 flex justify-between">
+  <div className="logo-333">333</div>
+  <div>{state.syncing?'●':'○'}</div>
+</header>
+
+<nav className="flex gap-2 p-4">
+  {['calc','sales','stock','gastos','settings'].map(p=>(
+    <div key={p} onClick={()=>setPage(p)} className={`nav-item ${page===p?'active':''}`}>{p}</div>
+  ))}
+</nav>
+
+<main className="p-4 space-y-8">
+
+{page==='calc' && (
+<div className="clean-card space-y-4">
+  <input className="studio-input" placeholder="Projeto" onChange={e=>setCalcForm(p=>({...p,nome:e.target.value}))}/>
+  <input className="studio-input" type="number" placeholder="Tempo (h)" onChange={e=>setCalcForm(p=>({...p,tempo:+e.target.value}))}/>
+  <input className="studio-input" type="number" placeholder="Peso (g)" onChange={e=>setCalcForm(p=>({...p,peso:+e.target.value}))}/>
+  <select className="studio-input" onChange={e=>setCalcForm(p=>({...p,matIdx:e.target.value}))}>
+    {state.estoque.map((m,i)=><option key={i}>{m.nome}</option>)}
+  </select>
+  <div><b>Venda:</b> R$ {simulacao?.venda.toFixed(2)}</div>
+</div>
+)}
+
+{page==='gastos' && (
+<div className="space-y-6">
+  <div className="clean-card space-y-4">
+    <input className="studio-input" placeholder="Descrição do gasto" onChange={e=>setGastoDesc(e.target.value)}/>
+    <input className="studio-input" type="number" placeholder="Valor" onChange={e=>setGastoValor(e.target.value)}/>
+    <button className="btn-studio-black w-full"
+      onClick={()=>apiCall('add_gasto',{descricao:gastoDesc,valor:gastoValor})}>
+      Registrar Gasto
+    </button>
+  </div>
+
+  <div className="clean-card">
+    <table className="w-full text-sm">
+      <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th></tr></thead>
+      <tbody>
+        {state.gastos.map((g,i)=>(
+          <tr key={i}>
+            <td>{g.data}</td>
+            <td>{g.descricao}</td>
+            <td>R$ {Number(g.valor).toFixed(2)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+)}
+
+</main>
+</div>
+);
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>
