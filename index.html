@@ -1,0 +1,548 @@
+<!-- 
+==========================================================================
+CÓDIGO GOOGLE APPS SCRIPT (BACKEND) - ATUALIZADO COM TEXTFINDER
+==========================================================================
+
+function doGet(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var param = e.parameter;
+    var type = param.type;
+
+    function normalizeId(val) {
+      if (val === undefined || val === null) return "";
+      if (typeof val === 'number') return val.toFixed(0);
+      return String(val).trim();
+    }
+    
+    if (type == 'read_data') {
+      var sE = ss.getSheetByName("Estoque"), sV = ss.getSheetByName("Vendas"), sG = ss.getSheetByName("Gastos");
+      var dE = [], dV = [], dG = [];
+      if (sE) { var r = sE.getDataRange().getValues(); for (var i=1; i<r.length; i++) if (r[i][0]) dE.push({ nome: String(r[i][0]), peso: r[i][1], preco: r[i][2] }); }
+      if (sV) { var r = sV.getDataRange().getValues(); for (var i=1; i<r.length; i++) if (r[i][0]) {
+          var dateVal = r[i][0] instanceof Date ? r[i][0] : new Date(r[i][0]);
+          dV.push({ data: Utilities.formatDate(dateVal, ss.getSpreadsheetTimeZone(), "dd/MM/yyyy"), item: r[i][1], venda: r[i][2], lucro: r[i][3] });
+      }}
+      if (sG) { var r = sG.getDataRange().getValues(); for (var i=1; i<r.length; i++) if (r[i][0]) {
+          var dg = r[i][3] instanceof Date ? Utilities.formatDate(r[i][3], ss.getSpreadsheetTimeZone(), "dd/MM/yyyy") : r[i][3];
+          dG.push({ id: normalizeId(r[i][0]), descricao: r[i][1], valor: r[i][2], data: dg });
+      }}
+      return ContentService.createTextOutput(JSON.stringify({ estoque: dE, vendas: dV, gastos: dG })).setMimeType(ContentService.MimeType.JSON);
+    }
+    else if (type == 'save_settings') {
+      var s = ss.getSheetByName("Config") || ss.insertSheet("Config");
+      var d = s.getDataRange().getValues(); var m = {}; for(var i=0; i<d.length; i++) m[String(d[i][0]).trim()] = i+1;
+      var ks = ["aluguel", "softwares", "ecommerce", "mei", "publicidade", "condominio", "kwh", "potencia", "precoMaq", "vidaUtil", "horasTrab", "embalagem", "markup", "pintSimples", "pintMedia", "pintProf", "FatPrevisto"];
+      ks.forEach(function(k) { if (param[k] !== undefined) { 
+        var val = param[k].replace(',', '.');
+        if (m[k]) s.getRange(m[k], 2).setValue(val); else s.appendRow([k, val]); 
+      }});
+      return ContentService.createTextOutput("OK");
+    }
+    else if (type == 'gasto') {
+      var s = ss.getSheetByName("Gastos") || ss.insertSheet("Gastos");
+      var id = normalizeId(param.id || Date.now());
+      s.appendRow([id, param.descricao, param.valor.replace(',', '.'), param.data || new Date()]);
+      s.getRange(s.getLastRow(), 1).setNumberFormat('@');
+      return ContentService.createTextOutput("OK");
+    }
+    else if (type == 'delete_gasto') {
+      var s = ss.getSheetByName("Gastos"); if (!s) return ContentService.createTextOutput("Erro");
+      var targetId = normalizeId(param.id);
+      var finder = s.getRange("A:A").createTextFinder(targetId).matchEntireCell(true).findNext();
+      if (finder) { s.deleteRow(finder.getRow()); return ContentService.createTextOutput("OK"); }
+      return ContentService.createTextOutput("Não encontrado");
+    }
+    else if (type == 'venda') {
+      var s = ss.getSheetByName("Vendas") || ss.insertSheet("Vendas");
+      s.appendRow([new Date(), param.item, param.venda.replace(',', '.'), param.lucro.replace(',', '.')]);
+      return ContentService.createTextOutput("OK");
+    }
+    else if (type == 'estoque') {
+      var s = ss.getSheetByName("Estoque") || ss.insertSheet("Estoque");
+      s.appendRow([param.nome, param.peso, param.preco]);
+      return ContentService.createTextOutput("OK");
+    }
+    else if (type == 'delete_estoque') {
+      var s = ss.getSheetByName("Estoque");
+      var finder = s.getRange("A:A").createTextFinder(param.nome).matchEntireCell(true).findNext();
+      if (finder) s.deleteRow(finder.getRow());
+      return ContentService.createTextOutput("OK");
+    }
+  } catch (err) { return ContentService.createTextOutput("Erro: " + err.toString()); } finally { lock.releaseLock(); }
+}
+==========================================================================
+-->
+
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>333 Print Studio - Gestão Pro</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@900&display=swap');
+        
+        :root {
+            --studio-white: #ffffff;
+            --studio-ice: #f8fafc;
+            --studio-yellow: #fffbeb; 
+            --studio-amber: #fef3c7; 
+            --studio-border: #f1f5f9;
+            --studio-accent: #3b82f6;
+            --studio-text: #0f172a;
+            --studio-muted: #64748b;
+            --whatsapp-green: #25D366;
+            --expense-red: #ef4444;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--studio-white); 
+            color: var(--studio-text);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .clean-card {
+            background: #ffffff;
+            border: 1px solid var(--studio-border);
+            border-radius: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .studio-input {
+            background: var(--studio-yellow) !important;
+            border: 1.5px solid #fde68a !important;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+        .studio-input:focus {
+            border-color: #fbbf24 !important;
+            background: white !important;
+            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.1);
+        }
+
+        .spool-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #f1f5f9;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .spool-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            transition: height 1s ease-out;
+            opacity: 0.85;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-fade { animation: fadeIn 0.4s ease forwards; }
+    </style>
+</head>
+<body class="pb-24 md:pb-0">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, Fragment } = React;
+
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const icons = {
+                calc: <path d="M16 2H8a2 2 0 00-2 2v16a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zM8 6h8M8 10h8M8 14h8M8 18h8" />,
+                stock: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />,
+                sales: <Fragment><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><path d="M3 6h18M16 10a4 4 0 01-8 0" /></Fragment>,
+                settings: <Fragment><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></Fragment>,
+                wallet: <path d="M20 12V8H6a2 2 0 012-2h12M4 10h16v10H4V10z" />,
+                trash: <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />,
+                edit: <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />,
+                refresh: <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />,
+                plus: <path d="M12 5v14M5 12h14" />,
+                x: <path d="M18 6L6 18M6 6l12 12" />,
+                check: <path d="M20 6L9 17l-5-5" />,
+                whatsapp: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-7.6 8.38 8.38 0 0 1 3.8.9L21 4.5z" />
+            };
+            return (
+                <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    {icons[name]}
+                </svg>
+            );
+        };
+
+        const App = () => {
+            const [page, setPage] = useState('calc');
+            const HARDCODED_URL = "https://script.google.com/macros/s/AKfycbx28rB657FbmmBk05Ljd_HuBCFAGNSaflknIeF_BNYfDVUvODiZb5ry_whruDHFjcMNuw/exec";
+            
+            const [state, setState] = useState(() => {
+                const saved = JSON.parse(localStorage.getItem('333_vFINAL_stable'));
+                const defaults = {
+                    aluguel: 210, softwares: 95, ecommerce: 59.9, mei: 60, publicidade: 100, condominio: 100,
+                    kwh: 1.14, potencia: 350, precoMaq: 1500, vidaUtil: 24, 
+                    FatPrevisto: 4000, horasTrab: 160, embalagem: 3, markup: 2.5,
+                    pintSimples: 15, pintMedia: 35, pintProf: 60,
+                    urlWrite: HARDCODED_URL
+                };
+                return {
+                    estoque: [], vendas: [], gastos: [], 
+                    syncing: false, settings: saved ? { ...saved, urlWrite: HARDCODED_URL } : defaults
+                };
+            });
+
+            const [calcForm, setCalcForm] = useState({ nome: '', tempo: 10, pintura: 'media', whatsapp: '', filamentos: [{ id: Date.now(), matIdx: 0, peso: 100 }] });
+            const [matForm, setMatForm] = useState({ nome: '', peso: 1000, preco: 120, editing: false, oldName: '' });
+            const [gastoForm, setGastoForm] = useState({ id: '', descricao: '', valor: '', editing: false });
+            const [toast, setToast] = useState({ show: false, msg: '' });
+
+            const notify = (msg) => { setToast({ show: true, msg }); setTimeout(() => setToast({ show: false, msg: '' }), 4000); };
+
+            const sync = async () => {
+                setState(prev => ({ ...prev, syncing: true }));
+                try {
+                    const response = await fetch(`${state.settings.urlWrite}?type=read_data&nocache=${Date.now()}`);
+                    const data = await response.json();
+                    
+                    const settingsRes = await fetch(`${state.settings.urlWrite}?type=read_settings&nocache=${Date.now()}`);
+                    const settingsData = await settingsRes.json();
+                    
+                    const newSettings = { ...state.settings, ...settingsData, urlWrite: HARDCODED_URL };
+                    localStorage.setItem('333_vFINAL_stable', JSON.stringify(newSettings));
+
+                    setState(prev => ({ 
+                        ...prev, 
+                        estoque: data.estoque || [], 
+                        vendas: data.vendas || [], 
+                        // TROCA SOLICITADA: Padronização de IDs de gastos
+                        gastos: (data.gastos || []).map(g => ({
+                            ...g,
+                            id: String(g.id).trim().replace(/^g_/, ''),
+                            valor: Number(g.valor)
+                        })),
+                        settings: newSettings,
+                        syncing: false 
+                    }));
+                    notify("Sincronizado");
+                } catch (e) { 
+                    console.error(e);
+                    setState(prev => ({ ...prev, syncing: false })); 
+                    notify("Erro de Ligação"); 
+                }
+            };
+
+            const saveSettingsToCloud = async () => {
+                notify("A Guardar...");
+                const q = new URLSearchParams();
+                q.append("type", "save_settings");
+                Object.keys(state.settings).forEach(key => { q.append(key, String(state.settings[key])); });
+                try {
+                    await fetch(`${state.settings.urlWrite}?${q.toString()}`, { method: 'GET', mode: 'no-cors' });
+                    localStorage.setItem('333_vFINAL_stable', JSON.stringify(state.settings));
+                    setTimeout(sync, 1500); 
+                    notify("Configurações Salvas");
+                } catch(e) { notify("Erro ao Salvar"); }
+            };
+
+            useEffect(() => { sync(); }, []);
+
+            const fatTotal = useMemo(() => state.vendas.reduce((acc, v) => acc + (Number(v.venda) || 0), 0), [state.vendas]);
+            const lucTotal = useMemo(() => state.vendas.reduce((acc, v) => acc + (Number(v.lucro) || 0), 0), [state.vendas]);
+            const gastosTotal = state.gastos.reduce((acc, g) => acc + (Number(g.valor) || 0), 0);
+            const saldoCaixa = lucTotal - gastosTotal;
+            const cobertura = gastosTotal > 0 ? (lucTotal / gastosTotal) * 100 : 100;
+
+            const simulacao = useMemo(() => {
+                if (!state.estoque.length) return null;
+                let cMat = 0; let pTotal = 0;
+                calcForm.filamentos.forEach(f => {
+                    const mat = state.estoque[f.matIdx] || state.estoque[0];
+                    cMat += (Number(f.peso) / 1000) * Number(mat.preco);
+                    pTotal += Number(f.peso);
+                });
+                const cLuz = (Number(state.settings.potencia) / 1000) * Number(calcForm.tempo) * Number(state.settings.kwh);
+                const cAmort = (Number(state.settings.precoMaq) / Number(state.settings.vidaUtil) / 30 / 24) * Number(calcForm.tempo);
+                const tFixo = Number(state.settings.aluguel) + Number(state.settings.softwares) + Number(state.settings.ecommerce) + Number(state.settings.mei) + Number(state.settings.publicidade) + Number(state.settings.condominio);
+                const divisor = (Number(state.settings.FatPrevisto) || 4000);
+                const cFixoProp = (tFixo / divisor) * Number(calcForm.tempo);
+                const base = cMat + cLuz + cAmort + cFixoProp + Number(state.settings.embalagem);
+                let cPint = 0;
+                if(calcForm.pintura === "simples") cPint = Number(state.settings.pintSimples);
+                else if(calcForm.pintura === "media") cPint = Number(state.settings.pintMedia);
+                else if(calcForm.pintura === "profissional") cPint = Number(state.settings.pintProf);
+                const sug = (base + cPint) * Number(state.settings.markup);
+                return { custoBase: base, sugerido: sug, lucro: sug - (base + cPint), pesoTotal: pTotal };
+            }, [calcForm, state.settings, state.estoque]);
+
+            const apiCall = async (type, data) => {
+                notify("A Processar...");
+                if (type === 'delete_gasto') {
+                    setState(p => ({ ...p, gastos: p.gastos.filter(g => String(g.id).trim() !== String(data.id).trim()) }));
+                }
+                const params = new URLSearchParams();
+                params.append('type', type);
+                Object.keys(data).forEach(k => { 
+                    if(data[k] !== undefined && data[k] !== null) params.append(k, String(data[k]).trim()); 
+                });
+                try {
+                    await fetch(`${state.settings.urlWrite}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
+                    setTimeout(sync, 2500); 
+                    notify("Operação Concluída");
+                    return true;
+                } catch (e) { 
+                    notify("Sincronização pendente..."); 
+                    return false; 
+                }
+            };
+
+            const updateFilamentSlot = (idx, field, value) => {
+                setCalcForm(prev => ({
+                    ...prev,
+                    filamentos: prev.filamentos.map((f, i) => i === idx ? { ...f, [field]: value } : f)
+                }));
+            };
+
+            const navigationItems = [
+                {id: 'calc', l: 'Calculadora', i: 'calc'},
+                {id: 'sales', l: 'Vendas', i: 'sales'},
+                {id: 'expenses', l: 'Despesas', i: 'wallet'},
+                {id: 'stock', l: 'Estoque', i: 'stock'},
+                {id: 'settings', l: 'Ajustes', i: 'settings'}
+            ];
+
+            return (
+                <div className="flex flex-col min-h-screen bg-slate-50">
+                    <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-40 px-6 py-4 shadow-sm">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="font-black text-3xl tracking-tighter text-slate-900 italic">333</div>
+                                <div className="hidden sm:block leading-tight"><span className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest">Print Studio</span></div>
+                            </div>
+                            <nav className="hidden md:flex items-center gap-1">
+                                {navigationItems.map(item => (
+                                    <button key={item.id} onClick={() => setPage(item.id)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${page===item.id ? 'bg-amber-100 text-amber-900 shadow-sm' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+                                        {item.l}
+                                    </button>
+                                ))}
+                            </nav>
+                            <div className="flex items-center gap-4">
+                                <div className={`w-2 h-2 rounded-full ${state.syncing ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                                <button onClick={sync} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all"><Icon name="refresh" /></button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around p-4 z-50 shadow-lg">
+                        {navigationItems.map(item => (
+                            <button key={item.id} onClick={() => setPage(item.id)} className={`flex flex-col items-center gap-1 transition-all ${page===item.id ? 'text-amber-600' : 'text-slate-400'}`}>
+                                <Icon name={item.id === 'expenses' ? 'wallet' : item.id === 'calc' ? 'calc' : item.id === 'sales' ? 'sales' : item.id === 'stock' ? 'stock' : 'settings'} className="w-6 h-6" />
+                                <span className="text-[9px] font-black uppercase tracking-widest">{item.l}</span>
+                            </button>
+                        ))}
+                    </nav>
+
+                    <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full pb-24 md:pb-14 anim-fade">
+                        {page === 'calc' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <section className="clean-card p-8 space-y-6">
+                                    <h2 className="text-2xl font-bold tracking-tight">Novo Orçamento</h2>
+                                    <div className="space-y-4">
+                                        <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Projeto</label><input type="text" value={calcForm.nome} onChange={e=>setCalcForm({...calcForm, nome:e.target.value})} className="studio-input" placeholder="Diorama Batman" /></div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horas</label><input type="number" value={calcForm.tempo} onChange={e=>setCalcForm({...calcForm, tempo:e.target.value})} className="studio-input" /></div>
+                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Acabamento</label>
+                                                <select value={calcForm.pintura} onChange={e=>setCalcForm({...calcForm, pintura:e.target.value})} className="studio-input"><option value="none">Nenhum</option><option value="simples">Simples</option><option value="media">Média</option><option value="profissional">Profissional</option></select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Insumos</label><button onClick={() => setCalcForm({...calcForm, filamentos: [...calcForm.filamentos, {id:Date.now(), matIdx:0, peso:0}]})} className="text-[10px] font-black text-blue-600 uppercase">+ Adicionar Cor</button></div>
+                                            {calcForm.filamentos.map((f, i) => (
+                                                <div key={i} className="flex gap-2 items-center">
+                                                    <select className="studio-input flex-1" value={f.matIdx} onChange={e=>updateFilamentSlot(i, 'matIdx', e.target.value)}>{state.estoque.map((m,idx)=><option key={idx} value={idx}>{m.nome}</option>)}</select>
+                                                    <div className="w-24 relative"><input type="number" className="studio-input" value={f.peso} onChange={e=>updateFilamentSlot(i, 'peso', e.target.value)} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">g</span></div>
+                                                    {calcForm.filamentos.length > 1 && <button onClick={() => setCalcForm({...calcForm, filamentos: calcForm.filamentos.filter((_, idx)=>idx!==i)})} className="p-2 text-slate-300 hover:text-rose-500"><Icon name="trash" className="w-4 h-4" /></button>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="pt-4 space-y-4">
+                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp</label><input type="text" value={calcForm.whatsapp} onChange={e=>setCalcForm({...calcForm, whatsapp:e.target.value})} className="studio-input" placeholder="DDD + Número" /></div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <button onClick={() => { if(!simulacao) return; const msg = `Olá! Segue o orçamento para o projeto: *${calcForm.nome || 'Impressão 3D'}*%0A%0A*Tempo estimado:* ${calcForm.tempo}h%0A*Valor Total:* R$ ${simulacao.sugerido.toFixed(2)}%0A%0A_Enviado via 333 Print Studio_`; window.open(`https://wa.me/${calcForm.whatsapp.replace(/\D/g, '') ? '55' + calcForm.whatsapp.replace(/\D/g, '') : ''}?text=${msg}`, '_blank'); }} className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-100 transition-all active:scale-95"><Icon name="whatsapp" className="w-4 h-4" /> Orçamento</button>
+                                                <button onClick={() => { const mats = calcForm.filamentos.map(f => ({ nome: state.estoque[f.matIdx]?.nome, peso: f.peso })); apiCall('venda', { item: calcForm.nome || 'Venda Studio', materiais: JSON.stringify(mats), venda: simulacao.sugerido.toFixed(2), lucro: simulacao.lucro.toFixed(2) }); }} className="bg-slate-900 hover:bg-slate-800 text-white p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-slate-200 transition-all active:scale-95">Registar Venda</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <section className="flex flex-col gap-6">
+                                    <div className="clean-card p-10 flex flex-col justify-center items-center text-center space-y-10 border-t-8 border-t-amber-400 bg-white shadow-2xl">
+                                        <div className="w-full flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Custo Real</span>
+                                            <span className="text-xl font-black text-slate-900">R$ {simulacao?.custoBase.toFixed(2)}</span>
+                                        </div>
+                                        <div><p className="text-[10px] uppercase font-black tracking-[0.5em] text-slate-300 mb-3">Venda Recomendada</p><p className="text-7xl font-black italic tracking-tighter text-slate-900">R$ {simulacao?.sugerido.toFixed(2)}</p></div>
+                                        <div><p className="text-[10px] uppercase font-black tracking-[0.5em] text-slate-300 mb-3">Lucro Estimado</p><p className="text-7xl font-black text-blue-600 italic tracking-tighter">R$ {simulacao?.lucro.toFixed(2)}</p></div>
+                                    </div>
+                                </section>
+                            </div>
+                        )}
+
+                        {page === 'expenses' && (
+                            <div className="space-y-8 animate-in slide-in-from-bottom">
+                                <div className="clean-card p-10 space-y-8 bg-white">
+                                    <div className="flex justify-between items-end"><h3 className="text-2xl font-bold tracking-tight">Painel Financeiro</h3><span className="text-4xl font-black text-slate-200 tracking-tighter">{cobertura.toFixed(0)}%</span></div>
+                                    <div className="w-full h-6 bg-slate-100 rounded-full overflow-hidden shadow-inner"><div className={`h-full transition-all duration-1000 ${saldoCaixa>=0?'bg-emerald-500':'bg-rose-500'}`} style={{width:`${Math.min(100, cobertura)}%`}}></div></div>
+                                    <div className="grid grid-cols-3 gap-6 text-center">
+                                        <div className="space-y-1"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Saídas</p><p className="text-2xl font-black text-rose-500">R$ {gastosTotal.toFixed(2)}</p></div>
+                                        <div className="border-x border-slate-200 space-y-1"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Saldo</p><p className={`text-2xl font-black ${saldoCaixa>=0?'text-emerald-500':'text-rose-500'}`}>R$ {saldoCaixa.toFixed(2)}</p></div>
+                                        <div className="space-y-1"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Entradas</p><p className="text-2xl font-black text-blue-500">R$ {lucTotal.toFixed(2)}</p></div>
+                                    </div>
+                                </div>
+                                <div className="bg-rose-50/10 border-2 border-dashed border-rose-100 rounded-[28px] p-8 flex flex-col md:flex-row gap-6 items-end">
+                                    <div className="flex-1 w-full space-y-1"><label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1">Descrição</label><input type="text" className="studio-input border-rose-200 bg-white !bg-white" placeholder="Filamento, Peças, Energia..." value={gastoForm.descricao} onChange={e=>setGastoForm({...gastoForm, descricao:e.target.value})} /></div>
+                                    <div className="w-full md:w-44 space-y-1"><label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1">Valor R$</label><input type="number" className="studio-input border-rose-200 bg-white !bg-white" value={gastoForm.valor} onChange={e=>setGastoForm({...gastoForm, valor:e.target.value})} /></div>
+                                    <button onClick={() => { if(!gastoForm.valor || !gastoForm.descricao) return notify("Campos obrigatórios!"); apiCall('gasto', gastoForm); setGastoForm({id:'', descricao:'', valor:'', editing:false}); }} className="w-full md:w-auto bg-rose-500 hover:bg-rose-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-rose-100 transition-all active:scale-95">Lançar Despesa</button>
+                                </div>
+                                <div className="clean-card overflow-hidden bg-white">
+                                    <div className="overflow-x-auto custom-scrollbar">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest"><tr><th className="p-6">Data</th><th className="p-6">Descrição</th><th className="p-6 text-right">Valor</th><th className="p-6 text-center">Ações</th></tr></thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {state.gastos.slice().reverse().map((g) => (
+                                                    <tr key={String(g.id)} className="hover:bg-rose-50/20 transition-colors">
+                                                        <td className="p-6 text-slate-400 text-xs font-bold">{g.data}</td>
+                                                        <td className="p-6 font-black text-slate-800 uppercase text-xs">{g.descricao}</td>
+                                                        <td className="p-6 text-right font-black text-rose-500">R$ {Number(g.valor).toFixed(2)}</td>
+                                                        <td className="p-6 flex justify-center">
+                                                            <button onClick={() => {if(window.confirm("Eliminar registo?")) apiCall('delete_gasto', {id: String(g.id).replace(/^g_/, '') })}} className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"><Icon name="trash" className="w-4 h-4" /></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {page === 'stock' && (
+                            <div className="space-y-10 animate-in slide-in-from-bottom">
+                                <div className="flex justify-between items-center px-2">
+                                    <h2 className="text-3xl font-bold italic tracking-tighter">Inventário AMS</h2>
+                                    <button onClick={() => {const n = prompt("Nome do Carretel:"); if(n) apiCall('estoque', {nome:n, peso:1000, preco:120})}} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">+ Novo Carretel</button>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                                    {state.estoque.map((m, i) => {
+                                        const p = Math.max(0, Math.min(100, (m.weight / 1000) * 100));
+                                        const color = getColorFromName(m.nome);
+                                        return (
+                                            <div key={i} className="clean-card p-6 flex flex-col items-center text-center space-y-4 relative group hover:border-blue-300 bg-white">
+                                                <div className="spool-ring">
+                                                    <div className="spool-fill" style={{ height: `${p}%`, backgroundColor: color, boxShadow: `0 0 15px ${color}44` }}></div>
+                                                    <div className="z-10 font-black text-xs text-slate-900 drop-shadow-sm">{Number(m.peso).toFixed(0)}g</div>
+                                                </div>
+                                                <div className="space-y-1 h-12 flex flex-col justify-center overflow-hidden">
+                                                    <p className="text-[10px] font-black uppercase text-slate-900 leading-tight line-clamp-2">{m.nome}</p>
+                                                    <p className="text-[9px] font-bold text-slate-400">R$ {Number(m.preco).toFixed(2)}/kg</p>
+                                                </div>
+                                                <div className="flex gap-2 w-full opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 pt-2 border-t border-slate-100">
+                                                    <button onClick={() => {const np = prompt("Novo peso (g):", m.peso); if(np) apiCall('edit_estoque', {oldName: m.nome, nome: m.nome, peso: np, preco: m.preco})}} className="flex-1 bg-slate-50 text-slate-400 hover:text-amber-600 p-2 rounded-lg flex justify-center transition-all"><Icon name="edit" className="w-3.5 h-3.5"/></button>
+                                                    <button onClick={() => {if(confirm("Remover?")) apiCall('delete_estoque', {nome: m.nome})}} className="flex-1 bg-slate-50 text-slate-400 hover:text-rose-600 p-2 rounded-lg flex justify-center transition-all"><Icon name="trash" className="w-3.5 h-3.5"/></button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {page === 'sales' && (
+                            <div className="space-y-8 animate-in slide-in-from-bottom">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="clean-card p-10 text-center bg-white shadow-xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Faturação Bruta</p><p className="text-4xl font-black tracking-tighter">R$ {fatTotal.toLocaleString('pt-BR', {minimumFractionDigits:2})}</p></div>
+                                    <div className="clean-card p-10 text-center bg-emerald-50 border-emerald-100 shadow-xl"><p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-2">Lucro Real</p><p className="text-4xl font-black text-emerald-600 tracking-tighter">R$ {lucTotal.toLocaleString('pt-BR', {minimumFractionDigits:2})}</p></div>
+                                </div>
+                                <div className="clean-card overflow-hidden bg-white">
+                                    <div className="overflow-x-auto custom-scrollbar">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest"><tr><th className="p-6">Data</th><th className="p-6">Projeto</th><th className="p-6 text-right">Venda R$</th><th className="p-6 text-right">Lucro R$</th></tr></thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {state.vendas.slice().reverse().map((v, i) => (
+                                                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="p-6 text-slate-400 text-xs font-bold">{v.data}</td>
+                                                        <td className="p-6 font-black text-slate-800 uppercase text-xs">{v.item}</td>
+                                                        <td className="p-6 text-right font-black text-slate-400">R$ {Number(v.venda).toFixed(2)}</td>
+                                                        <td className="p-6 text-right font-black text-emerald-500 text-lg">R$ {Number(v.lucro).toFixed(2)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {page === 'settings' && (
+                            <div className="max-w-4xl space-y-10 animate-in slide-in-from-bottom">
+                                <h2 className="text-3xl font-bold tracking-tight">Parâmetros</h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                    {Object.keys(state.settings).filter(k => typeof state.settings[k] === 'number').map(key => (
+                                        <div key={key} className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 space-y-1 hover:shadow-md transition-shadow">
+                                            <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest ml-1">{key}</label>
+                                            <input type="number" value={state.settings[key]} onChange={e => setState({...state, settings: {...state.settings, [key]: parseFloat(e.target.value)}})} className="w-full border-none bg-transparent p-0 font-black text-slate-800 text-xl focus:ring-0" />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="bg-white p-10 rounded-[32px] shadow-2xl border border-slate-100 space-y-6">
+                                    <div className="space-y-2"><label className="text-[10px] font-black text-blue-500 uppercase tracking-widest ml-1">Google Webhook URL</label><input type="text" value={state.settings.urlWrite} onChange={e => setState({...state, settings: {...state.settings, urlWrite: e.target.value}})} className="studio-input !bg-slate-50 !border-slate-100 font-mono text-[10px] text-slate-400 focus:text-slate-800" /></div>
+                                    <button onClick={saveSettingsToCloud} className="w-full bg-slate-900 hover:bg-slate-800 text-white p-6 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-[0.98]">Guardar na Nuvem</button>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {toast.show && (
+                        <div className="fixed bottom-28 md:bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-5 rounded-[24px] shadow-2xl z-[1000] font-black text-[11px] uppercase tracking-widest flex items-center gap-4 border border-slate-700 animate-in slide-in-from-bottom duration-300">
+                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                            {toast.msg}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+  }
+    
+</body>
+</html>
+
+
+</script>
