@@ -345,7 +345,28 @@ const configKeys = [...basicConfigKeys, ...advancedConfigKeys];
                                             <input className="input-studio" placeholder="WhatsApp Cliente (DDD + Número)" value={calcForm.whatsapp} onChange={e=>setCalcForm({...calcForm, whatsapp: e.target.value})} />
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <button onClick={() => {if(!simulacao.sugerido) return; const msg = `Olá! Segue o orçamento para o projeto: *${calcForm.nome || 'Impressão 3D'}*%0A%0A*Tempo estimado:* ${calcForm.tempo}h%0A*Valor:* R$ ${simulacao.sugerido.toFixed(2)}%0A%0A_Enviado via 333 Print Studio_`; window.open(`https://wa.me/${calcForm.whatsapp.replace(/\D/g, '') ? '55' + calcForm.whatsapp.replace(/\D/g, '') : ''}?text=${msg}`, '_blank'); }} className="btn-primary bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95"><Icon name="whatsapp" /> Enviar Whats</button>
-                                                <button onClick={() => apiCall('venda', { item: calcForm.nome || 'Venda Studio', venda: n(simulacao.sugerido).toFixed(2), lucro: n(simulacao.lucro).toFixed(2) })} className="btn-primary bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-100 transition-all active:scale-95">Registar Venda</button>
+                                                <button
+  onClick={() => {
+    const filamentosUsados = calcForm.filamentos.map(f => {
+      const mat = state.estoque[f.matIdx];
+      return {
+        nome: mat.nome,
+        peso: Number(f.peso)
+      };
+    });
+
+    apiCall('venda', {
+      item: calcForm.nome || 'Venda Studio',
+      venda: simulacao.sugerido.toFixed(2),
+      lucro: simulacao.lucro.toFixed(2),
+      filamentos: JSON.stringify(filamentosUsados)
+    });
+  }}
+  className="btn-primary bg-blue-600"
+>
+Registrar Venda
+</button>
+
                                             </div>
                                         </div>
                                     </div>
