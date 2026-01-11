@@ -4,83 +4,497 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>XP4NERD - Gestão Pro</title>
+    
+    <!-- PWA Meta Tags para permitir instalação -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="333 Studio">
+    
+    <!-- Manifest embutido para forçar a opção de instalação -->
     <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
+            margin: 0; padding: 0;
+        }
+
+        .card-glass {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-studio {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            font-size: 16px; 
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-studio:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .spool-visual {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; background: #f1f5f9;
+            overflow: hidden; border: 2px solid #e2e8f0;
+        }
+        .spool-progress {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: #2563eb; transition: height 0.8s ease, background-color 0.5s ease; opacity: 0.9;
+        }
+
+        .nav-active { color: #2563eb; border-bottom: 3px solid #2563eb; font-weight: 800; }
+        @media (max-width: 768px) {
+            .nav-active { color: #2563eb; border-bottom: none; transform: scale(1.1); }
+        }
+
+        .btn-primary {
+            background: #0f172a;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 14px;
+            font-weight: 700;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+        }
+        .btn-primary:active { transform: scale(0.96); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .logo-container { height: 55px; display: flex; align-items: center; gap: 12px; }
+        .logo-img { height: 100%; width: auto; border-radius: 12px; object-fit: cover; }
+        .logo-text { font-weight: 900; font-size: 22px; color: #0f172a; letter-spacing: -1px; }
+    </style>
 </head>
 <body class="pb-20 md:pb-0">
-<div id="root"></div>
+    <div id="root"></div>
 
-<script type="text/babel">
-const { useState, useEffect, useMemo, Fragment } = React;
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, Fragment } = React;
 
-const App = () => {
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const icons = {
+                calc: <path d="M16 2H8a2 2 0 00-2 2v16a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zM8 6h8M8 10h8M8 14h8M8 18h8" />,
+                stock: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />,
+                sales: <Fragment><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><path d="M3 6h18M16 10a4 4 0 01-8 0" /></Fragment>,
+                settings: <Fragment><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></Fragment>,
+                wallet: <path d="M20 12V8H6a2 2 0 012-2h12M4 10h16v10H4V10z" />,
+                trash: <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />,
+                refresh: <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />,
+                whatsapp: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-7.6 8.38 8.38 0 0 1 3.8.9L21 4.5z" />
+            };
+            return (
+                <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    {icons[name]}
+                </svg>
+            );
+        };
 
-  const HARDCODED_URL = "https://script.google.com/macros/s/AKfycbzmLU3BvkTG0MGg0QeL-YZZniHMwPh_Ki1GEwxUB97KRR3atX_gDp64nBB3_tC5cTpP2g/exec";
+        const App = () => {
+            const [page, setPage] = useState('calc');
+            const [advancedMode, setAdvancedMode] = useState(false);
 
-  const basicConfigKeys = ["markup","kwh","potencia","embalagem","pintSimples","pintMedia","pintProf"];
-  const advancedConfigKeys = ["aluguel","softwares","ecommerce","mei","publicidade","condominio","precoMaq","vidaUtil","horasTrab","FatPrevisto"];
-  const configKeys = [...basicConfigKeys, ...advancedConfigKeys];
+            const HARDCODED_URL = "https://script.google.com/macros/s/AKfycbzmLU3BvkTG0MGg0QeL-YZZniHMwPh_Ki1GEwxUB97KRR3atX_gDp64nBB3_tC5cTpP2g/exec";
+            const RAW_LOGO_URL = "https://raw.githubusercontent.com/bra83/3dforge/main/logo.jpg";
+            
+            const basicConfigKeys = [
+  "markup",
+  "kwh",
+  "potencia",
+  "embalagem",
+  "pintSimples",
+  "pintMedia",
+  "pintProf"
+];
 
-  const [advancedMode, setAdvancedMode] = useState(false);
-  const [settings, setSettings] = useState({});
+const advancedConfigKeys = [
+  "aluguel",
+  "softwares",
+  "ecommerce",
+  "mei",
+  "publicidade",
+  "condominio",
+  "precoMaq",
+  "vidaUtil",
+  "horasTrab",
+  "FatPrevisto"
+];
 
-  useEffect(() => {
-    fetch(`${HARDCODED_URL}?type=read_settings`)
-      .then(r => r.json())
-      .then(d => setSettings(d || {}));
-  }, []);
+const configKeys = [...basicConfigKeys, ...advancedConfigKeys];
 
-  return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-6">Ajustes Studio</h2>
 
-      <div className="flex justify-center gap-4 mb-8">
-        <button onClick={()=>setAdvancedMode(false)} className={`btn-primary ${!advancedMode?'bg-blue-600':'bg-slate-400'}`}>Básico</button>
-        <button onClick={()=>setAdvancedMode(true)} className={`btn-primary ${advancedMode?'bg-blue-600':'bg-slate-400'}`}>Avançado</button>
-      </div>
+            const [state, setState] = useState(() => {
+                const saved = JSON.parse(localStorage.getItem('333_vFINAL_stable'));
+                const defaults = { urlWrite: HARDCODED_URL };
+                configKeys.forEach(k => defaults[k] = 0);
+                defaults.markup = 2.5; defaults.horasTrab = 160;
+                return { estoque: [], vendas: [], gastos: [], syncing: false, settings: saved ? { ...saved, urlWrite: HARDCODED_URL } : defaults };
+            });
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {(advancedMode?configKeys:basicConfigKeys).map(k=>(
-          <div key={k} className="border rounded-xl p-4 text-center">
-            <label className="text-xs uppercase text-slate-400">{k}</label>
-            <input
-              type="number"
-              value={settings[k]||0}
-              onChange={e=>setSettings({...settings,[k]:e.target.value})}
-              className="w-full text-xl font-bold text-center outline-none"
-            />
-          </div>
-        ))}
-      </div>
+            const [calcForm, setCalcForm] = useState({ nome: '', tempo: 1, pintura: 'none', whatsapp: '', filamentos: [{ id: Date.now(), matIdx: 0, peso: 0 }] });
+            const [gastoForm, setGastoForm] = useState({ id: '', descricao: '', valor: '' });
+            const [toast, setToast] = useState({ show: false, msg: '' });
+            const [logoStatus, setLogoStatus] = useState('loading');
 
-      <button
-        onClick={()=>{
-          const p=new URLSearchParams({type:'save_settings',...settings});
-          fetch(`${HARDCODED_URL}?${p.toString()}`);
-          alert("Configurações salvas");
-        }}
-        className="btn-primary w-full mt-8"
-      >
-        Salvar Todas as Variáveis
-      </button>
-    </div>
-  );
-};
+            const notify = (msg) => { setToast({ show: true, msg }); setTimeout(() => setToast({ show: false, msg: '' }), 4000); };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
+            // n(val) RECONSTRUÍDO: Blindagem absoluta contra erros de milhar
+            const n = (val) => {
+                if (val === undefined || val === null || val === '') return 0;
+                if (typeof val === 'number') return val;
+                
+                let sVal = String(val).trim();
+                
+                // Se o número vier como "2.500,00", removemos o ponto e trocamos a vírgula por ponto
+                if (sVal.includes('.') && sVal.includes(',')) {
+                    sVal = sVal.replace(/\./g, '').replace(',', '.');
+                } else {
+                    // Se vier "2,5", apenas trocamos para "2.5"
+                    sVal = sVal.replace(',', '.');
+                }
+                
+                const num = parseFloat(sVal);
+                return isNaN(num) ? 0 : num;
+            };
 
-<script>
+            const extractColor = (name) => {
+                const match = name.match(/"([^"]+)"/);
+                if (!match) return '#2563eb';
+                const colorMap = { 'vermelho': '#ef4444', 'verde': '#22c55e', 'azul': '#3b82f6', 'preto': '#0f172a', 'branco': '#ffffff', 'amarelo': '#eab308', 'cinza': '#64748b', 'laranja': '#f97316', 'rosa': '#ec4899', 'roxo': '#a855f7', 'marrom': '#78350f', 'dourado': '#fbbf24', 'prata': '#cbd5e1', 'cobre': '#b45309', 'transparente': '#e2e8f0', 'pele': '#ffdbac' };
+                const colorKey = match[1].toLowerCase().trim();
+                return colorMap[colorKey] || colorKey; 
+            };
+
+            const sync = async () => {
+                setState(prev => ({ ...prev, syncing: true }));
+                try {
+                    const response = await fetch(`${HARDCODED_URL
+}?type=read_data&nc=${Date.now()}`);
+                    const data = await response.json();
+                    const settingsRes = await fetch(`${HARDCODED_URL
+}?type=read_settings&nc=${Date.now()}`);
+                    const settingsData = await settingsRes.json();
+                    
+                    const newSettings = { ...state.settings, ...settingsData, urlWrite: HARDCODED_URL };
+                    localStorage.setItem('333_vFINAL_stable', JSON.stringify(newSettings));
+                    
+                    setState(prev => ({
+    ...prev,
+    estoque: data.estoque || [],
+    vendas: data.vendas || [],
+    gastos: (data.gastos || []).map(g => ({
+        ...g,
+        id: String(g.id).replace(/^g_/, ''),
+        valor: n(g.valor)
+    })),
+    settings: newSettings,
+    syncing: false
+}));
+
+                } catch (e) { setState(p => ({ ...p, syncing: false })); notify("Erro de Conexão"); }
+            };
+
+            useEffect(() => { sync(); }, []);
+
+            const metrics = useMemo(() => {
+                const fat = state.vendas.reduce((acc, v) => acc + n(v.venda), 0);
+                const luc = state.vendas.reduce((acc, v) => acc + n(v.lucro), 0);
+                const out = state.gastos.reduce((acc, g) => acc + n(g.valor), 0);
+                return { fat, luc, out, bal: luc - out };
+            }, [state.vendas, state.gastos]);
+
+            const simulacao = useMemo(() => {
+                if (!state.estoque.length) return { custoBase: 0, sugerido: 0, lucro: 0 };
+                
+                let cMat = 0;
+                calcForm.filamentos.forEach(f => {
+                    const mat = state.estoque[f.matIdx] || state.estoque[0];
+                    if (mat) cMat += (n(f.peso) / 1000) * n(mat.preco);
+                });
+
+                const cLuz = (n(state.settings.potencia) / 1000) * n(calcForm.tempo) * n(state.settings.kwh);
+                const cAmort = (n(state.settings.precoMaq) / n(state.settings.vidaUtil || 24) / 30 / 24) * n(calcForm.tempo);
+                
+                const tFixo = n(state.settings.aluguel) + n(state.settings.softwares) + n(state.settings.ecommerce) + n(state.settings.mei) + n(state.settings.publicidade) + n(state.settings.condominio);
+                const divisor = n(state.settings.horasTrab) || 160;
+                const cFixoProp = (tFixo / divisor) * n(calcForm.tempo);
+                
+                const base = cMat + cLuz + cAmort + cFixoProp + n(state.settings.embalagem);
+                
+                let cPint = 0;
+                if(calcForm.pintura === "simples") cPint = n(state.settings.pintSimples);
+                else if(calcForm.pintura === "media") cPint = n(state.settings.pintMedia);
+                else if(calcForm.pintura === "profissional") cPint = n(state.settings.pintProf);
+                
+                const markupVal = n(state.settings.markup) || 1;
+                const sugerido = (base + cPint) * markupVal;
+                
+                return { custoBase: base, sugerido, lucro: sugerido - (base + cPint) };
+            }, [calcForm, state.settings, state.estoque]);
+
+            const apiCall = async (type, data) => {
+                notify("Sincronizando...");
+                if (type === 'delete_gasto') {
+                    setState(p => ({ ...p, gastos: p.gastos.filter(g => String(g.id).trim() !== String(data.id).trim()) }));
+                }
+                const params = new URLSearchParams();
+                params.append('type', type);
+                Object.keys(data).forEach(k => { if(data[k] !== undefined && data[k] !== null) params.append(k, String(data[k]).trim()); });
+                try {
+                    await fetch(`${state.settings.urlWrite}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
+                    setTimeout(sync, 2500);
+                    return true;
+                } catch (e) { notify("Falha na Rede"); return false; }
+            };
+
+            const navigation = [
+                {id: 'calc', l: 'Calculadora', i: 'calc'},
+                {id: 'stock', l: 'Estoque', i: 'stock'},
+                {id: 'sales', l: 'Vendas', i: 'sales'},
+                {id: 'expenses', l: 'Financeiro', i: 'wallet'},
+                {id: 'settings', l: 'Ajustes', i: 'settings'}
+            ];
+
+            return (
+                <div className="min-h-screen flex flex-col bg-slate-50">
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-8 py-3 shadow-sm">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                            <div className="logo-container">
+                                {logoStatus !== 'error' ? (
+                                    <img 
+                                        src={RAW_LOGO_URL} 
+                                        alt="Logo" 
+                                        className="logo-img" 
+                                        onLoad={() => setLogoStatus('loaded')}
+                                        onError={() => setLogoStatus('error')}
+                                    />
+                                ) : (
+                                    <div className="logo-text italic">333 Studio</div>
+                                )}
+                                <div className="hidden sm:block ml-4">
+                                    <div className="text-xl font-black tracking-tighter text-slate-900 italic leading-none">Management Pro</div>
+                                    <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-1">3D Forge System</div>
+                                </div>
+                            </div>
+                            <nav className="hidden md:flex items-center gap-8">
+                                {navigation.map(n => (
+                                    <button key={n.id} onClick={() => setPage(n.id)} className={`text-xs font-bold uppercase tracking-wider py-4 transition-all ${page === n.id ? 'nav-active' : 'text-slate-400 hover:text-slate-900'}`}>{n.l}</button>
+                                ))}
+                            </nav>
+                            <button onClick={sync} className={`p-2 rounded-full hover:bg-slate-100 ${state.syncing ? 'animate-spin text-blue-500' : 'text-slate-400'}`}><Icon name="refresh" /></button>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8 pb-28 md:pb-12">
+                        {page === 'calc' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                                <section className="lg:col-span-7 card-glass p-6 md:p-10 space-y-8">
+                                    <h2 className="text-xl font-bold">Novo Orçamento</h2>
+                                    <div className="space-y-6">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Projeto</label>
+                                            <input className="input-studio" placeholder="Nome do modelo..." value={calcForm.nome} onChange={e=>setCalcForm({...calcForm, nome: e.target.value})} />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1"><label className="text-[10px] font-black uppercase text-slate-400 ml-1">Tempo Impressão (h)</label><input type="number" className="input-studio" value={calcForm.tempo} onChange={e=>setCalcForm({...calcForm, tempo: e.target.value})} /></div>
+                                            <div className="space-y-1"><label className="text-[10px] font-black uppercase text-slate-400 ml-1">Acabamento</label>
+                                                <select className="input-studio" value={calcForm.pintura} onChange={e=>setCalcForm({...calcForm, pintura: e.target.value})}>
+                                                    <option value="none">Nenhum</option>
+                                                    <option value="simples">Simples</option>
+                                                    <option value="media">Média</option>
+                                                    <option value="profissional">Profissional</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center"><label className="text-[10px] font-black uppercase text-slate-400">Filamentos Utilizados</label> <button onClick={() => setCalcForm({...calcForm, filamentos: [...calcForm.filamentos, {id: Date.now(), matIdx: 0, peso: 0}]})} className="text-[10px] font-black text-blue-600 uppercase">+ Adicionar Cor</button></div>
+                                            {calcForm.filamentos.map((f, i) => (
+                                                <div key={f.id} className="flex gap-2">
+                                                    <select className="input-studio flex-1" value={f.matIdx} onChange={e => {const n = [...calcForm.filamentos]; n[i].matIdx = e.target.value; setCalcForm({...calcForm, filamentos: n})}}>
+                                                        {state.estoque.map((m, idx) => <option key={idx} value={idx}>{m.nome}</option>)}
+                                                    </select>
+                                                    <div className="relative w-28"><input type="number" className="input-studio pr-8" placeholder="Peso" value={f.peso} onChange={e => {const n = [...calcForm.filamentos]; n[i].peso = e.target.value; setCalcForm({...calcForm, filamentos: n})}} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">g</span></div>
+                                                    {calcForm.filamentos.length > 1 && <button onClick={() => setCalcForm({...calcForm, filamentos: calcForm.filamentos.filter(x => x.id !== f.id)})} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash" className="w-4 h-4"/></button>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="pt-4 space-y-4">
+                                            <input className="input-studio" placeholder="WhatsApp Cliente (DDD + Número)" value={calcForm.whatsapp} onChange={e=>setCalcForm({...calcForm, whatsapp: e.target.value})} />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <button onClick={() => {if(!simulacao.sugerido) return; const msg = `Olá! Segue o orçamento para o projeto: *${calcForm.nome || 'Impressão 3D'}*%0A%0A*Tempo estimado:* ${calcForm.tempo}h%0A*Valor:* R$ ${simulacao.sugerido.toFixed(2)}%0A%0A_Enviado via 333 Print Studio_`; window.open(`https://wa.me/${calcForm.whatsapp.replace(/\D/g, '') ? '55' + calcForm.whatsapp.replace(/\D/g, '') : ''}?text=${msg}`, '_blank'); }} className="btn-primary bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95"><Icon name="whatsapp" /> Enviar Whats</button>
+                                                <button onClick={() => apiCall('venda', { item: calcForm.nome || 'Venda Studio', venda: n(simulacao.sugerido).toFixed(2), lucro: n(simulacao.lucro).toFixed(2) })} className="btn-primary bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-100 transition-all active:scale-95">Registar Venda</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="lg:col-span-5 flex flex-col gap-6">
+                                    <div className="card-glass p-10 text-center border-t-8 border-slate-900 bg-white shadow-xl">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Venda Sugerida</p>
+                                        <h3 className="text-7xl font-black tracking-tighter text-slate-900 italic">R$ {simulacao.sugerido.toFixed(2)}</h3>
+                                        <div className="mt-10 grid grid-cols-2 gap-4 border-t border-slate-100 pt-8 text-center">
+                                            <div><p className="text-[9px] font-bold uppercase text-slate-400">Custo Base</p><p className="text-xl font-bold text-slate-900">R$ {simulacao.custoBase.toFixed(2)}</p></div>
+                                            <div><p className="text-[9px] font-bold uppercase text-slate-400">Lucro Estimado</p><p className="text-xl font-bold text-emerald-600">R$ {simulacao.lucro.toFixed(2)}</p></div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        )}
+
+                        {page === 'stock' && (
+                            <div className="space-y-8">
+                                <div className="flex justify-between items-center px-2">
+                                    <h2 className="text-2xl font-bold">Inventário</h2>
+                                    <button onClick={() => {const nome = prompt("Nome do Material (Ex: PLA \"Vermelho\"):"); if(nome) apiCall('estoque', {nome, peso:1000, preco:120})}} className="btn-primary">+ Novo Spool</button>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8 text-center">
+                                    {state.estoque.map((m, i) => (
+                                        <div key={i} className="card-glass p-6 flex flex-col items-center space-y-4 group relative">
+                                            <div className="spool-visual">
+                                                <div className="spool-progress" style={{height: `${(n(m.peso)/1000)*100}%`, backgroundColor: extractColor(m.nome)}}></div>
+                                                <span className="z-10 text-[11px] font-bold text-slate-900 drop-shadow-sm">{m.peso}g</span>
+                                            </div>
+                                            <div className="h-10 flex items-center"><p className="text-[11px] font-bold uppercase leading-tight line-clamp-2 text-slate-700">{m.nome}</p></div>
+                                            <button onClick={() => {if(confirm("Remover este carretel?")) apiCall('delete_estoque', {nome: m.nome})}} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500"><Icon name="trash" className="w-4 h-4"/></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {page === 'expenses' && (
+                            <div className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                                    <div className="card-glass p-8 border-l-4 border-red-500 shadow-sm"><p className="text-[10px] font-bold uppercase text-slate-400">Total Despesas</p><p className="text-3xl font-black text-red-500">R$ {metrics.out.toFixed(2)}</p></div>
+                                    <div className="card-glass p-8 border-l-4 border-blue-600 shadow-sm"><p className="text-[10px] font-bold uppercase text-slate-400">Lucro Bruto</p><p className="text-3xl font-black text-blue-600">R$ {metrics.luc.toFixed(2)}</p></div>
+                                    <div className="card-glass p-8 border-l-4 border-emerald-500 shadow-sm"><p className="text-[10px] font-bold uppercase text-slate-400">Saldo Disponível</p><p className={`text-3xl font-black ${metrics.bal >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>R$ {metrics.bal.toFixed(2)}</p></div>
+                                </div>
+
+                                <div className="card-glass p-8 space-y-6 border-dashed border-2">
+                                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest text-center">Registrar Gasto Direto</h3>
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        <input className="input-studio flex-1" placeholder="Ex: Manutenção, Aluguel, Softwares..." value={gastoForm.descricao} onChange={e=>setGastoForm({...gastoForm, descricao: e.target.value})} />
+                                        <div className="relative md:w-48"><input type="number" className="input-studio pl-8" placeholder="0.00" value={gastoForm.valor} onChange={e=>setGastoForm({...gastoForm, valor: e.target.value})} /><span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">R$</span></div>
+                                        <button onClick={() => {if(gastoForm.descricao && gastoForm.valor) { apiCall('gasto', {descricao: gastoForm.descricao, valor: String(gastoForm.valor).replace(',', '.'), id: Date.now()}); setGastoForm({descricao:'', valor:''})}}} className="btn-primary md:px-12">Lançar</button>
+                                    </div>
+                                </div>
+
+                                <div className="card-glass overflow-hidden">
+                                    <div className="p-4 bg-slate-50 border-b border-slate-200"><h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Histórico Financeiro</h3></div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-sm">
+                                            <thead><tr className="border-b border-slate-200"><th className="p-4 text-[10px] text-slate-400 uppercase font-black">Data</th><th className="p-4 text-[10px] text-slate-400 uppercase font-black">Descrição</th><th className="p-4 text-[10px] text-slate-400 uppercase font-black text-right">Valor</th><th className="p-4 text-center">Ações</th></tr></thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {state.gastos.slice().reverse().map((g) => (
+                                                    <tr key={String(g.id)} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="p-4 text-slate-400 text-xs">{g.data}</td>
+                                                        <td className="p-4 font-bold uppercase text-xs text-slate-800">{g.descricao}</td>
+                                                        <td className="p-4 text-right font-black text-red-500">R$ {n(g.valor).toFixed(2)}</td>
+                                                        <td className="p-4 text-center">
+                                                            <button onClick={() => {if(window.confirm("Remover este registro?")) apiCall('delete_gasto', {id: String(g.id).replace(/^g_/, '') })}} className="p-2 text-slate-300 hover:text-red-500 transition-all"><Icon name="trash" className="w-4 h-4"/></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {page === 'sales' && (
+                            <div className="space-y-8">
+                                <div className="card-glass p-8 flex justify-between items-center bg-slate-900 text-white shadow-xl">
+                                    <div><p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Faturamento</p><p className="text-4xl font-black">R$ {metrics.fat.toFixed(2)}</p></div>
+                                    <div className="text-right"><p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Lucro Líquido</p><p className="text-4xl font-black text-emerald-400">R$ {metrics.luc.toFixed(2)}</p></div>
+                                </div>
+                                <div className="card-glass overflow-hidden">
+                                    <div className="p-4 bg-slate-50 border-b border-slate-200"><h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Relatório de Vendas</h3></div>
+                                    <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b border-slate-200"><tr><th className="p-4 text-[10px] text-slate-400 uppercase font-black">Data</th><th className="p-4 text-[10px] text-slate-400 uppercase font-black">Projeto</th><th className="p-4 text-[10px] text-slate-400 uppercase font-black text-right">Venda</th><th className="p-4 text-[10px] text-slate-400 uppercase font-black text-right">Lucro</th></tr></thead>
+                                    <tbody className="divide-y divide-slate-100">{state.vendas.slice().reverse().map((v, i) => (<tr key={i} className="hover:bg-slate-50"><td className="p-4 text-slate-400 text-xs">{v.data}</td><td className="p-4 font-bold uppercase text-xs text-slate-800">{v.item}</td><td className="p-4 text-right font-bold text-xs text-slate-500">R$ {n(v.venda).toFixed(2)}</td><td className="p-4 text-right font-black text-emerald-600">R$ {n(v.lucro).toFixed(2)}</td></tr>))}</tbody></table></div>
+                                </div>
+                            </div>
+                        )}
+
+                        {page === 'settings' && (
+                            <div className="max-w-4xl space-y-8 text-center mx-auto">
+                                <h2> <div className="flex justify-center gap-4">
+  <button
+    onClick={() => setAdvancedMode(false)}
+    className={`btn-primary ${!advancedMode ? 'bg-blue-600' : 'bg-slate-400'}`}
+  >
+    Básico
+  </button>
+
+  <button
+    onClick={() => setAdvancedMode(true)}
+    className={`btn-primary ${advancedMode ? 'bg-blue-600' : 'bg-slate-400'}`}
+  >
+    Avançado
+  </button>
+</div>
+className="text-2xl font-bold text-slate-900">Ajustes Studio</h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {(advancedMode ? configKeys : basicConfigKeys).map(key => (
+
+                                        <div key={key} className="card-glass p-5 space-y-2">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block text-center truncate">{key}</label>
+                                            <input type="number" step="0.01" value={state.settings[key]} onChange={e => setState({...state, settings: {...state.settings, [key]: n(e.target.value)}})} className="w-full bg-transparent border-none p-0 font-bold text-xl text-center focus:ring-0 text-slate-800" />
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={() => apiCall('save_settings', state.settings)} className="btn-primary w-full shadow-lg shadow-blue-500/10 transition-all active:scale-95">Salvar Todas as Variáveis</button>
+                            </div>
+                        )}
+                    </main>
+
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around p-4 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                        {navigation.map(n => (
+                            <button key={n.id} onClick={() => setPage(n.id)} className={`flex flex-col items-center gap-1 transition-all ${page === n.id ? 'text-blue-600 scale-110' : 'text-slate-400'}`}>
+                                <Icon name={n.id === 'expenses' ? 'wallet' : n.id} className="w-6 h-6" /><span className="text-[8px] font-black uppercase tracking-widest">{n.l.slice(0,4)}</span>
+                            </button>
+                        ))}
+                    </nav>
+
+                    {toast.show && (
+                        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-[100] font-bold text-xs uppercase tracking-widest animate-bounce">
+                            {toast.msg}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+            <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js");
-}
-</script>
+  }
+    </script>
 </body>
 </html>
