@@ -1,8 +1,14 @@
 <!-- 
   ==========================================================================
-  GOOGLE APPS SCRIPT - 333 PRINT STUDIO (Atualizado)
+  GOOGLE APPS SCRIPT - 333 PRINT STUDIO (Configuração do Backend)
   ==========================================================================
-  
+  Instruções:
+  1. No Google Sheets, vá em Extensões > Apps Script.
+  2. Apague tudo e cole o código abaixo.
+  3. Clique em "Implantar" > "Nova Implantação".
+  4. Selecione "App da Web", mude "Quem pode acessar" para "Qualquer pessoa".
+  5. Copie o URL gerado e cole na constante HARDCODED_URL no index.html.
+
   function doGet(e) {
     const type = e.parameter.type;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -180,7 +186,7 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        .logo-container { height: 55px; display: flex; align-items: center; gap: 12px; }
+        .logo-container { height: 55px; display: flex; align-items: center; justify-content: center; width: 100%; }
         .logo-img { height: 100%; width: auto; border-radius: 12px; object-fit: cover; }
         .logo-text { font-weight: 900; font-size: 22px; color: #0f172a; letter-spacing: -1px; }
     </style>
@@ -203,7 +209,8 @@
                 refresh: <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />,
                 whatsapp: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-7.6 8.38 8.38 0 0 1 3.8.9L21 4.5z" />,
                 alert: <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" />,
-                layers: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                layers: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />,
+                x: <path d="M18 6L6 18M6 6l12 12" />
             };
             return (
                 <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -231,6 +238,10 @@
                 return { estoque: [], vendas: [], gastos: [], syncing: false, settings: saved ? { ...saved, urlWrite: HARDCODED_URL } : defaults };
             });
 
+            // Gerenciamento do Modal de Filamento
+            const [filamentModal, setFilamentModal] = useState({ open: false, editing: null });
+            const [filamentForm, setFilamentForm] = useState({ nome: '', peso: 1000, preco: 120 });
+
             const [calcForm, setCalcForm] = useState({ nome: '', tempo: 1, pintura: 'none', whatsapp: '', filamentos: [{ id: Date.now(), matIdx: 0, peso: 0 }] });
             const [gastoForm, setGastoForm] = useState({ id: '', descricao: '', valor: '' });
             const [toast, setToast] = useState({ show: false, msg: '' });
@@ -249,7 +260,7 @@
             };
 
             const extractColor = (name) => {
-                const match = name.match(/"([^"]+)"/);
+                const match = String(name || '').match(/"([^"]+)"/);
                 if (!match) return '#2563eb';
                 const colorMap = { 'vermelho': '#ef4444', 'verde': '#22c55e', 'azul': '#3b82f6', 'preto': '#0f172a', 'branco': '#ffffff', 'amarelo': '#eab308', 'cinza': '#64748b', 'laranja': '#f97316', 'rosa': '#ec4899', 'roxo': '#a855f7', 'marrom': '#78350f', 'dourado': '#fbbf24', 'prata': '#cbd5e1', 'cobre': '#b45309', 'transparente': '#e2e8f0', 'pele': '#ffdbac' };
                 const colorKey = match[1].toLowerCase().trim();
@@ -349,6 +360,17 @@
                 }
             };
 
+            const handleSaveFilament = async (e) => {
+                e.preventDefault();
+                // Se mudamos o nome do filamento, precisamos deletar o registro antigo no Sheets
+                // porque o script usa o nome como ID primário no loop de edição.
+                if (filamentModal.editing && filamentModal.editing.nome !== filamentForm.nome) {
+                    await apiCall('delete_estoque', { nome: filamentModal.editing.nome });
+                }
+                await apiCall('estoque', { nome: filamentForm.nome, peso: n(filamentForm.peso), preco: n(filamentForm.preco) });
+                setFilamentModal({ open: false, editing: null });
+            };
+
             const navigation = [
                 {id: 'calc', l: 'Calculadora', i: 'calc'},
                 {id: 'stock', l: 'Estoque', i: 'stock'},
@@ -436,7 +458,7 @@
                             <div className="space-y-8">
                                 <div className="flex justify-between items-center px-2">
                                     <h2 className="text-2xl font-bold">Inventário</h2>
-                                    <button onClick={() => {const nome = prompt("Nome do Material (Ex: PLA \"Vermelho\"):"); if(nome) apiCall('estoque', {nome, peso:1000, preco:120})}} className="btn-primary">+ Novo Spool</button>
+                                    <button onClick={() => { setFilamentForm({ nome: '', peso: 1000, preco: 120 }); setFilamentModal({ open: true, editing: null }); }} className="btn-primary">+ Novo Spool</button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="card-glass p-6 border-l-4 border-blue-600 flex items-center gap-4">
@@ -467,11 +489,11 @@
                                             <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button 
                                                     onClick={() => {
-                                                        const novoPeso = prompt("Atualizar peso restante (g):", m.peso);
-                                                        if(novoPeso !== null) apiCall('estoque', {nome: m.nome, peso: n(novoPeso), preco: m.preco || 120});
+                                                        setFilamentForm({ nome: m.nome, peso: m.peso, preco: m.preco || 120 });
+                                                        setFilamentModal({ open: true, editing: m });
                                                     }} 
                                                     className="text-blue-500 hover:text-blue-700" 
-                                                    title="Editar Peso"
+                                                    title="Editar Filamento"
                                                 >
                                                     <Icon name="edit" className="w-4 h-4"/>
                                                 </button>
@@ -544,6 +566,65 @@
                         ))}
                     </nav>
 
+                    {/* Modal de Gestão de Filamento */}
+                    {filamentModal.open && (
+                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl space-y-6 animate-in zoom-in duration-200">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-xl font-bold text-slate-900">{filamentModal.editing ? 'Editar Filamento' : 'Novo Filamento'}</h3>
+                                    <button onClick={() => setFilamentModal({ open: false, editing: null })} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors"><Icon name="x" className="w-6 h-6"/></button>
+                                </div>
+                                <form onSubmit={handleSaveFilament} className="space-y-5">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nome e Cor</label>
+                                        <input 
+                                            className="input-studio" 
+                                            placeholder='Ex: PLA "Azul"' 
+                                            required 
+                                            value={filamentForm.nome} 
+                                            onChange={e => setFilamentForm({...filamentForm, nome: e.target.value})}
+                                        />
+                                        <p className="text-[9px] text-slate-400 italic">A primeira palavra define a Tag (Ex: PLA, PETG, ABS).</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Peso Restante (g)</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="number" 
+                                                    className="input-studio pr-8" 
+                                                    required 
+                                                    value={filamentForm.peso} 
+                                                    onChange={e => setFilamentForm({...filamentForm, peso: e.target.value})}
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">g</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Preço do Rolo</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    className="input-studio pl-10" 
+                                                    required 
+                                                    value={filamentForm.preco} 
+                                                    onChange={e => setFilamentForm({...filamentForm, preco: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-2">
+                                        <button type="submit" className="btn-primary w-full bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-100">
+                                            {filamentModal.editing ? 'Salvar Alterações' : 'Adicionar ao Estoque'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
                     {toast.show && (
                         <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-[100] font-bold text-xs uppercase tracking-widest animate-bounce">
                             {toast.msg}
@@ -555,11 +636,6 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-    </script>
-  <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js");
-  }
     </script>
 </body>
 </html>
