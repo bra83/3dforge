@@ -115,13 +115,36 @@
 
         const App = () => {
             const [page, setPage] = useState('calc');
+            const [advancedMode, setAdvancedMode] = useState(false);
+
             const HARDCODED_URL = "https://script.google.com/macros/s/AKfycbwdsCshiPQjiuu8f49zwwrWtIYbOxD5PdqOvjBKjU5xre2rNc5V7sizbaDef6WlpIuAmw/exec";
             const RAW_LOGO_URL = "https://raw.githubusercontent.com/bra83/3dforge/main/logo.jpg";
             
-            const configKeys = [
-                "aluguel", "softwares", "ecommerce", "mei", "publicidade", "condominio",
-                "kwh", "potencia", "precoMaq", "vidaUtil", "horasTrab", "embalagem",
-                "markup", "pintSimples", "pintMedia", "pintProf", "FatPrevisto"
+            const basicConfigKeys = [
+  "markup",
+  "kwh",
+  "potencia",
+  "embalagem",
+  "pintSimples",
+  "pintMedia",
+  "pintProf"
+];
+
+const advancedConfigKeys = [
+  "aluguel",
+  "softwares",
+  "ecommerce",
+  "mei",
+  "publicidade",
+  "condominio",
+  "precoMaq",
+  "vidaUtil",
+  "horasTrab",
+  "FatPrevisto"
+];
+
+const configKeys = [...basicConfigKeys, ...advancedConfigKeys];
+
             ];
 
             const [state, setState] = useState(() => {
@@ -419,9 +442,25 @@
 
                         {page === 'settings' && (
                             <div className="max-w-4xl space-y-8 text-center mx-auto">
-                                <h2 className="text-2xl font-bold text-slate-900">Ajustes Studio</h2>
+                                <h2 <div className="flex justify-center gap-4">
+  <button
+    onClick={() => setAdvancedMode(false)}
+    className={`btn-primary ${!advancedMode ? 'bg-blue-600' : 'bg-slate-400'}`}
+  >
+    Básico
+  </button>
+
+  <button
+    onClick={() => setAdvancedMode(true)}
+    className={`btn-primary ${advancedMode ? 'bg-blue-600' : 'bg-slate-400'}`}
+  >
+    Avançado
+  </button>
+</div>
+className="text-2xl font-bold text-slate-900">Ajustes Studio</h2>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {configKeys.map(key => (
+                                    {(advancedMode ? configKeys : basicConfigKeys).map(key => (
+
                                         <div key={key} className="card-glass p-5 space-y-2">
                                             <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block text-center truncate">{key}</label>
                                             <input type="number" step="0.01" value={state.settings[key]} onChange={e => setState({...state, settings: {...state.settings, [key]: n(e.target.value)}})} className="w-full bg-transparent border-none p-0 font-bold text-xl text-center focus:ring-0 text-slate-800" />
