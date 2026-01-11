@@ -378,6 +378,20 @@ const configKeys = [...basicConfigKeys, ...advancedConfigKeys];
                                                 <span className="z-10 text-[11px] font-bold text-slate-900 drop-shadow-sm">{m.peso}g</span>
                                             </div>
                                             <div className="h-10 flex items-center"><p className="text-[11px] font-bold uppercase leading-tight line-clamp-2 text-slate-700">{m.nome}</p></div>
+                                            <button onClick={() => {
+  const peso = prompt("Novo peso (g):", m.peso);
+  const preco = prompt("Novo preço:", m.preco);
+  if(peso && preco) {
+    apiCall('update_estoque', {
+      nome: m.nome,
+      peso,
+      preco
+    });
+  }
+}}>
+Editar
+</button>
+
                                             <button onClick={() => {if(confirm("Remover este carretel?")) apiCall('delete_estoque', {nome: m.nome})}} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500"><Icon name="trash" className="w-4 h-4"/></button>
                                         </div>
                                     ))}
