@@ -1,169 +1,254 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>333 Print Studio – Calculadora</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>333 Print Studio - Gestão Pro</title>
 
-  <!-- Tailwind + React -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 
-<body class="bg-slate-100">
-  <div id="root"></div>
+<body class="bg-slate-50">
+<div id="root"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbwa9oyc4qFMAA1ppHJjZhiEPIVWAhqikFmYip5T9OB5mNktXTFYSRKqpWZRXT6zf_zPJw/exec";
+/**
+ * URL DEFINITIVA DO BACKEND (APPS SCRIPT)
+ */
+const API_URL = "https://script.google.com/macros/s/AKfycbwa9oyc4qFMAA1ppHJjZhiEPIVWAhqikFmYip5T9OB5mNktXTFYSRKqpWZRXT6zf_zPJw/exec";
 
-    function App() {
-      const [estoque, setEstoque] = useState([]);
-      const [settings, setSettings] = useState({});
-      const [loading, setLoading] = useState(false);
+function App() {
+  const [page, setPage] = useState("calc");
+  const [syncing, setSyncing] = useState(false);
 
-      const [form, setForm] = useState({
-        nome: "",
-        peso: 0,
-        tempo: 1
-      });
+  const [estoque, setEstoque] = useState([]);
+  const [vendas, setVendas] = useState([]);
+  const [gastos, setGastos] = useState([]);
+  const [settings, setSettings] = useState({});
 
-      const [resultado, setResultado] = useState({
-        custo: 0,
-        preco: 0,
-        lucro: 0
-      });
+  /**
+   * FORMULÁRIO DA CALCULADORA
+   */
+  const [calcForm, setCalcForm] = useState({
+    nome: "",
+    tempo: 1,
+    peso: 0
+  });
 
-      const n = v => isNaN(parseFloat(v)) ? 0 : parseFloat(v);
+  /**
+   * RESULTADO VINDA DO BACKEND
+   */
+  const [simulacao, setSimulacao] = useState({
+    custo: 0,
+    preco: 0,
+    lucro: 0
+  });
 
-      // ======================
-      // SINCRONIZAÇÃO INICIAL
-      // ======================
-      const sync = async () => {
-        try {
-          const r1 = await fetch(API_URL + "?type=read_data");
-          const d1 = await r1.json();
+  const n = (v) => {
+    const x = parseFloat(String(v).replace(",", "."));
+    return isNaN(x) ? 0 : x;
+  };
 
-          const r2 = await fetch(API_URL + "?type=read_settings");
-          const d2 = await r2.json();
+  /**
+   * SINCRONIZA TUDO DO BACKEND
+   */
+  const sync = async () => {
+    setSyncing(true);
+    try {
+      const d = await fetch(API_URL + "?type=read_data").then(r => r.json());
+      const s = await fetch(API_URL + "?type=read_settings").then(r => r.json());
 
-          setEstoque(d1.estoque || []);
-          setSettings(d2 || {});
-        } catch (e) {
-          alert("Erro de sincronização com o backend");
-          console.error(e);
-        }
-      };
+      setEstoque(d.estoque || []);
+      setVendas(d.vendas || []);
+      setGastos(d.gastos || []);
+      setSettings(s || {});
+    } catch (e) {
+      alert("Erro de sincronização com o backend");
+      console.error(e);
+    }
+    setSyncing(false);
+  };
 
-      useEffect(() => {
-        sync();
-      }, []);
+  useEffect(() => {
+    sync();
+  }, []);
 
-      // ======================
-      // SIMULAR
-      // ======================
-      const simular = async () => {
-        setLoading(true);
-        try {
-          const url =
-            API_URL +
-            `?type=simular&peso=${n(form.peso)}&tempo=${n(form.tempo)}&nc=${Date.now()}`;
+  /**
+   * SIMULAÇÃO VIA BACKEND (CORE PROFISSIONAL)
+   */
+  const simular = async () => {
+    try {
+      const url =
+        API_URL +
+        `?type=simular&peso=${n(calcForm.peso)}&tempo=${n(calcForm.tempo)}&nc=${Date.now()}`;
 
-          const r = await fetch(url);
-          const data = await r.json();
+      const r = await fetch(url);
+      const data = await r.json();
+      setSimulacao(data);
+    } catch (e) {
+      alert("Erro ao simular custo");
+      console.error(e);
+    }
+  };
 
-          setResultado(data);
-        } catch (e) {
-          alert("Erro ao simular custo");
-          console.error(e);
-        }
-        setLoading(false);
-      };
-
-      // ======================
-      // GRAVAR VENDA
-      // ======================
-      const gravarVenda = async () => {
-        if (!form.nome) {
-          alert("Informe o nome do projeto");
-          return;
-        }
-
-        try {
-          const url =
-            API_URL +
-            `?type=venda&item=${encodeURIComponent(form.nome)}` +
-            `&venda=${resultado.preco}&lucro=${resultado.lucro}`;
-
-          await fetch(url);
-          alert("Venda registrada com sucesso");
-        } catch (e) {
-          alert("Erro ao gravar venda");
-          console.error(e);
-        }
-      };
-
-      return (
-        <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-xl shadow space-y-6">
-          <h1 className="text-2xl font-black text-slate-800">
-            Calculadora de Impressão 3D
-          </h1>
-
-          <div className="space-y-3">
-            <input
-              className="w-full border rounded p-2"
-              placeholder="Nome do projeto"
-              value={form.nome}
-              onChange={e => setForm({ ...form, nome: e.target.value })}
-            />
-
-            <input
-              type="number"
-              className="w-full border rounded p-2"
-              placeholder="Peso total (g)"
-              value={form.peso}
-              onChange={e => setForm({ ...form, peso: e.target.value })}
-            />
-
-            <input
-              type="number"
-              className="w-full border rounded p-2"
-              placeholder="Tempo de impressão (h)"
-              value={form.tempo}
-              onChange={e => setForm({ ...form, tempo: e.target.value })}
-            />
-          </div>
-
-          <button
-            onClick={simular}
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-500 disabled:opacity-50"
-          >
-            {loading ? "Calculando..." : "Simular"}
-          </button>
-
-          <div className="border-t pt-4 space-y-1 text-sm">
-            <div>Custo: <b>R$ {resultado.custo.toFixed(2)}</b></div>
-            <div>Lucro: <b>R$ {resultado.lucro.toFixed(2)}</b></div>
-            <div className="text-lg font-black">
-              Preço Ideal: R$ {resultado.preco.toFixed(2)}
-            </div>
-          </div>
-
-          <button
-            onClick={gravarVenda}
-            className="w-full bg-emerald-600 text-white py-3 rounded font-bold hover:bg-emerald-500"
-          >
-            Gravar Venda
-          </button>
-        </div>
-      );
+  /**
+   * GRAVAR VENDA
+   */
+  const gravarVenda = async () => {
+    if (!calcForm.nome) {
+      alert("Informe o nome do projeto");
+      return;
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+    try {
+      const url =
+        API_URL +
+        `?type=venda&item=${encodeURIComponent(calcForm.nome)}` +
+        `&venda=${simulacao.preco}&lucro=${simulacao.lucro}`;
+
+      await fetch(url);
+      alert("Venda registrada com sucesso");
+      sync();
+    } catch (e) {
+      alert("Erro ao gravar venda");
+      console.error(e);
+    }
+  };
+
+  /**
+   * MÉTRICAS
+   */
+  const metrics = useMemo(() => {
+    const fat = vendas.reduce((a, v) => a + n(v.venda), 0);
+    const luc = vendas.reduce((a, v) => a + n(v.lucro), 0);
+    const out = gastos.reduce((a, g) => a + n(g.valor), 0);
+    return { fat, luc, out, bal: luc - out };
+  }, [vendas, gastos]);
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-white border-b p-4 flex justify-between items-center">
+        <h1 className="font-black text-xl">333 Print Studio</h1>
+        <button
+          onClick={sync}
+          className={syncing ? "animate-spin text-blue-500" : "text-slate-400"}
+        >
+          🔄
+        </button>
+      </header>
+
+      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
+        {page === "calc" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow space-y-4">
+              <h2 className="font-black text-lg">Novo Orçamento</h2>
+
+              <input
+                className="border p-2 w-full rounded"
+                placeholder="Nome do projeto"
+                value={calcForm.nome}
+                onChange={e => setCalcForm({ ...calcForm, nome: e.target.value })}
+              />
+
+              <input
+                type="number"
+                className="border p-2 w-full rounded"
+                placeholder="Peso total (g)"
+                value={calcForm.peso}
+                onChange={e => setCalcForm({ ...calcForm, peso: e.target.value })}
+              />
+
+              <input
+                type="number"
+                className="border p-2 w-full rounded"
+                placeholder="Tempo de impressão (h)"
+                value={calcForm.tempo}
+                onChange={e => setCalcForm({ ...calcForm, tempo: e.target.value })}
+              />
+
+              <button
+                onClick={simular}
+                className="bg-blue-600 text-white py-2 rounded font-bold"
+              >
+                Simular
+              </button>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow space-y-4 text-center">
+              <p className="text-xs uppercase text-slate-400">Preço sugerido</p>
+              <h3 className="text-5xl font-black">
+                R$ {simulacao.preco.toFixed(2)}
+              </h3>
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div>
+                  <p className="text-xs text-slate-400">Custo</p>
+                  <p className="font-bold">R$ {simulacao.custo.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Lucro</p>
+                  <p className="font-bold text-emerald-600">
+                    R$ {simulacao.lucro.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={gravarVenda}
+                className="mt-4 bg-emerald-600 text-white py-2 w-full rounded font-bold"
+              >
+                Gravar Venda
+              </button>
+            </div>
+          </div>
+        )}
+
+        {page === "sales" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-black">Vendas</h2>
+            <div className="bg-white rounded shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-100">
+                  <tr>
+                    <th className="p-2 text-left">Data</th>
+                    <th className="p-2 text-left">Projeto</th>
+                    <th className="p-2 text-right">Venda</th>
+                    <th className="p-2 text-right">Lucro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vendas.map((v, i) => (
+                    <tr key={i} className="border-t">
+                      <td className="p-2">{v.data}</td>
+                      <td className="p-2">{v.item}</td>
+                      <td className="p-2 text-right">
+                        R$ {n(v.venda).toFixed(2)}
+                      </td>
+                      <td className="p-2 text-right text-emerald-600">
+                        R$ {n(v.lucro).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <nav className="bg-white border-t flex justify-around p-3">
+        <button onClick={() => setPage("calc")}>Calculadora</button>
+        <button onClick={() => setPage("sales")}>Vendas</button>
+      </nav>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
 </body>
 </html>
